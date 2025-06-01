@@ -1,8 +1,8 @@
-# TradeHabit Analyzer
+# TradeHabit - Behavioral Analytics
 
 ## Overview
 
-TradeHabit Analyzer is a Python-based tool designed to analyze trader order data to identify and quantify common trading mistakes or suboptimal behaviors. The initial focus is on parsing and analyzing order execution reports, starting with data exported from NinjaTrader (in CSV format).
+TradeHabit is a Python-based tool designed to analyze trader order data to identify and quantify common trading mistakes or suboptimal behaviors. The initial focus is on parsing and analyzing order execution reports, starting with data exported from NinjaTrader (in CSV format).
 
 The primary goal is to help traders gain insights into their patterns and improve their trading discipline by highlighting recurring mistakes.
 
