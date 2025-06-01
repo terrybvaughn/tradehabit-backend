@@ -1,4 +1,4 @@
-# TradeHabit - Behavioral Analytics
+# TradeHabit - Behavioral Analytics for Novice Traders
 
 ## Overview
 
