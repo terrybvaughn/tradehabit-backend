@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.DS_Store
+
+# VSCode
+.vscode/
+
+# Cursor
+.cursor/
+
+# pyenv
+.python-version
+
+# Environments
+.env
+.venv
+env/
+venv/ 
