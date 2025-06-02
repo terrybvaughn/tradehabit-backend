@@ -1,4 +1,5 @@
 # TradeHabit - Behavioral Analytics for Novice Traders
+![TradeHabit Dashboard Mockup](images/mockups/TradeHabit-Dashboard.png)
 
 ## Overview
 
