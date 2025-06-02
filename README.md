@@ -1,4 +1,4 @@
-# TradeHabit - Behavioral Analytics
+# TradeHabit - Behavioral Analytics for Novice Traders
 
 ## Overview
 
@@ -74,8 +74,9 @@ The script will output:
 
 ## Future Enhancements (Examples)
 
-*   Detection of other common trading mistakes (e.g., "Revenge Trading," "Over-Leveraging," "Failing to Take Profits").
-*   More sophisticated P&L calculation.
+*   Detection of other common trading mistakes.
+*   Loss dispersion analysis.
+*   Analytics dashboard for behavioral analytics visualization.
 *   Support for other broker export formats.
 *   Basic reporting or visualization of mistake patterns.
 
