@@ -53,7 +53,6 @@ def _is_oco_completion(stop_candidate_row: pd.Series, trade_obj: Trade, all_raw_
     profit_target_side = str(stop_candidate_row.get('side', '')).strip() 
 
     if pd.isna(stop_cancellation_ts) or not profit_target_side:
-        # print(f"[DEBUG OCO] Insufficient data for OCO check: stop_ts={stop_cancellation_ts}, pt_side={profit_target_side}")
         return False
 
     # Profit target must be filled at or after the stop cancellation, within the OCO window
@@ -63,7 +62,6 @@ def _is_oco_completion(stop_candidate_row: pd.Series, trade_obj: Trade, all_raw_
     # We need to look at the 'fill_ts' for profit targets.
     # Ensure 'fill_ts' column exists. If not, this check might be unreliable.
     if 'fill_ts' not in all_raw_orders.columns:
-        print(f"[DEBUG OCO] Warning: 'fill_ts' column not found in all_raw_orders. OCO check will use 'ts' for profit targets and may be inaccurate.")
         pt_ts_col = 'ts'
     else:
         pt_ts_col = 'fill_ts'
@@ -79,12 +77,10 @@ def _is_oco_completion(stop_candidate_row: pd.Series, trade_obj: Trade, all_raw_
     ]
 
     if potential_targets_df.empty:
-        # print(f"[DEBUG OCO] No potential filled profit targets found for stop {stop_candidate_row.get('order_id_original')} canceled at {stop_cancellation_ts} within window {time_window_start} to {time_window_end}")
         return False
 
     # If any such profit target exists, it's an OCO completion.
     # We could add more conditions, e.g. profit target price makes sense relative to entry, etc.
-    # print(f"[DEBUG OCO] Found OCO completion for stop {stop_candidate_row.get('order_id_original')}. Profit target(s) filled between {time_window_start} and {time_window_end}. Details:\n{potential_targets_df[['order_id_original', 'ts', 'fill_ts', 'price', 'qty']]}")
     return True
 
 def _check_single_trade_for_no_stop(trade_obj: Trade, all_raw_orders: pd.DataFrame) -> None:
@@ -205,81 +201,6 @@ def _check_single_trade_for_no_stop(trade_obj: Trade, all_raw_orders: pd.DataFra
     if not found_protective_stop_for_trade:
         if "no stop-loss order" not in trade_obj.mistakes:
             trade_obj.mistakes.append("no stop-loss order")
-            # --- BEGIN DIAGNOSTIC PRINTS ---
-            print(f"\n[DEBUG] Trade ID {trade_obj.id} ({trade_obj.symbol} {trade_obj.side} Entry: {trade_obj.entry_time} Exit: {trade_obj.exit_time}) flagged: NO PROTECTIVE STOP FOUND.")
-            # Re-iterate through stop orders to print their evaluation path for this trade
-            if not unique_stop_order_ids.size: # Check if unique_stop_order_ids is empty (numpy array)
-                 print(f"  [DEBUG] No unique stop order IDs found for this trade's symbol in the first place.")
-            else:
-                for dbg_order_id in unique_stop_order_ids:
-                    dbg_all_events_df = stop_type_orders[stop_type_orders['order_id_original'] == dbg_order_id].sort_values(by='ts')
-                    if dbg_all_events_df.empty:
-                        print(f"  [DEBUG] Stop ID {dbg_order_id}: No events found (should not happen if in unique_stop_order_ids from stop_type_orders).")
-                        continue
-                    dbg_all_events_list = dbg_all_events_df.to_dict('records')
-                    dbg_first_event = dbg_all_events_list[0]
-                    print(f"  [DEBUG] Evaluating Stop ID {dbg_order_id} (first event ts: {dbg_first_event.get('ts')}, status: {dbg_first_event.get('Status')} side: {dbg_first_event.get('side')}, stop_price: {dbg_first_event.get('Stop Price')})")
-
-                    # 1. Validate the stop based on its first event
-                    s_side = str(dbg_first_event.get('side', '')).strip()
-                    t_side = trade_obj.side
-                    valid_side = (t_side == "Buy" and s_side == "Sell") or (t_side == "Sell" and s_side == "Buy")
-                    if not valid_side:
-                        print(f"    [DEBUG] Skipped: Invalid side (Trade: {t_side}, Stop: {s_side}).")
-                        continue
-                    s_price_str = dbg_first_event.get('Stop Price')
-                    s_price = pd.to_numeric(s_price_str, errors='coerce') # Keep s_price for debug output if needed
-                    dbg_current_stop_order_id = str(dbg_first_event.get('order_id_original')) # Ensure string
-                    dbg_trade_exit_order_id_str = str(trade_obj.exit_order_id) if trade_obj.exit_order_id is not None else None
-
-                    if pd.isna(s_price): # s_price here refers to the parsed float/NaN
-                        if not (dbg_current_stop_order_id == dbg_trade_exit_order_id_str and dbg_first_event.get('Status') == "Filled"):
-                            print(f"    [DEBUG] Skipped: Invalid stop price (is NA, and not exit fill: '{s_price_str}').")
-                            continue
-                        
-                    print(f"    [DEBUG] Passed initial validation (side & price check). Stop Price: {s_price if not pd.isna(s_price) else s_price_str}")
-
-                    # 2b. Stop must NOT have been terminally resolved before trade_obj.entry_time.
-                    dbg_resolved_before_entry = False
-                    for ev in dbg_all_events_list:
-                        if ev['ts'] < trade_obj.entry_time:
-                            if ev['Status'] == "Filled":
-                                dbg_resolved_before_entry = True; print(f"    [DEBUG] Skipped: Resolved (Filled) before trade entry at {ev['ts']}."); break
-                            if ev['Status'] == "Canceled" and not _is_oco_completion(pd.Series(ev), trade_obj, all_raw_orders):
-                                dbg_resolved_before_entry = True; print(f"    [DEBUG] Skipped: Resolved (Canceled non-OCO) before trade entry at {ev['ts']}."); break
-                        else: break
-                    if dbg_resolved_before_entry: continue
-                    print(f"    [DEBUG] Passed pre-trade resolution check.")
-
-                    # 3. Protective Outcome Analysis
-                    dbg_prot_fill = any(e['Status'] == "Filled" and e['ts'] >= trade_obj.entry_time for e in dbg_all_events_list)
-                    if dbg_prot_fill:
-                        print(f"    [DEBUG] Deemed Protective: Filled at/after trade entry."); continue
-                    print(f"    [DEBUG] Fill check: {'Passed (found protective fill)' if dbg_prot_fill else 'Failed'}.")
-
-                    dbg_prot_oco = False
-                    for ev in dbg_all_events_list:
-                        if ev['ts'] >= trade_obj.entry_time and ev['Status'] == "Canceled" and _is_oco_completion(pd.Series(ev), trade_obj, all_raw_orders):
-                            dbg_prot_oco = True; break
-                    if dbg_prot_oco:
-                        print(f"    [DEBUG] Deemed Protective: OCO-Canceled at/after trade entry."); continue
-                    print(f"    [DEBUG] OCO check: {'Passed (found protective OCO)' if dbg_prot_oco else 'Failed'}.")
-
-                    dbg_last_rel_status = None
-                    for ev in reversed(dbg_all_events_list):
-                        if ev['ts'] <= trade_obj.exit_time:
-                            if ev['ts'] >= trade_obj.entry_time or dbg_first_event['ts'] < trade_obj.entry_time:
-                                dbg_last_rel_status = ev['Status']; break
-                    
-                    active_statuses = ["Working", "Submitted", "Accepted"]
-                    is_active = dbg_last_rel_status in active_statuses
-                    if is_active:
-                         print(f"    [DEBUG] Deemed Protective: Last relevant status '{dbg_last_rel_status}' at {ev['ts']} is active."); continue 
-                    # Safe print for the timestamp of the last relevant event, if one was found
-                    last_event_ts_for_print = ev.get('ts', 'N/A') if dbg_last_rel_status and ev else 'N/A' 
-                    print(f"    [DEBUG] Active Maintained check: Failed (Last relevant status: '{dbg_last_rel_status}' at {last_event_ts_for_print}).")
-                    print(f"    [DEBUG] Stop ID {dbg_order_id} was NOT protective for Trade ID {trade_obj.id}.")
-            # --- END DIAGNOSTIC PRINTS ---
 
 # Main analysis function
 def analyze_trades_for_no_stop_mistake(trades: List[Trade], raw_orders_df: pd.DataFrame) -> List[Trade]:
