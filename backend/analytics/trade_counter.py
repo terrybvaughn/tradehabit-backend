@@ -1,9 +1,19 @@
 import pandas as pd
-from models.trade import Trade
+from backend.models.trade import Trade
 from typing import List, Tuple, Dict, Any
-from parsing.utils import normalize_timestamps_in_df
+from backend.parsing.utils import normalize_timestamps_in_df
 from datetime import datetime, timedelta, timezone
 
+def parse_datetime_safe(value):
+    if isinstance(value, datetime):
+        return value
+    try:
+        return datetime.fromisoformat(value)
+    except Exception:
+        try:
+            return datetime.strptime(value, "%m/%d/%Y %H:%M:%S")
+        except Exception:
+            return value  # Fallback
 
 def normalize_and_prepare_orders_df(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -178,13 +188,12 @@ def count_trades(input_data: pd.DataFrame) -> Tuple[List[Trade], pd.DataFrame]:
             trade_entry_qty = min(exit_qty, abs(net))
 
             trade = Trade(
-                id=trade_id_counter,
                 symbol=symbol,
                 side=position["side"],
-                entry_time=position["entry_time"], # This is from the initial position opening
+                entry_time=parse_datetime_safe(position["entry_time"]),
                 entry_price=position["entry_price"],
                 entry_qty=trade_entry_qty,
-                exit_time=event_fill_time, # Use fill_ts for exit
+                exit_time=parse_datetime_safe(event_fill_time),
                 exit_price=price,
                 exit_qty=exit_qty,
                 exit_order_id=row.get("order_id_original", None),
