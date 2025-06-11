@@ -13,15 +13,12 @@ The primary goal is to help traders gain insights into their patterns and improv
 *   **Trade Identification:** Reconstructs individual trades from a stream of order execution events, handling entries, exits, and scaling-in.
 *   **Mistake Detection: "No Stop-Loss Order"**
     *   Analyzes each identified trade to determine if a protective stop-loss order was appropriately placed and managed throughout the trade's lifecycle.
-    *   Considers various scenarios, including:
-        *   Stops placed before or during the trade.
-        *   Stops filled to exit the trade (even if at breakeven or for a small profit).
-        *   Stops canceled as part of an OCO (One-Cancels-Other) with a profit target.
-        *   Stops actively maintained during the trade.
+
 
 ## Technology Stack
 
 *   Python 3.x
+*   Flask: Lightweight web framework for serving the API
 *   Pandas: For data manipulation and analysis.
 
 ## Project Structure
@@ -29,16 +26,16 @@ The primary goal is to help traders gain insights into their patterns and improv
 ```
 tradehabit/
 ├── analytics/                # Core mistake analysis logic
-│   ├── tests/                # Unit tests for analytics
 │   └── stop_loss_analyzer.py # Logic for "No Stop-Loss Order"
+├── backend/                  # Flask backend to expose API endpoints
+│   └── app.py                # Entry point for the web server
 ├── models/                   # Data models (e.g., Trade dataclass)
 │   └── trade.py
 ├── parsing/                  # Data loading, normalization, and trade counting
-│   ├── tests/                # Unit tests for parsing utilities
-│   ├── utils.py              # Timestamp normalization and other utilities
-│   └── trade_counter.py      # Loads CSVs, identifies trades
+│   ├── trade_counter.py      # Loads CSVs, identifies trades
+│   └── utils.py              # Timestamp normalization and other utilities
 ├── tasks/                    # Project planning documents (PRDs, task lists)
-├── run_analyzer_sample.py    # Main script to run the analysis
+├── images/                   # Diagrams, mockups, or other visual references
 └── README.md                 # This file
 ```
 
@@ -49,29 +46,56 @@ tradehabit/
     git clone https://github.com/terrybvaughn/tradehabit.git
     cd tradehabit
     ```
-2.  **Ensure Python and Pandas are installed.** If you are using a virtual environment (recommended):
+2.  **Set up your environment.** If you are using a virtual environment (recommended):
     ```bash
     python -m venv venv
     source venv/bin/activate  # On Windows: venv\Scripts\activate
-    pip install pandas
+    pip install flask pandas
     ```
-    (You might want to create a `requirements.txt` file later for easier dependency management.)
+
+## Dependency Management
+
+To simplify dependency installation, use the included `requirements.txt` file.
+
+1. Create it (if not already present) in the project root with the following contents:
+    ```
+    flask
+    pandas
+    ```
+
+2. Then install all dependencies with:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+This ensures your environment has the required packages to run the app.
+
+> **Tip:** If you prefer to pin exact versions (for consistency across machines or deployments), run:
+> ```bash
+> pip freeze > requirements.txt
+> ```
+> This will lock the versions of all currently installed packages. Keep in mind that it may include extra packages not strictly required by the app.
+
 
 ## Usage
 
 To analyze your NinjaTrader order CSV data:
 
-1.  Ensure your CSV file is accessible.
-2.  Run the `run_analyzer_sample.py` script from the project root, providing the path to your CSV file as an argument:
-
+1.  Run the Flask app:
     ```bash
-    python run_analyzer_sample.py /path/to/your/ninjatrader_orders.csv
+    python backend/app.py
     ```
 
-The script will output:
-*   The total number of trades found.
-*   Details of any trades flagged with the "no stop-loss order" mistake.
-*   A summary of the total mistakes found.
+2.  Send a POST request with your CSV file:
+    ```bash
+    curl -X POST http://localhost:5000/api/analyze \
+      -F "file=@/absolute/path/to/your_ninjatrader_order_data.csv"
+    ```
+
+The response will include:
+*   Total number of trades detected
+*   List of trades flagged with a "no stop-loss order" mistake
+*   Summary statistics on mistake count
 
 ## Future Enhancements (Examples)
 
@@ -80,5 +104,3 @@ The script will output:
 *   Analytics dashboard for behavioral analytics visualization.
 *   Support for other broker export formats.
 *   Basic reporting or visualization of mistake patterns.
-
---- 
