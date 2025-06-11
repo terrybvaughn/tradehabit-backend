@@ -3,9 +3,7 @@
 
 ## Overview
 
-TradeHabit is a Python-based tool designed to analyze trader order data to identify and quantify common trading mistakes or suboptimal behaviors. The initial focus is on parsing and analyzing order execution reports, starting with data exported from NinjaTrader (in CSV format).
-
-The primary goal is to help traders gain insights into their patterns and improve their trading discipline by highlighting recurring mistakes.
+TradeHabit is a behvaioral analytics tool that helps novice traders identify and fix bad trading habits. It is a Python-based tool that analyzes trader order data to identify and quantify common trading mistakes. The initial focus is on parsing and analyzing order execution reports, starting with data exported from NinjaTrader (in CSV format).
 
 ## Current Features
 
