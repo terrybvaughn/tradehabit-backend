@@ -34,5 +34,6 @@ class Trade:
             "exitQty": self.exit_qty,
             "exitOrderId": self.exit_order_id,
             "pnl": self.pnl,
+            "pointsLost": getattr(self, "points_lost", None),
             "mistakes": self.mistakes,
         }
