@@ -3,8 +3,7 @@
 
 ## Overview
 
-TradeHabit is a behvaioral analytics tool that helps novice traders identify and fix bad trading habits. It is a Python-based tool that analyzes trader order data to identify and quantify common trading mistakes. The initial focus is on parsing and analyzing order execution reports, starting with data exported from NinjaTrader (in CSV format).
-
+TradeHabit is a behavioral analytics tool that helps novice traders identify and fix bad trading habits. It is a Python-based tool that analyzes trader order data to identify and quantify common trading mistakes. The initial focus is on parsing and analyzing order execution reports, starting with data exported from NinjaTrader (in CSV format).
 
 ## Current Features
 
@@ -15,30 +14,46 @@ TradeHabit is a behvaioral analytics tool that helps novice traders identify and
   Rebuilds discrete trades from the event stream—handles new entries, partial exits, scale-ins, and full exits to yield a list of completed `Trade` objects.
 
 * **PnL & Points-Lost Calculation**  
-  - Computes each trade’s dollar P&L (`(exitPrice – entryPrice) × qty × direction`).  
-  - Computes “points lost” per contract for loss-dispersion charts.
+  - Computes each trade's dollar P&L.  
+  - Computes "points lost" per contract for loss-dispersion charts.
 
 * **Mistake Detection Framework**  
-  All trades are passed through a pluggable analyzer that tags mistakes in sequence:
-  1. **No Stop-Loss Order**  
-     Flags any trade where no protective stop was ever placed after entry.  
-  2. **Outsized Loss**  
-     Marks losses exceeding μ + σ·(user σ-multiplier) on your points-lost distribution.  
-  3. **Revenge Trade**  
-     Identifies trades entered “too soon” after a loss (configurable window based on median hold time × multiplier).
+  All trades are passed through a suite of analyzers that identify common trading mistakes:
+  1. **Stop-Loss Analysis**  
+     - Flags trades without protective stops
+     - Tracks stop-loss placement timing and effectiveness
+  2. **Excessive Risk Analysis**  
+     - Identifies trades with position sizes exceeding risk parameters
+     - Monitors risk-to-reward ratios
+  3. **Outsized Loss Analysis**  
+     - Marks losses exceeding μ + σ·(user σ-multiplier) on your points-lost distribution
+     - Provides statistical context for loss severity
+  4. **Revenge Trade Analysis**  
+     - Identifies trades entered "too soon" after a loss (configurable window)
+     - Analyzes emotional trading patterns
+  5. **Risk Sizing Analysis**  
+     - Evaluates position sizing consistency
+     - Tracks risk exposure across different market conditions
+
+* **Insights Endpoint**  
+  `/api/insights` provides behavioral analytics:
+  - Summary diagnostics for each mistake category
+  - Trend analysis of trading behavior
+  - Actionable improvement suggestions
+  - Performance metrics by mistake type
 
 * **Loss-Dispersion Analysis**  
   `/api/losses` returns all losing-trade points, plus computed:  
   - Mean & population σ of points-lost  
   - Threshold (μ + k·σ)  
-  - Per-loss “hasMistake” flag (outsized or revenge)
+  - Per-loss "hasMistake" flag (outsized or revenge)
 
 * **Trade Summary Metrics**  
   `/api/summary` exposes overall stats:  
   - Total trades, total mistakes, win rate & success rate  
   - Current & record mistake-free streaks  
-  - Payoff Ratio (avg win / avg loss) and “required” R to breakeven at your win rate  
-  - Diagnostic text (“Over this time period, X % of your trades were executed without a mistake.”)
+  - Payoff Ratio (avg win / avg loss) and "required" R to breakeven at your win rate  
+  - Diagnostic text ("Over this time period, X % of your trades were executed without a mistake.")
 
 * **Full Trade List Endpoint**  
   `/api/trades` dumps every trade object with its entry/exit, P&L, points_lost, and all mistake tags—ready for front-end drill-down.
@@ -48,6 +63,18 @@ TradeHabit is a behvaioral analytics tool that helps novice traders identify and
   - Total revenge trades, win rate, avg win & avg loss  
   - Revenge-trade Payoff Ratio  
   - Configurable revenge-window multiplier
+
+* **Risk Sizing Analysis**  
+  `/api/risk-sizing` returns statistics and diagnostics on position sizing consistency and risk exposure.
+
+* **Excessive Risk Analysis**  
+  `/api/excessive-risk` provides stats and diagnostics for trades that exceed risk thresholds.
+
+* **Stop-Loss Summary**  
+  `/api/stop-loss` summarizes stop-loss usage, average loss with/without stops, and related diagnostics.
+
+* **Winrate & Payoff Analysis**  
+  `/api/winrate-payoff` returns win rate, average win/loss, payoff ratio, and a diagnostic summary.
 
 All of these live behind a single Flask service with simple query-param overrides (σ-multiplier, revenge-window, symbol filters), so your front-end can drive the behavior analysis dynamically.
 
@@ -64,16 +91,18 @@ tradehabit/
 ├── backend/
 │ ├── app.py # Flask entry point exposing all API endpoints
 │ ├── analytics/
-│ │ ├── stop_loss_analyzer.py # “No Stop-Loss Order” logic
-│ │ ├── outsized_loss_analyzer.py # μ+σ “Outsized Loss” tagging
+│ │ ├── stop_loss_analyzer.py # Stop-loss analysis logic
+│ │ ├── excessive_risk_analyzer.py # Risk management analysis
+│ │ ├── outsized_loss_analyzer.py # μ+σ "Outsized Loss" tagging
 │ │ ├── revenge_analyzer.py # Revenge-trade detection
+│ │ ├── risk_sizing_analyzer.py # Position sizing analysis
 │ │ └── mistake_analyzer.py # Orchestrates all mistake detectors
 │ ├── parsing/
 │ │ ├── order_loader.py # CSV loading & raw DataFrame creation
 │ │ ├── utils.py # Timestamp normalization utilities
 │ │ └── trade_counter.py # Infers Trade objects from fills
 │ └── models/
-│ └── trade.py # Trade dataclass & serialization
+│     └── trade.py # Enhanced Trade dataclass with comprehensive metrics
 ├── static/ # (Optional) Front-end assets or mockups
 │ └── images/ # Diagrams, screenshots, mockups
 ├── tasks/ # Project docs: PRDs, task lists, notes
@@ -136,17 +165,23 @@ This ensures your environment has the required packages to run the app.
    **Query Params**  
    - `sigma` (optional): σ-multiplier for outsized-loss threshold (default `1.0`)
 
-3. **Overall summary (GET `/api/summary`)**  
+3. **Get Behavioral Insights (GET `/api/insights`)**  
+   ```bash
+   curl http://localhost:5000/api/insights
+   ```
+   Returns comprehensive behavioral analysis and improvement suggestions.
+
+4. **Overall summary (GET `/api/summary`)**  
    ```bash
    curl http://localhost:5000/api/summary
    ```
 
-4. **Full trades list (GET `/api/trades`)**  
+5. **Full trades list (GET `/api/trades`)**  
    ```bash
    curl http://localhost:5000/api/trades
    ```
 
-5. **Loss-dispersion data (GET `/api/losses`)**  
+6. **Loss-dispersion data (GET `/api/losses`)**  
    ```bash
    curl "http://localhost:5000/api/losses?sigma=1.0&symbol=MNQH5"
    ```
@@ -154,12 +189,32 @@ This ensures your environment has the required packages to run the app.
    - `sigma` (optional): σ-multiplier for threshold (default `1.0`)  
    - `symbol` (optional): filter to a single instrument  
 
-6. **Revenge-trade stats (GET `/api/revenge`)**  
+7. **Revenge-trade stats (GET `/api/revenge`)**  
    ```bash
    curl "http://localhost:5000/api/revenge?k=1.0"
    ```
    **Query Params**  
    - `k` (optional): revenge-window multiplier on median hold time (default `1.0`)
+
+8. **Risk Sizing stats (GET `/api/risk-sizing`)**  
+   ```bash
+   curl http://localhost:5000/api/risk-sizing
+   ```
+
+9. **Excessive Risk stats (GET `/api/excessive-risk`)**  
+   ```bash
+   curl http://localhost:5000/api/excessive-risk
+   ```
+
+10. **Stop-Loss summary (GET `/api/stop-loss`)**  
+    ```bash
+    curl http://localhost:5000/api/stop-loss
+    ```
+
+11. **Winrate & Payoff stats (GET `/api/winrate-payoff`)**  
+    ```bash
+    curl http://localhost:5000/api/winrate-payoff
+    ```
 
 ## Future Enhancements
 
