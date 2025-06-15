@@ -20,6 +20,7 @@ class Trade:
     exit_order_id: Optional[int] = None
     pnl: Optional[float] = None
     mistakes: List[str] = field(default_factory=list)
+    risk_points: Optional[float] = None
 
     def to_dict(self):
         return {
@@ -35,5 +36,11 @@ class Trade:
             "exitOrderId": self.exit_order_id,
             "pnl": self.pnl,
             "pointsLost": getattr(self, "points_lost", None),
+            "riskPoints": getattr(self, "risk_points", None),
             "mistakes": self.mistakes,
         }
+
+    @property
+    def has_stop_order(self) -> bool:
+        """Returns True if the trade is not flagged as missing a stop-loss."""
+        return "no_stop_loss" not in self.mistakes
