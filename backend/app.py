@@ -14,6 +14,8 @@ from backend.analytics.outsized_loss_analyzer import get_outsized_loss_insight
 from backend.analytics.risk_sizing_analyzer import get_risk_sizing_insight
 from backend.analytics.stop_loss_analyzer import get_stop_loss_insight
 from backend.analytics.excessive_risk_analyzer import get_excessive_risk_insight
+from backend.analytics.goal_tracker import generate_goal_report
+from backend.analytics.goal_tracker import get_clean_streak_stats
 
 import io
 import statistics
@@ -139,13 +141,7 @@ def get_summary():
     success_rate = round((total_trades - total_mistakes) / total_trades, 2)
 
     # streaks
-    current_streak = best_streak = 0
-    for t in trade_objs:
-        if not t.mistakes:
-            current_streak += 1
-            best_streak = max(best_streak, current_streak)
-        else:
-            current_streak = 0
+    current_streak, best_streak = get_clean_streak_stats(trade_objs)
 
     # ---------- 3) payoff & win-rate stats ----------
     wins   = [t.pnl for t in trade_objs if t.pnl and t.pnl > 0]
@@ -162,10 +158,14 @@ def get_summary():
 
     # ---------- 4) helper counters ----------
     pct = lambda n: round(100 * n / total_trades, 1) if total_trades else 0.0
+    no_stop_pct        = mistake_counts.get("no stop-loss order", 0)
+    excess_risk_pct    = mistake_counts.get("excessive risk", 0)
+    outsized_loss_pct  = mistake_counts.get("outsized loss", 0)
+    revenge_count      = mistake_counts.get("revenge trade", 0)
     no_stop_pct        = pct(mistake_counts.get("no stop-loss order", 0))
     excess_risk_pct    = pct(mistake_counts.get("excessive risk", 0))
     outsized_loss_pct  = pct(mistake_counts.get("outsized loss", 0))
-    revenge_count      = mistake_counts.get("revenge trade", 0)
+    revenge_count_pct  = pct(mistake_counts.get("revenge trade", 0))
 
     # ---------- 5) risk-sizing variation ----------
     risk_vals = [t.risk_points for t in trade_objs if t.risk_points is not None]
@@ -420,7 +420,13 @@ def get_insights():
     insights = build_insights(trade_objs, order_df)
     return jsonify(insights)
 
+@app.get("/api/goals")
+def get_goals():
+    global trade_objs
+    if not trade_objs:
+        abort(400, "No trades have been analyzed yet")
+
+    return jsonify(generate_goal_report(trade_objs))
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
-
