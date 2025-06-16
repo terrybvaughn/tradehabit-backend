@@ -76,6 +76,13 @@ TradeHabit is a behavioral analytics tool that helps novice traders identify and
 * **Winrate & Payoff Analysis**  
   `/api/winrate-payoff` returns win rate, average win/loss, payoff ratio, and a diagnostic summary.
 
+* **Goals Tracking**  
+  `/api/goals` returns progress toward hard-coded behavioral goals:
+  - Clean Trades: Consecutive trades without any mistakes
+  - Risk Management: Consecutive trades without no stop-loss, excessive risk, or outsized loss mistakes
+  - Revenge Trades: Consecutive trades without a revenge trade mistake
+  For each goal, the API returns the current streak, best streak, and progress percentage toward the goal.
+
 All of these live behind a single Flask service with simple query-param overrides (σ-multiplier, revenge-window, symbol filters), so your front-end can drive the behavior analysis dynamically.
 
 ## Technology Stack
@@ -214,6 +221,11 @@ This ensures your environment has the required packages to run the app.
 11. **Winrate & Payoff stats (GET `/api/winrate-payoff`)**  
     ```bash
     curl http://localhost:5000/api/winrate-payoff
+    ```
+
+12. **Goals progress (GET `/api/goals`)**  
+    ```bash
+    curl http://localhost:5000/api/goals
     ```
 
 ## Future Enhancements
