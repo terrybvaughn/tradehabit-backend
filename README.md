@@ -98,6 +98,7 @@ tradehabit/
 ├── backend/
 │ ├── app.py # Flask entry point exposing all API endpoints
 │ ├── analytics/
+│ │ ├── goal_tracker.py # Tracks progress toward predefined goals
 │ │ ├── stop_loss_analyzer.py # Stop-loss analysis logic
 │ │ ├── excessive_risk_analyzer.py # Risk management analysis
 │ │ ├── outsized_loss_analyzer.py # μ+σ "Outsized Loss" tagging
