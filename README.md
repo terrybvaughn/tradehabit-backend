@@ -94,25 +94,23 @@ All of these live behind a single Flask service with simple query-param override
 ## Project Structure
 
 ```
-tradehabit/
-├── backend/
-│ ├── app.py # Flask entry point exposing all API endpoints
-│ ├── analytics/
-│ │ ├── goal_tracker.py # Tracks progress toward predefined goals
-│ │ ├── stop_loss_analyzer.py # Stop-loss analysis logic
-│ │ ├── excessive_risk_analyzer.py # Risk management analysis
-│ │ ├── outsized_loss_analyzer.py # μ+σ "Outsized Loss" tagging
-│ │ ├── revenge_analyzer.py # Revenge-trade detection
-│ │ ├── risk_sizing_analyzer.py # Position sizing analysis
-│ │ └── mistake_analyzer.py # Orchestrates all mistake detectors
-│ ├── parsing/
-│ │ ├── order_loader.py # CSV loading & raw DataFrame creation
-│ │ ├── utils.py # Timestamp normalization utilities
-│ │ └── trade_counter.py # Infers Trade objects from fills
-│ └── models/
-│     └── trade.py # Enhanced Trade dataclass with comprehensive metrics
-├── static/ # (Optional) Front-end assets or mockups
-│ └── images/ # Diagrams, screenshots, mockups
+tradehabit-backend/
+├── app.py # Flask entry point exposing all API endpoints
+├── analytics/
+│ ├── goal_tracker.py # Tracks progress toward predefined goals
+│ ├── stop_loss_analyzer.py # Stop-loss analysis logic
+│ ├── excessive_risk_analyzer.py # Risk management analysis
+│ ├── outsized_loss_analyzer.py # μ+σ "Outsized Loss" tagging
+│ ├── revenge_analyzer.py # Revenge-trade detection
+│ ├── risk_sizing_analyzer.py # Position sizing analysis
+│ └── mistake_analyzer.py # Orchestrates all mistake detectors
+├── parsing/
+│ ├── order_loader.py # CSV loading & raw DataFrame creation
+│ ├── utils.py # Timestamp normalization utilities
+│ └── trade_counter.py # Infers Trade objects from fills
+├── models/
+│   └── trade.py # Enhanced Trade dataclass with comprehensive metrics
+├── images/ # Diagrams, screenshots, mockups
 ├── tasks/ # Project docs: PRDs, task lists, notes
 └── README.md # Project overview & API reference
 ```
@@ -121,8 +119,8 @@ tradehabit/
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/terrybvaughn/tradehabit.git
-    cd tradehabit
+    git clone https://github.com/terrybvaughn/tradehabit-backend.git
+    cd tradehabit-backend
     ```
 2.  **Set up your environment.** If you are using a virtual environment (recommended):
     ```bash
@@ -159,7 +157,7 @@ This ensures your environment has the required packages to run the app.
 
 1. **Start the Flask server**  
    ```bash
-   cd tradehabit/backend
+   cd tradehabit-backend
    python app.py
    ```
    By default, the service listens on `http://localhost:5000`.
