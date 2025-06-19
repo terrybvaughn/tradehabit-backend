@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, abort
 from flask_cors import CORS
 
 from dataclasses import asdict
+from errors import init_error_handlers
 
 from models.trade import Trade
 from parsing.order_loader import load_orders
@@ -22,6 +23,7 @@ import statistics
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
+init_error_handlers(app)
 
 trade_objs = []
 order_df = None  # Add global order_df variable
@@ -38,15 +40,6 @@ def _size_ok(file_storage) -> bool:
     ok = file_storage.tell() <= MAX_MB * 1024 * 1024
     file_storage.seek(0)
     return ok
-
-# ---- Error handlers ----
-@app.errorhandler(400)
-def bad_request(e):
-    return jsonify(error=str(e.description)), 400
-
-@app.errorhandler(413)
-def too_large(e):
-    return jsonify(error="File too large"), 413
 
 # ---- Main route ----
 @app.post("/api/analyze")
