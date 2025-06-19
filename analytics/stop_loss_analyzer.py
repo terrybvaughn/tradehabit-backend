@@ -2,8 +2,8 @@ import logging
 from typing import List
 import pandas as pd
 import statistics
-
-from backend.models.trade import Trade
+from dataclasses import asdict
+from models.trade import Trade
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

@@ -1,6 +1,6 @@
 import statistics
 from typing import List
-from backend.models.trade import Trade
+from models.trade import Trade
 
 def analyze_trades_for_outsized_loss(
     trades: List[Trade], sigma_multiplier: float = 1.0

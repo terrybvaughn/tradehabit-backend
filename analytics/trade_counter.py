@@ -1,7 +1,7 @@
+from models.trade import Trade
 import pandas as pd
-from backend.models.trade import Trade
 from typing import List, Tuple, Dict, Any
-from backend.parsing.utils import normalize_timestamps_in_df
+from parsing.utils import normalize_timestamps_in_df
 from datetime import datetime, timedelta, timezone
 
 def parse_datetime_safe(value):

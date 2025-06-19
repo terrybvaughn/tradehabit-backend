@@ -1,11 +1,12 @@
 from typing import List, Optional
-from backend.models.trade import Trade
+from models.trade import Trade
+import pandas as pd
 
-from backend.analytics.stop_loss_analyzer import analyze_trades_for_no_stop_mistake
-from backend.analytics.outsized_loss_analyzer import analyze_trades_for_outsized_loss
-from backend.analytics.revenge_analyzer import analyze_trades_for_revenge
-from backend.analytics.risk_sizing_analyzer import analyze_trades_for_risk_sizing_consistency
-from backend.analytics.excessive_risk_analyzer import analyze_trades_for_excessive_risk
+from analytics.stop_loss_analyzer import analyze_trades_for_no_stop_mistake
+from analytics.outsized_loss_analyzer import analyze_trades_for_outsized_loss
+from analytics.revenge_analyzer import analyze_trades_for_revenge
+from analytics.risk_sizing_analyzer import analyze_trades_for_risk_sizing_consistency
+from analytics.excessive_risk_analyzer import analyze_trades_for_excessive_risk
 
 def analyze_all_mistakes(
     trades, orders_df,

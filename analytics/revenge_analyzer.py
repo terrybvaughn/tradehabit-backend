@@ -1,6 +1,7 @@
 from typing import List
 from datetime import timedelta
-from backend.models.trade import Trade
+from models.trade import Trade
+import statistics
 
 def analyze_trades_for_revenge(
     trades: List[Trade],

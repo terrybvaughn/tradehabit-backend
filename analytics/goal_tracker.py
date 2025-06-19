@@ -1,5 +1,5 @@
 from typing import List
-from backend.models.trade import Trade
+from models.trade import Trade
 
 GOAL_DEFINITIONS = [
     {

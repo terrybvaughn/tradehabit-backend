@@ -1,7 +1,7 @@
 import pandas as pd
 from typing import List
 import statistics
-from backend.models.trade import Trade
+from models.trade import Trade
 
 def analyze_trades_for_risk_sizing_consistency(
     trades: List[Trade], orders: pd.DataFrame
