@@ -3,19 +3,19 @@ from flask_cors import CORS
 
 from dataclasses import asdict
 
-from backend.models.trade import Trade
-from backend.parsing.order_loader import load_orders
-from backend.analytics.trade_counter import count_trades
-from backend.analytics.mistake_analyzer import analyze_all_mistakes, get_summary_insight
-from backend.analytics.stop_loss_analyzer import summarize_stop_loss_behavior
-from backend.analytics.winrate_payoff_analyzer import generate_winrate_payoff_insight
-from backend.analytics.insights import build_insights
-from backend.analytics.outsized_loss_analyzer import get_outsized_loss_insight
-from backend.analytics.risk_sizing_analyzer import get_risk_sizing_insight
-from backend.analytics.stop_loss_analyzer import get_stop_loss_insight
-from backend.analytics.excessive_risk_analyzer import get_excessive_risk_insight
-from backend.analytics.goal_tracker import generate_goal_report
-from backend.analytics.goal_tracker import get_clean_streak_stats
+from models.trade import Trade
+from parsing.order_loader import load_orders
+from analytics.trade_counter import count_trades
+from analytics.mistake_analyzer import analyze_all_mistakes, get_summary_insight
+from analytics.stop_loss_analyzer import summarize_stop_loss_behavior
+from analytics.winrate_payoff_analyzer import generate_winrate_payoff_insight
+from analytics.insights import build_insights
+from analytics.outsized_loss_analyzer import get_outsized_loss_insight
+from analytics.risk_sizing_analyzer import get_risk_sizing_insight
+from analytics.stop_loss_analyzer import get_stop_loss_insight
+from analytics.excessive_risk_analyzer import get_excessive_risk_insight
+from analytics.goal_tracker import generate_goal_report
+from analytics.goal_tracker import get_clean_streak_stats
 
 import io
 import statistics
@@ -287,7 +287,7 @@ def get_revenge_stats():
     # 2) Clone and tag
     from copy import deepcopy
     trades = deepcopy(trade_objs)
-    from backend.analytics.revenge_analyzer import analyze_trades_for_revenge, _analyze_revenge_trading
+    from analytics.revenge_analyzer import analyze_trades_for_revenge, _analyze_revenge_trading
     analyze_trades_for_revenge(trades, k)
 
     # 3) Get analysis

@@ -1,10 +1,10 @@
-from backend.analytics.stop_loss_analyzer import get_stop_loss_insight
-from backend.analytics.excessive_risk_analyzer import get_excessive_risk_insight
-from backend.analytics.risk_sizing_analyzer import get_risk_sizing_insight
-from backend.analytics.revenge_analyzer import get_revenge_insight
-from backend.analytics.outsized_loss_analyzer import get_outsized_loss_insight
-from backend.analytics.winrate_payoff_analyzer import generate_winrate_payoff_insight
-from backend.analytics.mistake_analyzer import get_summary_insight
+from analytics.stop_loss_analyzer import get_stop_loss_insight
+from analytics.excessive_risk_analyzer import get_excessive_risk_insight
+from analytics.risk_sizing_analyzer import get_risk_sizing_insight
+from analytics.revenge_analyzer import get_revenge_insight
+from analytics.outsized_loss_analyzer import get_outsized_loss_insight
+from analytics.winrate_payoff_analyzer import generate_winrate_payoff_insight
+from analytics.mistake_analyzer import get_summary_insight
 
 def build_insights(trades, orders, sigma_multiplier: float = 1.0):
     """
