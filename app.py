@@ -251,7 +251,13 @@ def get_losses():
             "lossIndex": idx,
             "tradeId": t.id,
             "pointsLost": t.points_lost,
-            "hasMistake": t.points_lost > threshold
+            "hasMistake": t.points_lost > threshold,
+            # extra contextual fields
+            "side": t.side,
+            "exitQty": t.exit_qty,
+            "symbol": t.symbol,
+            "entryTime": t.entry_time.isoformat() if t.entry_time else None,
+            "exitOrderId": t.exit_order_id,
         })
 
     # 5) Plain-English diagnostic
