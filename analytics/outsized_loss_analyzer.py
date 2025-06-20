@@ -9,8 +9,8 @@ def analyze_trades_for_outsized_loss(
     Marks trades with an 'outsized loss' mistake if their points_lost
     exceeds mean + (sigma_multiplier × std_dev).
     """
-    # Gather all losing points
-    losses = [t.points_lost for t in trades if getattr(t, "points_lost", 0) > 0]
+    # Consider only *losing* trades when computing the threshold
+    losses = [t.points_lost for t in trades if t.pnl is not None and t.pnl < 0]
     if not losses:
         return trades
 
@@ -19,8 +19,9 @@ def analyze_trades_for_outsized_loss(
     threshold = mean_pts + sigma_multiplier * std_pts
 
     for t in trades:
-        if getattr(t, "points_lost", 0) > threshold:
-            t.mistakes.append("outsized loss")
+        if t.pnl is not None and t.pnl < 0 and t.points_lost > threshold:
+            if "outsized loss" not in t.mistakes:
+                t.mistakes.append("outsized loss")
     return trades
 
 def get_outsized_loss_insight(trades: List[Trade], sigma_multiplier: float = 1.0) -> dict:

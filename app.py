@@ -92,18 +92,18 @@ def analyze():
     # 5) Count trades with >=1 mistake
     trades_with_mistakes = sum(1 for t in trade_objs if t.mistakes)
 
-    # 6) Compute success rate
-    success_rate       = round((len(trade_objs) - total_mistakes) / len(trade_objs), 2)
+    # 6) Compute clean trade rate (trades without mistakes / total)
+    clean_trade_rate   = round((len(trade_objs) - trades_with_mistakes) / len(trade_objs), 2)
 
     # 7) Build and return payload
     payload = {
         "meta": {
             "csvRows":            len(order_df),
             "tradesDetected":     len(trade_objs),
-            "tradesWithMistakes": trades_with_mistakes,
+            "flaggedTrades":      trades_with_mistakes,
             "totalMistakes":      total_mistakes,
             "mistakeCounts":      mistake_counts,
-            "successRate":        success_rate,
+            "cleanTradeRate":     clean_trade_rate,
             "sigmaUsed":          sigma
         },
         "trades": [t.to_dict() for t in trade_objs],
@@ -130,8 +130,11 @@ def get_summary():
             mistake_counts[m] = mistake_counts.get(m, 0) + 1
     total_mistakes = sum(mistake_counts.values())
 
+    # Number of trades that have at least one mistake
+    flagged_trades = sum(1 for t in trade_objs if t.mistakes)
+
     # ---------- 2) headline success metrics ----------
-    success_rate = round((total_trades - total_mistakes) / total_trades, 2)
+    clean_trade_rate = round((total_trades - flagged_trades) / total_trades, 2)
 
     # streaks
     current_streak, best_streak = get_clean_streak_stats(trade_objs)
@@ -169,7 +172,7 @@ def get_summary():
         risk_var_flag = (std_risk / mean_risk) >= 0.35
 
     # ---------- 6) headline diagnostic (shared with insights) ----------
-    summary_text = get_summary_insight(trade_objs, success_rate)
+    summary_text = get_summary_insight(trade_objs, clean_trade_rate)
 
     # ---------- 7) response
     return jsonify({
@@ -177,7 +180,8 @@ def get_summary():
         "win_count":          win_count,
         "loss_count":         loss_count,
         "total_mistakes":     total_mistakes,
-        "success_rate":       success_rate,
+        "flagged_trades":     flagged_trades,
+        "clean_trade_rate":   clean_trade_rate,
         "streak_current":     current_streak,
         "streak_record":      best_streak,
         "mistake_counts":     mistake_counts,
