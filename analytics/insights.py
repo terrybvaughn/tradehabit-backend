@@ -18,12 +18,12 @@ def build_insights(trades, orders, sigma_multiplier: float = 1.0):
 
     insights = []
 
-    # Calculate success rate as (total_trades - total_mistakes) / total_trades
+    # Calculate clean-trade rate: proportion of trades with zero mistakes
     total_trades = len(trades)
-    total_mistakes = sum(len(t.mistakes) for t in trades)
-    success_rate = round((total_trades - total_mistakes) / total_trades, 2) if total_trades else 0.0
+    flagged_trades = sum(1 for t in trades if t.mistakes)
+    clean_trade_rate = round((total_trades - flagged_trades) / total_trades, 2) if total_trades else 0.0
     
-    summary = get_summary_insight(trades, success_rate)
+    summary = get_summary_insight(trades, clean_trade_rate)
     
     if summary:
         insights.append({
