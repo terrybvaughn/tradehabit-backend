@@ -78,9 +78,9 @@ def get_summary_insight(trades: List[Trade], success_rate: float) -> Optional[st
             "For more information, see your Stop-Loss Discipline insight."
         )
     elif excess_risk_pct > 5:
-        problem = "risking too much on individual trades"
+        problem = "that you risk too much on some of your trades"
         diagnostic = (
-            "Bring position size back in line to avoid single-trade blow-ups. "
+            "If you keep doing this, you risk blowing up your account with a handful of bad trades. "
             "For more information, see your Excessive Risk Sizing insight."
         )
     elif outsized_loss_pct > 0:
