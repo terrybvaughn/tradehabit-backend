@@ -18,6 +18,8 @@ def analyze_all_mistakes(
     Apply all configured mistake detection functions in sequence.
     Mutates trades in place.
     """
+    # DEBUG: track how many times this orchestrator is invoked at runtime
+    # print(f"analyze_all_mistakes called on {len(trades)} trades")
     # Detect missing stop-loss orders
     analyze_trades_for_no_stop_mistake(trades, orders_df)
 
