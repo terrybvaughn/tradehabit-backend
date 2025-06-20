@@ -5,8 +5,7 @@ import statistics
 from dataclasses import asdict
 from models.trade import Trade
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Optionally configure logging externally; no default verbose output here.
 
 
 def _check_single_trade_for_no_stop(tr: Trade, orders: pd.DataFrame) -> None:
@@ -35,12 +34,7 @@ def _check_single_trade_for_no_stop(tr: Trade, orders: pd.DataFrame) -> None:
     if mask.any():
         return  # we saw a stop order placed → no mistake
 
-    # debug output when we fail to see one
-    logging.info(
-        f"No protective stop found for trade {tr.id}. "
-        f"Scanned orders from {tr.entry_time} onward:\n"
-        f"{df[['order_id_original','ts','Type','side']].to_string(index=False)}"
-    )
+    # Optional: emit detailed log messages externally if needed
 
     tr.mistakes.append("no stop-loss order")
 
@@ -63,11 +57,11 @@ def analyze_trades_for_no_stop_mistake(
     # Ensure timestamp column is datetime
     raw_orders_df["ts"] = pd.to_datetime(raw_orders_df["ts"], errors="coerce")
 
-    logging.info(f"Analyzing {len(trades)} trades for missing stop-loss orders.")
+    # logging.debug(f"Analyzing {len(trades)} trades for stop-loss usage.")
     for tr in trades:
         _check_single_trade_for_no_stop(tr, raw_orders_df)
 
-    logging.info("Stop-loss analysis complete.")
+    # logging.debug("Stop-loss analysis complete.")
     return trades
 
 def summarize_stop_loss_behavior(trades: List[Trade]) -> dict:
