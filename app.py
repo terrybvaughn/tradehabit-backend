@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, abort
 from flask_cors import CORS
 
 from dataclasses import asdict
-from errors import init_error_handlers
+from errors import init_error_handlers, error_response
 
 from models.trade import Trade
 from parsing.order_loader import load_orders
@@ -20,6 +20,7 @@ from analytics.goal_tracker import get_clean_streak_stats
 
 import io
 import statistics
+import pandas as pd
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -41,19 +42,43 @@ def _size_ok(file_storage) -> bool:
     file_storage.seek(0)
     return ok
 
-# ---- Main route ----
+# ---- Main route ---- 
 @app.post("/api/analyze")
 def analyze():
     global trade_objs, order_df  # Add order_df to global declaration
 
     if "file" not in request.files:
-        abort(400, "No file part")
+        return error_response(400, "No file part")
 
     f = request.files["file"]
-    if not _is_allowed(f.filename) or not _size_ok(f):
-        abort(400, "Only CSV files ≤2 MB accepted")
 
-    order_df = load_orders(f)  # Store the DataFrame globally
+    # Validate file extension
+    if not _is_allowed(f.filename):
+        return error_response(400, "TradeHabit only works with the CSV file format.")
+
+    # Validate file size (≤2 MB)
+    if not _size_ok(f):
+        return error_response(400, "This file exceeds the 2 MB size limit.")
+
+    try:
+        order_df = load_orders(f)  # Store the DataFrame globally
+    except pd.errors.ParserError:
+        return error_response(400, "This CSV format is not recognized.")
+    except KeyError as exc:
+        # exc.args[0] will be like "Missing columns: fill_ts"
+        msg = exc.args[0]
+        # Map internal names to original CSV headers for friendlier output
+        col_map = {
+            "fill_ts": "Fill Time",
+            "ts": "Timestamp",
+            "qty": "filledQty",
+            "side": "B/S",
+            "symbol": "Contract",
+            "price": "Avg Fill Price",
+        }
+        for internal, original in col_map.items():
+            msg = msg.replace(internal, original)
+        return error_response(400, f"This file is missing required columns:\n{msg}")
     print("Loaded columns:", list(order_df.columns))
 
     trades, _ = count_trades(order_df)  # list[Trade]

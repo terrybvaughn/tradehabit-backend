@@ -24,4 +24,11 @@ def load_orders(path: str) -> pd.DataFrame:
 
     print("Loaded columns:", df.columns.tolist())  # Optional debug
 
+    # ---- Validate required columns ----
+    required_cols = {"ts", "fill_ts", "qty", "Status", "side", "symbol", "price"}
+    missing = required_cols - set(df.columns)
+    if missing:
+        cols = ', '.join(sorted(missing))
+        raise KeyError(f"{cols}")
+
     return df
