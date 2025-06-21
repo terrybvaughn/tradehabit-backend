@@ -75,38 +75,38 @@ def get_summary_insight(trades: List[Trade], success_rate: float) -> Optional[st
         problem = "placing naked trades"
         diagnostic = (
             "Skipping stop-losses not only magnifies downside but also increases emotional volatility in your decision-making. "
-            "For more information, see your Stop-Loss Discipline insight."
+            "For more information, see Stop-Loss Discipline below."
         )
     elif excess_risk_pct > 5:
         problem = "that you risk too much on some of your trades"
         diagnostic = (
             "If you keep doing this, you risk blowing up your account with a handful of bad trades. "
-            "For more information, see your Excessive Risk Sizing insight."
+            "For more information, see Excessive Risk Sizing below."
         )
     elif outsized_loss_pct > 0:
         problem = "letting small losses grow too large"
         diagnostic = (
             "A few outlier losses can erase weeks of gains. Keep your losses closer to your average. "
-            "For more information, see your Outsized Losses insight."
+            "For more information, see Outsized Losses below."
         )
     elif revenge_count and win_rate - 0.05 > 0 and (
         win_rate - (revenge_count / total_trades)) > 0:
         problem = "revenge trading after taking a loss"
         diagnostic = (
             "These reactive trades often break your rules and compound losses. "
-            "For more information, see your Revenge Trading insight."
+            "For more information, see Revenge Trading below."
         )
     elif risk_var_flag:
         problem = "inconsistent risk sizing"
         diagnostic = (
             "Without a consistent risk unit, you can't evaluate or improve your strategy with confidence. "
-            "For more information, see your Risk Sizing Consistency insight."
+            "For more information, see Risk Sizing Consistency below."
         )
     elif required_wr_adj and win_rate < required_wr_adj:
         problem = "an imbalance between win rate and payoff ratio"
         diagnostic = (
             "This mismatch quietly drains your account even if most trades are wins. "
-            "For more information, see your Win Rate vs. Payoff Ratio insight."
+            "For more information, see Win Rate vs. Payoff Ratio below."
         )
     else:
         problem = None
