@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, abort
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 
 from dataclasses import asdict
 from errors import init_error_handlers, error_response
@@ -43,7 +43,8 @@ def _size_ok(file_storage) -> bool:
     return ok
 
 # ---- Main route ---- 
-@app.post("/api/analyze")
+@app.route("/api/analyze", methods=["POST", "OPTIONS"])
+@cross_origin()
 def analyze():
     global trade_objs, order_df  # Add order_df to global declaration
 
