@@ -15,8 +15,7 @@ from analytics.outsized_loss_analyzer import get_outsized_loss_insight
 from analytics.risk_sizing_analyzer import get_risk_sizing_insight
 from analytics.stop_loss_analyzer import get_stop_loss_insight
 from analytics.excessive_risk_analyzer import get_excessive_risk_insight
-from analytics.goal_tracker import generate_goal_report
-from analytics.goal_tracker import get_clean_streak_stats
+from analytics.goal_tracker import generate_goal_report, get_clean_streak_stats, evaluate_goal
 
 import io
 import statistics
@@ -456,6 +455,100 @@ def get_goals():
         abort(400, "No trades have been analyzed yet")
 
     return jsonify(generate_goal_report(trade_objs))
+
+@app.post("/api/goals/calculate")
+@cross_origin()
+def calculate_goals():
+    """Calculate streak/progress stats for a user–defined list of goals.
+
+    Expects a JSON body that is **an array** of goal objects with at least:
+        id (str) – opaque identifier returned unchanged
+        title (str)
+        metric ("trades" | "days") – optional, defaults to "trades"
+        mistake_types (list[str]) – optional, defaults to []
+        target (int) – goal threshold (aka streak goal)
+        start_date (YYYY-MM-DD) – optional, ISO-8601 calendar date
+
+    Example
+    -------
+    [
+        {
+            "id": "123",
+            "title": "Clean 20 Trades",
+            "metric": "trades",
+            "mistake_types": [],
+            "target": 20,
+            "start_date": "2023-01-01"
+        }
+    ]
+    """
+    global trade_objs
+
+    # Ensure trades are available
+    if not trade_objs:
+        return error_response(400, "No trades have been analyzed yet.")
+
+    payload = request.get_json(silent=True)
+    if payload is None:
+        return error_response(400, "Request body must be valid JSON.")
+
+    # Accept either a dict with key "goals" or a bare list
+    if isinstance(payload, dict):
+        goals_in = payload.get("goals")
+    else:
+        goals_in = payload
+
+    if not isinstance(goals_in, list):
+        return error_response(400, "Payload must be a list of goal objects or {\"goals\": [...]}.")
+
+    from datetime import datetime
+
+    results = []
+    for goal in goals_in:
+        if not isinstance(goal, dict):
+            continue  # skip invalid entries silently
+
+        gid = goal.get("id")
+        title = goal.get("title", "")
+        mistake_types = goal.get("mistake_types", []) or []
+        target = goal.get("target") or goal.get("goal") or 1
+        metric = goal.get("metric", "trades")
+        start_date_str = goal.get("start_date") or goal.get("startDate")
+        try:
+            start_dt = datetime.fromisoformat(start_date_str).date() if start_date_str else None
+        except ValueError:
+            # Invalid date format – ignore the filter
+            start_dt = None
+
+        try:
+            current, best, progress = evaluate_goal(
+                trades=trade_objs,
+                mistake_types=mistake_types,
+                goal_target=target,
+                metric=metric,
+                start_date=start_dt,
+            )
+        except ValueError as exc:
+            # Unsupported metric – propagate as error field in result
+            results.append({
+                "id": gid,
+                "title": title,
+                "error": str(exc),
+            })
+            continue
+
+        results.append({
+            "id": gid,
+            "title": title,
+            "goal": target,
+            "metric": metric,
+            "start_date": start_date_str,
+            "current_streak": current,
+            "best_streak": best,
+            "progress": progress,
+        })
+
+    return jsonify({"goals": results})
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
