@@ -43,11 +43,20 @@ def analyze_trades_for_risk_sizing_consistency(
 
     return trades
 
-def _analyze_risk_sizing(trades: List[Trade]) -> dict:
+def _analyze_risk_sizing(trades: List[Trade], variation_threshold: float = 0.35) -> dict:
     """
-    Private helper function that performs the core risk sizing analysis.
-    Returns a dictionary containing all risk sizing statistics and diagnostics.
+    Core risk-sizing analysis.
+
+    Parameters
+    ----------
+    trades : list[Trade]
+        List of Trade objects that already have the ``risk_points`` attribute populated.
+    variation_threshold : float, default 0.35
+        The cutoff at which the coefficient of variation (SD / mean) is flagged as
+        inconsistent sizing. Exposed as a parameter so callers or API consumers can
+        loosen or tighten the definition of "consistent".
     """
+
     risk_vals = [t.risk_points for t in trades if t.risk_points is not None]
     count = len(risk_vals)
 
@@ -61,27 +70,28 @@ def _analyze_risk_sizing(trades: List[Trade]) -> dict:
             "min_risk": None,
             "max_risk": None,
             "trades_with_risk": 0,
-            "total_trades": len(trades)
+            "total_trades": len(trades),
+            "variation_threshold": variation_threshold,
         }
 
     mean_risk = statistics.mean(risk_vals)
     std_dev_risk = statistics.pstdev(risk_vals)
     variation_ratio = std_dev_risk / mean_risk if mean_risk else 0
-    variation_flag = variation_ratio >= 0.35
+    variation_flag = variation_ratio >= variation_threshold
     min_risk = round(min(risk_vals), 2)
     max_risk = round(max(risk_vals), 2)
 
-    if variation_ratio < 0.35:
-        diagnostic = (
-            f"Your risk sizing is consistent — your average risk per trade was {round(mean_risk, 2)} points "
-            f"with relatively low variation (std dev: {round(std_dev_risk, 2)}). This kind of discipline makes it easier to "
-            "evaluate performance and manage risk over time. Well done."
-        )
-    else:
+    if variation_flag:
         diagnostic = (
             f"You risked as little as {min_risk} points and as much as {max_risk} points per trade. "
             f"Your average risk size was {round(mean_risk, 2)} points, with a standard deviation of {round(std_dev_risk, 2)} points. "
             "Wide variation in stop placement may signal inconsistency in risk management."
+        )
+    else:
+        diagnostic = (
+            f"Your risk sizing is consistent — your average risk per trade was {round(mean_risk, 2)} points "
+            f"with relatively low variation (std dev: {round(std_dev_risk, 2)}). This kind of discipline makes it easier to "
+            "evaluate performance and manage risk over time. Well done."
         )
 
     return {
@@ -93,14 +103,20 @@ def _analyze_risk_sizing(trades: List[Trade]) -> dict:
         "min_risk": min_risk,
         "max_risk": max_risk,
         "trades_with_risk": len(risk_vals),
-        "total_trades": len(trades)
+        "total_trades": len(trades),
+        "variation_threshold": variation_threshold,
     }
 
-def summarize_risk_sizing_behavior(trades: List[Trade]) -> dict:
+def summarize_risk_sizing_behavior(trades: List[Trade], variation_threshold: float = 0.35) -> dict:
     """
-    Returns insight into consistency of risk sizing based on risk_points across trades.
+    Returns a compact summary of risk-sizing consistency.
+
+    Parameters
+    ----------
+    variation_threshold : float, default 0.35
+        Same as for :pyfunc:`_analyze_risk_sizing`.
     """
-    analysis = _analyze_risk_sizing(trades)
+    analysis = _analyze_risk_sizing(trades, variation_threshold)
     # Return only the fields needed for the original interface
     return {
         "diagnostic": analysis["diagnostic"],
@@ -112,11 +128,13 @@ def summarize_risk_sizing_behavior(trades: List[Trade]) -> dict:
         "max_risk": analysis["max_risk"]
     }
 
-def get_risk_sizing_insight(trades: List[Trade]) -> dict:
+def get_risk_sizing_insight(trades: List[Trade], variation_threshold: float = 0.35) -> dict:
     """
-    Adapter for unified insight format expected by insights.py
+    Adapter for unified insight format expected by insights.py.
+
+    Provides the full statistics dictionary as ``stats``.
     """
-    analysis = _analyze_risk_sizing(trades)
+    analysis = _analyze_risk_sizing(trades, variation_threshold)
     return {
         "title": "Risk Sizing Consistency",
         "diagnostic": analysis["diagnostic"],
@@ -127,6 +145,7 @@ def get_risk_sizing_insight(trades: List[Trade]) -> dict:
             "minRisk": analysis["min_risk"],
             "maxRisk": analysis["max_risk"],
             "tradesWithRiskData": analysis["trades_with_risk"],
-            "totalTrades": analysis["total_trades"]
+            "totalTrades": analysis["total_trades"],
+            "variationThreshold": analysis["variation_threshold"],
         }
     }

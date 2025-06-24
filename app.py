@@ -28,6 +28,23 @@ init_error_handlers(app)
 trade_objs = []
 order_df = None  # Add global order_df variable
 
+# ---------------------------------------------------------------------------
+# Global, in-memory settings for user-tunable analysis thresholds. Front-end can
+# adjust them once per session via POST /api/settings; every endpoint then
+# reads the current value unless a query-param explicitly overrides it.
+# ---------------------------------------------------------------------------
+
+THRESHOLDS = {
+    # Revenge-trade window multiplier on median hold time
+    "k": 1.0,
+    # Sigma used for outsized-loss detection (loss consistency)
+    "sigma_loss": 1.0,
+    # Sigma used for excessive-risk (stop distance)
+    "sigma_risk": 1.5,
+    # Coefficient-of-variation cutoff for risk-sizing consistency
+    "vr": 0.35,
+}
+
 # ---- Helper functions (CSV gate) ----
 ALLOWED_EXT = {".csv"}
 MAX_MB = 2  # MB
@@ -98,14 +115,13 @@ def analyze():
         # points lost (for loss‐consistency chart)
         t.points_lost = abs(round(raw_points * direction, 2))
 
-    # 2) Read sigma multiplier from ?sigma= query (default 1.0)
-    sigma = float(request.args.get("sigma", 1.0))
-
-    # 2a) Read sigma_risk multiplier from ?sigma_risk= query (default 1.5)
-    sigma_risk = float(request.args.get("sigma_risk", 1.5))
+    # Read thresholds, allowing per-request override via query-params
+    sigma      = float(request.args.get("sigma", THRESHOLDS["sigma_loss"]))
+    sigma_risk = float(request.args.get("sigma_risk", THRESHOLDS["sigma_risk"]))
+    k          = float(request.args.get("k", THRESHOLDS["k"]))
 
     # 3) Tag all mistake types (stop‐loss + outsized loss + revenge + excessive risk)
-    analyze_all_mistakes(trade_objs, order_df, sigma, 1.0, sigma_risk)
+    analyze_all_mistakes(trade_objs, order_df, sigma, k, sigma_risk)
 
     # 4) Compute mistake counts by type
     mistake_counts     = {}
@@ -194,7 +210,7 @@ def get_summary():
     if risk_vals:
         mean_risk = statistics.mean(risk_vals)
         std_risk  = statistics.pstdev(risk_vals) if len(risk_vals) > 1 else 0.0
-        risk_var_flag = (std_risk / mean_risk) >= 0.35
+        risk_var_flag = (std_risk / mean_risk) >= THRESHOLDS["vr"]
 
     # ---------- 6) headline diagnostic (shared with insights) ----------
     summary_text = get_summary_insight(trade_objs, clean_trade_rate)
@@ -250,7 +266,7 @@ def get_losses():
     if not trade_objs:
         abort(400, "No trades have been analyzed yet")
 
-    sigma = float(request.args.get("sigma", 1.0))
+    sigma = float(request.args.get("sigma", THRESHOLDS["sigma_loss"]))
     symbol = request.args.get("symbol", None)
 
     # 1) Filter to actual losing trades
@@ -310,7 +326,7 @@ def get_revenge_stats():
         abort(400, "No trades have been analyzed yet")
 
     # 1) Read multiplier (default 1.0× median hold)
-    k = float(request.args.get("k", 1.0))
+    k = float(request.args.get("k", THRESHOLDS["k"]))
 
     # 2) Clone and tag
     from copy import deepcopy
@@ -342,8 +358,11 @@ def get_risk_sizing():
     if not trade_objs:
         abort(400, "No trades have been analyzed yet")
 
-    # Get insight from analyzer
-    insight = get_risk_sizing_insight(trade_objs)
+    # Query parameter (?vr=0.35) – coefficient of variation threshold
+    vr = float(request.args.get("vr", THRESHOLDS["vr"]))
+
+    # Get insight from analyzer with custom threshold
+    insight = get_risk_sizing_insight(trade_objs, vr)
     
     # Return with all available stats
     return jsonify({
@@ -353,6 +372,7 @@ def get_risk_sizing():
         "meanRiskPoints": insight["stats"]["meanRisk"],
         "stdDevRiskPoints": insight["stats"]["standardDeviation"],
         "variationRatio": insight["stats"]["variationRatio"],
+        "variationThreshold": vr,
         "diagnostic": insight["diagnostic"]
     })
 
@@ -363,7 +383,7 @@ def get_excessive_risk_summary():
         abort(400, "No trades have been analyzed yet")
 
     # Get sigma multiplier from query (?sigma=...)
-    sigma = float(request.args.get("sigma", 1.5))
+    sigma = float(request.args.get("sigma", THRESHOLDS["sigma_risk"]))
 
     # Get insight from analyzer
     insight = get_excessive_risk_insight(trade_objs, sigma)
@@ -549,6 +569,67 @@ def calculate_goals():
         })
 
     return jsonify({"goals": results})
+
+# ---------------------------------------------------------------------------
+# Settings endpoint: read / update analysis thresholds
+# ---------------------------------------------------------------------------
+
+@app.route("/api/settings", methods=["GET", "POST"])
+@cross_origin()
+def settings():
+    """Get or update the global analysis thresholds.
+
+    GET  ➜ returns the current ``THRESHOLDS`` dict.
+    POST ➜ body should be JSON of key-value pairs. Only keys present in
+    ``THRESHOLDS`` are applied; others are ignored. All values must be
+    numeric (int or float). Returns the updated settings.
+    """
+
+    global THRESHOLDS
+
+    if request.method == "GET":
+        return jsonify(THRESHOLDS)
+
+    payload = request.get_json(silent=True)
+    if payload is None:
+        return error_response(400, "Request body must be valid JSON.")
+
+    updated = {}
+    for key, val in payload.items():
+        if key not in THRESHOLDS:
+            # Ignore unknown keys silently to keep the contract simple
+            continue
+        try:
+            THRESHOLDS[key] = float(val)
+            updated[key] = THRESHOLDS[key]
+        except (TypeError, ValueError):
+            return error_response(400, f"Value for '{key}' must be numeric.")
+
+    # ------------------------------------------------------------------
+    # Optional: re-run mistake tagging on existing in-memory trades so that
+    # dashboard summary and insights reflect the new thresholds without
+    # requiring the user to re-upload the CSV.
+    # ------------------------------------------------------------------
+
+    global trade_objs, order_df
+    if trade_objs and order_df is not None:
+        # Clear old mistake lists to avoid duplicates
+        for t in trade_objs:
+            t.mistakes.clear()
+
+        analyze_all_mistakes(
+            trade_objs,
+            order_df,
+            sigma_multiplier=THRESHOLDS["sigma_loss"],
+            revenge_multiplier=THRESHOLDS["k"],
+            sigma_risk=THRESHOLDS["sigma_risk"],
+        )
+
+    return jsonify({
+        "status": "OK",
+        "updated": updated,
+        "thresholds": THRESHOLDS,
+    })
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
