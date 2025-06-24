@@ -20,6 +20,7 @@ from analytics.goal_tracker import generate_goal_report, get_clean_streak_stats,
 import io
 import statistics
 import pandas as pd
+import os
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -632,4 +633,14 @@ def settings():
     })
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    # Resolve host and port dynamically so the same code works locally and in
+    # platforms like Replit/Heroku where the runtime assigns a public port.
+    #
+    #   • Locally   → defaults to 127.0.0.1:5000 with debug on.
+    #   • Replit    → set FLASK_RUN_HOST=0.0.0.0 (and FLASK_RUN_PORT or rely on $PORT).
+    #   • Heroku/Pa → $PORT is provided automatically; host 0.0.0.0 is typical.
+    host  = os.environ.get("FLASK_RUN_HOST", "127.0.0.1")
+    port  = int(os.environ.get("FLASK_RUN_PORT", os.environ.get("PORT", 5000)))
+    debug = os.environ.get("FLASK_DEBUG", "1") == "1"
+
+    app.run(host=host, port=port, debug=debug)
