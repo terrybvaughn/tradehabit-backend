@@ -1,12 +1,13 @@
 modules = ["python-3.12"]
-run = "run = \"gunicorn -w 3 -b 0.0.0.0:$PORT app:app\""
+run = "run = \"gunicorn -w 1 -b 0.0.0.0:$PORT app:app\""
 
 [nix]
 channel = "stable-24_05"
 packages = ["glibcLocales"]
 
 [deployment]
-run = ["sh", "-c", "run = \"gunicorn -w 3 -b 0.0.0.0:$PORT app:app\""]
+run = ["sh", "-c", "run = \"gunicorn -w 1 -b 0.0.0.0:$PORT app:app\""]
+deploymentTarget = "cloudrun"
 
 [workflows]
 runButton = "Run Flask App"
@@ -18,7 +19,8 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "gunicorn -w 3 -b 0.0.0.0:5000 app:app"
+args = "gunicorn -w 1 -b 0.0.0.0:5000 app:app"
 
 [[ports]]
 localPort = 5000
+externalPort = 80
