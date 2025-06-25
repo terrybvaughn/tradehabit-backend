@@ -648,6 +648,12 @@ def settings():
         "thresholds": THRESHOLDS,
     })
 
+@app.get("/api/health")
+@cross_origin()
+def health():
+    """Lightweight liveness probe so the front-end can wake the server from an autosleep state."""
+    return {"Status": "Nuh worry yuhself, mi bredda. Everyting crisp."}
+
 if __name__ == "__main__":
     # Resolve host and port dynamically so the same code works locally and in
     # platforms like Replit/Heroku where the runtime assigns a public port.
