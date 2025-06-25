@@ -42,5 +42,13 @@ class Trade:
 
     @property
     def has_stop_order(self) -> bool:
-        """Returns True if the trade is not flagged as missing a stop-loss."""
-        return "no_stop_loss" not in self.mistakes
+        """True if the trade *did* have a protective stop-loss order.
+
+        The stop-loss analyzer tags trades that **lack** a protective stop with
+        the exact string "no stop-loss order". The old implementation used a
+        snake-case variant ("no_stop_loss"), which never matched and therefore
+        incorrectly reported every trade as having a stop order. This broke
+        downstream summaries like the Stop-Loss insights section and overall
+        mistake tallies. Fixing the string restores accurate reporting.
+        """
+        return "no stop-loss order" not in self.mistakes
