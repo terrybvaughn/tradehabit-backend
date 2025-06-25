@@ -23,7 +23,23 @@ import pandas as pd
 import os
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+ALLOWED_ORIGINS = [
+    "http://127.0.0.1:5173",        # Vite / React dev server, etc.
+    "http://localhost:5173",
+    "https://tradehabit-frontend.replit.app",
+    "https://app.tradehab.it",
+]
+
+# If you want to manage this at deploy time, you can also use an env var:
+# ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",")
+
+CORS(
+    app,
+    resources={r"/api/*": {"origins": ALLOWED_ORIGINS}},
+    supports_credentials=False      # set True only if you need cookies/auth headers
+)
+
 init_error_handlers(app)
 
 trade_objs = []
