@@ -75,7 +75,7 @@ def _size_ok(file_storage) -> bool:
     file_storage.seek(0)
     return ok
 
-# ---- Main route ---- 
+# ---- Main route ----
 @app.route("/api/analyze", methods=["POST", "OPTIONS"])
 @cross_origin()
 def analyze():
