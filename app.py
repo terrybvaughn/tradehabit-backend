@@ -24,6 +24,7 @@ import os
 
 app = Flask(__name__)
 
+# CORS Configuration
 ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",        # Vite / React dev server, etc.
     "http://localhost:5173",
@@ -31,13 +32,10 @@ ALLOWED_ORIGINS = [
     "https://app.tradehab.it",
 ]
 
-# If you want to manage this at deploy time, you can also use an env var:
-# ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",")
-
 CORS(
     app,
-    resources={r"/api/*": {"origins": ALLOWED_ORIGINS}},
-    supports_credentials=False      # set True only if you need cookies/auth headers
+    resources={r"/*": {"origins": ALLOWED_ORIGINS}},
+    supports_credentials=False
 )
 
 init_error_handlers(app)
@@ -76,7 +74,7 @@ def _size_ok(file_storage) -> bool:
     return ok
 
 # ---- Main route ----
-@app.route("/api/analyze", methods=["POST", "OPTIONS"])
+@app.route("/api/analyze", methods=["POST"])
 @cross_origin()
 def analyze():
     global trade_objs, order_df  # Add order_df to global declaration

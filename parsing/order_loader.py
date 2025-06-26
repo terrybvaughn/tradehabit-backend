@@ -19,8 +19,21 @@ def load_orders(path: str) -> pd.DataFrame:
         "Avg Fill Price": "price",
         "Order ID": "order_id_original",
         "Timestamp": "ts",
-        "Fill Time": "fill_ts",  # 👈 ADD THIS LINE
+        "Fill Time": "fill_ts",
     }, inplace=True)
+
+    # Ensure consistent datetime parsing for timestamps
+    def parse_timestamp(ts):
+        if pd.isna(ts):
+            return pd.NaT
+        try:
+            # Handle both single and double-digit hours
+            return pd.to_datetime(ts, format='%m/%d/%Y %H:%M:%S', errors='coerce')
+        except ValueError:
+            return pd.to_datetime(ts, errors='coerce')
+
+    df["ts"] = df["ts"].apply(parse_timestamp)
+    df["fill_ts"] = df["fill_ts"].apply(parse_timestamp)
 
     print("Loaded columns:", df.columns.tolist())  # Optional debug
 

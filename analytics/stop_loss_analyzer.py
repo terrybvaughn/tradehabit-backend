@@ -10,32 +10,122 @@ from models.trade import Trade
 
 def _check_single_trade_for_no_stop(tr: Trade, orders: pd.DataFrame) -> None:
     """Marks tr.mistakes with 'no stop-loss order' if *no* protective stop
-    was *placed* at or after entry_time."""
+    was *placed* any time *after* the trade's entry.  We do **not** enforce an
+    upper bound tied to the exit timestamp because protective stops are often
+    cancelled or adjusted milliseconds after a fill.  Looking at the full
+    post-entry history avoids missing legitimate stops on partial exits or
+    near-simultaneous cancel / replace events."""
     opp_side = "Sell" if tr.side == "Buy" else "Buy"
 
-    # filter down to this symbol
-    df = orders[orders["symbol"] == tr.symbol].copy()
-    if df.empty:
+    # ---------------- Timestamp column resolution --------------------
+    # The analyser may receive either the *raw* loader dataframe (has a
+    # populated 'ts' column) **or** the heavily-renamed dataframe produced by
+    # trade_counter (where 'ts' can be NaT/duplicated and 'fill_ts' holds the
+    # usable event time).  Pick whichever column contains real datetimes.
+
+    if "ts" in orders.columns and orders["ts"].notna().any():
+        ts_col = "ts"
+    elif "fill_ts" in orders.columns and orders["fill_ts"].notna().any():
+        ts_col = "fill_ts"
+    else:
+        # No usable timestamp column – abort with conservative flag.
         tr.mistakes.append("no stop-loss order")
         return
 
+    # -----------------------------------------------------------------
+
+    # Filter to this symbol and *all* orders occurring *after* entry.
+    df = orders[
+        (orders["symbol"] == tr.symbol) &
+        (orders[ts_col] >= tr.entry_time)
+    ].copy()
+    
+    # If *no* orders exist after entry, we can immediately mark as unprotected.
+    if df.empty:
+        tr.mistakes.append("no stop-loss order")
+        return
+    
     # normalize columns
     df["Type"] = df["Type"].astype(str).str.strip().str.lower()
     df["side"] = df["side"].astype(str).str.strip()
-    df["ts"]   = pd.to_datetime(df["ts"], errors="coerce")
 
-    # look for any stop(*) on the opposite side at or after entry_time
-    mask = (
-        df["Type"].isin({"stop", "stop limit"}) &
+    # Look for any stop orders placed after entry
+    stop_orders = df[
+        (df["Type"].str.contains("stop", case=False, na=False)) &
+        (df["side"] == opp_side)
+    ].copy()
+
+    if not stop_orders.empty:
+        # A cancelled stop only counts if its recorded timestamp is **after**
+        # the trade exited (meaning it was active during the trade and then
+        # cancelled).  Otherwise it provided no protection.
+        stop_orders["Status"] = stop_orders["Status"].astype(str).str.strip().str.lower()
+        buffer_after_exit = pd.Timedelta(seconds=2)
+        min_live = pd.Timedelta(seconds=2)  # cancelled stops must live ≥2 s
+
+        valid_stops = stop_orders[
+            # Must sit within the trade plus a tiny tail.
+            (stop_orders[ts_col] <= tr.exit_time + buffer_after_exit) &
+            (
+                # Filled or working stops always count …
+                (stop_orders["Status"] != "canceled") |
+                # … Cancelled stops count as long as they were NOT cancelled
+                # immediately (≥2 s after entry).  This captures genuine
+                # protective stops that were pulled later while excluding
+                # nuisance orders placed & cancelled in the same second as the entry.
+                (stop_orders[ts_col] - tr.entry_time >= min_live)
+            )
+        ]
+
+        if not valid_stops.empty:
+            return
+
+    # If no stop orders, check if the exit order itself was a stop (rare but possible).
+    exit_stop = df[
+        (df[ts_col] == tr.exit_time) &
         (df["side"] == opp_side) &
-        (df["ts"] >= tr.entry_time)   # <-- only lower bound
-    )
+        (df["Type"].str.contains("stop", case=False, na=False))
+    ]
 
-    if mask.any():
-        return  # we saw a stop order placed → no mistake
+    if not exit_stop.empty:
+        return
 
-    # Optional: emit detailed log messages externally if needed
+    # --- Fallback: handle partial-exit edge-case ---------------------------------
+    # When a position is split into multiple trades by the trade_counter, the
+    # "child" trades have entry_time equal to the partial-exit timestamp.  The
+    # protective stop may have been placed (and even filled) seconds **before**
+    # that timestamp, causing the logic above to miss it.  We therefore look
+    # back a small window (default 60 s) prior to entry for any opposite-side
+    # stop orders.  If we find one, we treat the trade as protected.
 
+    lookback_seconds = 60
+    lb_start = tr.entry_time - pd.Timedelta(seconds=lookback_seconds)
+
+    pre_window = orders[
+        (orders["symbol"] == tr.symbol) &
+        (orders[ts_col] >= lb_start) &
+        (orders[ts_col] < tr.entry_time)
+    ].copy()
+
+    if not pre_window.empty:
+        pre_window["Type"] = pre_window["Type"].astype(str).str.strip().str.lower()
+        pre_window["side"] = pre_window["side"].astype(str).str.strip()
+        pre_window["Status"] = pre_window["Status"].astype(str).str.strip().str.lower()
+
+        min_live = pd.Timedelta(seconds=2)
+        pre_stops = pre_window[
+            (pre_window["Type"].str.contains("stop", case=False, na=False)) &
+            (pre_window["side"] == opp_side) &
+            (
+                (pre_window["Status"] != "canceled") |
+                (pre_window[ts_col] - tr.entry_time >= min_live)
+            )
+        ]
+
+        if not pre_stops.empty:
+            return
+
+    # If none of the above conditions met, flag trade as lacking a protective stop.
     tr.mistakes.append("no stop-loss order")
 
 
