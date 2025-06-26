@@ -19,27 +19,44 @@ def analyze_trades_for_risk_sizing_consistency(
     orders["ts"] = pd.to_datetime(orders["ts"], errors="coerce")
 
     for tr in trades:
+        # Skip trades without stops or with the no-stop mistake
         if "no stop-loss order" in tr.mistakes:
-            continue  # skip trades without a stop
+            tr.risk_points = None  # Ensure we clear any existing value
+            continue
 
         opp_side = "Sell" if tr.side == "Buy" else "Buy"
 
-        matching_stop = orders[
+        # Find stop orders within the trade's duration
+        matching_stops = orders[
             (orders["symbol"] == tr.symbol) &
             (orders["Type"].isin({"stop", "stop limit"})) &
             (orders["side"] == opp_side) &
-            (orders["ts"] >= tr.entry_time)
-        ].sort_values("ts").head(1)
+            (orders["ts"] >= tr.entry_time) &
+            (orders["ts"] <= tr.exit_time) &
+            orders["Stop Price"].notna()  # Ensure stop price exists
+        ].sort_values("ts")
 
-        if not matching_stop.empty:
-            stop_price = matching_stop.iloc[0]["Stop Price"]
-            if pd.notna(stop_price):
-                # Long: risk = entry - stop
-                # Short: risk = stop - entry
-                direction = 1 if tr.side == "Buy" else -1
-                raw_risk = (tr.entry_price - stop_price) * direction
-                tr.risk_points = round(abs(raw_risk), 2)
-        # If no stop match found (but it was previously detected), leave risk_points as None
+        # If we can't find a qualifying stop order we simply skip the risk
+        # calculation.  The dedicated stop-loss analyser is responsible for
+        # flagging missing stops; duplicating that logic here caused trades to
+        # be incorrectly re-flagged when their protective stop was placed
+        # outside the (entry → exit) window.
+        if matching_stops.empty:
+            tr.risk_points = None
+            continue
+
+        # Use the first stop's price for risk calculation
+        first_stop = matching_stops.iloc[0]
+        stop_price = first_stop["Stop Price"]
+        
+        if pd.notna(stop_price) and pd.notna(tr.entry_price):
+            # Long: risk = entry - stop
+            # Short: risk = stop - entry
+            direction = 1 if tr.side == "Buy" else -1
+            raw_risk = (tr.entry_price - stop_price) * direction
+            tr.risk_points = round(abs(raw_risk), 2)
+        else:
+            tr.risk_points = None
 
     return trades
 

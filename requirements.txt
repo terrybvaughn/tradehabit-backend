@@ -3,3 +3,5 @@ flask-cors>=4
 pandas>=2
 gunicorn>=22
 werkzeug
+numpy
+python-dateutil
