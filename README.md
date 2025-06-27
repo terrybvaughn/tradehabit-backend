@@ -1,9 +1,14 @@
 # TradeHabit - Behavioral Analytics for Novice Traders
-![TradeHabit Dashboard Mockup](images/mockups/TradeHabit-Dashboard.png)
+![TradeHabit Dashboard Mockup](images/mockups/TradeHabit_Dashboard_Live.png)
+
+## 🚀 Live Application
+
+**Try TradeHabit now**: [app.tradehab.it](https://app.tradehab.it)  
+Use the demo data link if you don't have your own NinjaTrader CSV files.
 
 ## Overview
 
-TradeHabit is a behavioral analytics tool that helps novice traders identify and fix bad trading habits. It is a Python-based tool that analyzes trader order data to identify and quantify common trading mistakes. The initial focus is on parsing and analyzing order execution reports, starting with data exported from NinjaTrader (in CSV format).
+TradeHabit is a full-stack behavioral analytics platform that helps novice traders identify and fix bad trading habits. The application combines a Python-based backend for sophisticated data analysis with a modern React frontend for interactive visualization. It analyzes trader order data to identify and quantify common trading mistakes, starting with data exported from NinjaTrader (in CSV format).
 
 ## Current Features
 
@@ -17,102 +22,123 @@ TradeHabit is a behavioral analytics tool that helps novice traders identify and
   - Computes each trade's dollar P&L.  
   - Computes "points lost" per contract for loss-dispersion charts.
 
-* **Mistake Detection Framework**  
+* **Comprehensive Mistake Detection Framework**  
   All trades are passed through a suite of analyzers that identify common trading mistakes:
   1. **Stop-Loss Analysis**  
      - Flags trades without protective stops
      - Tracks stop-loss placement timing and effectiveness
+     - Handles OCO (One-Cancels-Other) order scenarios
   2. **Excessive Risk Analysis**  
-     - Identifies trades with position sizes exceeding risk parameters
-     - Monitors risk-to-reward ratios
+     - Identifies trades with position sizes exceeding statistical risk parameters
+     - Monitors risk-to-reward ratios using configurable sigma multipliers
   3. **Outsized Loss Analysis**  
      - Marks losses exceeding μ + σ·(user σ-multiplier) on your points-lost distribution
      - Provides statistical context for loss severity
   4. **Revenge Trade Analysis**  
-     - Identifies trades entered "too soon" after a loss (configurable window)
-     - Analyzes emotional trading patterns
-  5. **Risk Sizing Analysis**  
-     - Evaluates position sizing consistency
-     - Tracks risk exposure across different market conditions
+     - Identifies trades entered "too soon" after a loss (configurable window based on median hold time)
+     - Analyzes emotional trading patterns and their impact on performance
+  5. **Risk Sizing Consistency Analysis**  
+     - Evaluates position sizing consistency using coefficient of variation
+     - Tracks risk exposure patterns across different market conditions
 
-* **Insights Endpoint**  
-  `/api/insights` provides behavioral analytics:
+* **Interactive Frontend Dashboard**  
+  Modern React-based interface with:
+  - Real-time data visualization and charts
+  - Goal tracking with streak analysis
+  - Interactive insights and behavioral recommendations
+  - Responsive design for desktop and mobile
+
+* **Behavioral Insights Engine**  
+  `/api/insights` provides comprehensive behavioral analytics:
+  - Prioritized diagnostic insights using decision-tree logic
   - Summary diagnostics for each mistake category
   - Trend analysis of trading behavior
-  - Actionable improvement suggestions
+  - Actionable improvement suggestions with statistical backing
   - Performance metrics by mistake type
 
-* **Loss-Dispersion Analysis**  
-  `/api/losses` returns all losing-trade points, plus computed:  
-  - Mean & population σ of points-lost  
-  - Threshold (μ + k·σ)  
-  - Per-loss "hasMistake" flag (outsized or revenge)
+* **Advanced Goal Tracking System**  
+  `/api/goals` and `/api/goals/calculate` support:
+  - Predefined behavioral goals (Clean Trades, Risk Management, Revenge Trading)
+  - Custom user-defined goals with flexible parameters
+  - Streak tracking by trades or calendar days
+  - Progress monitoring with percentage completion
+  - Date-filtered goal evaluation
 
-* **Trade Summary Metrics**  
-  `/api/summary` exposes overall stats:  
-  - Total trades, total mistakes, win rate & success rate  
-  - Current & record mistake-free streaks  
-  - Payoff Ratio (avg win / avg loss) and "required" R to breakeven at your win rate  
-  - Diagnostic text ("Over this time period, X % of your trades were executed without a mistake.")
+* **Comprehensive Analytics Endpoints**  
+  - **Trade Summary** (`/api/summary`): Overall performance metrics, streaks, payoff ratios
+  - **Trade Details** (`/api/trades`): Complete trade list with metadata and date ranges
+  - **Loss Analysis** (`/api/losses`): Statistical loss distribution with outlier detection
+  - **Revenge Trading** (`/api/revenge`): Detailed revenge trade performance analysis
+  - **Risk Sizing** (`/api/risk-sizing`): Position sizing consistency metrics
+  - **Excessive Risk** (`/api/excessive-risk`): Statistical risk exposure analysis
+  - **Stop-Loss Summary** (`/api/stop-loss`): Stop-loss usage and effectiveness
+  - **Win Rate & Payoff** (`/api/winrate-payoff`): Performance ratio analysis
 
-* **Full Trade List Endpoint**  
-  `/api/trades` dumps every trade object with its entry/exit, P&L, points_lost, and all mistake tags—ready for front-end drill-down.
+* **Dynamic Threshold Configuration**  
+  `/api/settings` allows real-time adjustment of analysis parameters:
+  - Sigma multipliers for outsized loss and excessive risk detection
+  - Revenge trade window multipliers
+  - Risk sizing variation thresholds
+  - Settings persist across analysis sessions
 
-* **Revenge-Trade Performance**  
-  `/api/revenge` returns:  
-  - Total revenge trades, win rate, avg win & avg loss  
-  - Revenge-trade Payoff Ratio  
-  - Configurable revenge-window multiplier
+* **Production-Ready Architecture**  
+  - Comprehensive error handling with JSON error responses
+  - CORS configuration for multiple frontend origins
+  - File upload validation (size, format)
+  - Health check endpoint for deployment monitoring
+  - Gunicorn WSGI server configuration
 
-* **Risk Sizing Analysis**  
-  `/api/risk-sizing` returns statistics and diagnostics on position sizing consistency and risk exposure.
-
-* **Excessive Risk Analysis**  
-  `/api/excessive-risk` provides stats and diagnostics for trades that exceed risk thresholds.
-
-* **Stop-Loss Summary**  
-  `/api/stop-loss` summarizes stop-loss usage, average loss with/without stops, and related diagnostics.
-
-* **Winrate & Payoff Analysis**  
-  `/api/winrate-payoff` returns win rate, average win/loss, payoff ratio, and a diagnostic summary.
-
-* **Goals Tracking**  
-  `/api/goals` returns progress toward hard-coded behavioral goals:
-  - Clean Trades: Consecutive trades without any mistakes
-  - Risk Management: Consecutive trades without no stop-loss, excessive risk, or outsized loss mistakes
-  - Revenge Trades: Consecutive trades without a revenge trade mistake
-  For each goal, the API returns the current streak, best streak, and progress percentage toward the goal.
-
-All of these live behind a single Flask service with simple query-param overrides (σ-multiplier, revenge-window, symbol filters), so your front-end can drive the behavior analysis dynamically.
+All analytics live behind a Flask REST API with query-parameter overrides, enabling the frontend to drive behavioral analysis dynamically.
 
 ## Technology Stack
 
-*   Python 3.x
-*   Flask: Lightweight web framework for serving the API
-*   Pandas: For data manipulation and analysis.
+### Backend
+*   **Python 3.x** with Flask web framework
+*   **Pandas & NumPy** for data manipulation and statistical analysis
+*   **Flask-CORS** for cross-origin resource sharing
+*   **Gunicorn** for production WSGI deployment
+
+### Frontend
+*   **React 19** with TypeScript for type-safe development
+*   **Zustand** for global state management
+*   **TanStack Query** for efficient server state management
+*   **Modern CSS Modules** for component-scoped styling
+*   **Interactive data visualization** components
+
+### Deployment
+*   **Backend**: Deployed on Replit with auto-scaling
+*   **Frontend**: Available at [app.tradehab.it](https://app.tradehab.it)
+*   **Frontend Repository**: [tradehabit-frontend](https://github.com/terrybvaughn/tradehabit-frontend)
 
 ## Project Structure
 
 ```
 tradehabit-backend/
-├── app.py # Flask entry point exposing all API endpoints
-├── analytics/
-│ ├── goal_tracker.py # Tracks progress toward predefined goals
-│ ├── stop_loss_analyzer.py # Stop-loss analysis logic
-│ ├── excessive_risk_analyzer.py # Risk management analysis
-│ ├── outsized_loss_analyzer.py # μ+σ "Outsized Loss" tagging
-│ ├── revenge_analyzer.py # Revenge-trade detection
-│ ├── risk_sizing_analyzer.py # Position sizing analysis
-│ └── mistake_analyzer.py # Orchestrates all mistake detectors
-├── parsing/
-│ ├── order_loader.py # CSV loading & raw DataFrame creation
-│ ├── utils.py # Timestamp normalization utilities
-│ └── trade_counter.py # Infers Trade objects from fills
-├── models/
-│   └── trade.py # Enhanced Trade dataclass with comprehensive metrics
-├── images/ # Diagrams, screenshots, mockups
-├── tasks/ # Project docs: PRDs, task lists, notes
-└── README.md # Project overview & API reference
+├── app.py                          # Flask entry point with 14+ API endpoints
+├── analytics/                      # Behavioral analysis modules
+│   ├── goal_tracker.py            # Goal progress and streak analysis
+│   ├── stop_loss_analyzer.py      # Stop-loss detection and analysis
+│   ├── excessive_risk_analyzer.py # Statistical risk exposure analysis
+│   ├── outsized_loss_analyzer.py  # μ+σ "Outsized Loss" detection
+│   ├── revenge_analyzer.py        # Revenge-trade detection and analysis
+│   ├── risk_sizing_analyzer.py    # Position sizing consistency analysis
+│   ├── winrate_payoff_analyzer.py # Win rate and payoff ratio analysis
+│   ├── mistake_analyzer.py        # Orchestrates all mistake detectors
+│   ├── insights.py               # Prioritized insight generation
+│   └── trade_counter.py           # Trade reconstruction from order events
+├── parsing/                        # Data ingestion and processing
+│   ├── order_loader.py            # CSV loading with validation
+│   ├── utils.py                   # Timestamp normalization utilities
+│   └── __main__.py                # Command-line interface
+├── models/                         # Data models
+│   └── trade.py                   # Enhanced Trade dataclass with metrics
+├── errors.py                       # Centralized error handling
+├── requirements.txt               # Python dependencies
+├── Procfile                       # Production deployment configuration
+├── data/                          # Sample and test data files
+├── images/                        # Documentation and mockup assets
+├── tasks/                         # Project documentation and PRDs
+└── README.md                      # This file
 ```
 
 ## Setup
@@ -122,112 +148,149 @@ tradehabit-backend/
     git clone https://github.com/terrybvaughn/tradehabit-backend.git
     cd tradehabit-backend
     ```
-2.  **Set up your environment.** If you are using a virtual environment (recommended):
+
+2.  **Set up your environment** (virtual environment recommended):
     ```bash
     python -m venv venv
     source venv/bin/activate  # On Windows: venv\Scripts\activate
-    pip install flask pandas
-    ```
-
-## Dependency Management
-
-To simplify dependency installation, use the included `requirements.txt` file.
-
-1. Create it (if not already present) in the project root with the following contents:
-    ```
-    flask
-    pandas
-    ```
-
-2. Then install all dependencies with:
-    ```bash
     pip install -r requirements.txt
     ```
 
-This ensures your environment has the required packages to run the app.
-
-> **Tip:** If you prefer to pin exact versions (for consistency across machines or deployments), run:
-> ```bash
-> pip freeze > requirements.txt
-> ```
-> This will lock the versions of all currently installed packages. Keep in mind that it may include extra packages not strictly required by the app.
-
-
-## Usage
-
-1. **Start the Flask server**  
-   ```bash
-   cd tradehabit-backend
-   python app.py
-   ```
-   By default, the service listens on `http://localhost:5000`.
-
-2. **Analyze orders (POST `/api/analyze`)**  
-   Upload your NinjaTrader CSV and (optionally) set an outsized-loss σ-multiplier:  
-   ```bash
-   curl -X POST "http://localhost:5000/api/analyze?sigma=1.0" \
-     -F "file=@/absolute/path/to/your_ninjatrader_order_data.csv"
-   ```
-   **Query Params**  
-   - `sigma` (optional): σ-multiplier for outsized-loss threshold (default `1.0`)
-
-3. **Get Behavioral Insights (GET `/api/insights`)**  
-   ```bash
-   curl http://localhost:5000/api/insights
-   ```
-   Returns comprehensive behavioral analysis and improvement suggestions.
-
-4. **Overall summary (GET `/api/summary`)**  
-   ```bash
-   curl http://localhost:5000/api/summary
-   ```
-
-5. **Full trades list (GET `/api/trades`)**  
-   ```bash
-   curl http://localhost:5000/api/trades
-   ```
-
-6. **Loss-dispersion data (GET `/api/losses`)**  
-   ```bash
-   curl "http://localhost:5000/api/losses?sigma=1.0&symbol=MNQH5"
-   ```
-   **Query Params**  
-   - `sigma` (optional): σ-multiplier for threshold (default `1.0`)  
-   - `symbol` (optional): filter to a single instrument  
-
-7. **Revenge-trade stats (GET `/api/revenge`)**  
-   ```bash
-   curl "http://localhost:5000/api/revenge?k=1.0"
-   ```
-   **Query Params**  
-   - `k` (optional): revenge-window multiplier on median hold time (default `1.0`)
-
-8. **Risk Sizing stats (GET `/api/risk-sizing`)**  
-   ```bash
-   curl http://localhost:5000/api/risk-sizing
-   ```
-
-9. **Excessive Risk stats (GET `/api/excessive-risk`)**  
-   ```bash
-   curl http://localhost:5000/api/excessive-risk
-   ```
-
-10. **Stop-Loss summary (GET `/api/stop-loss`)**  
+3.  **Start the development server:**
     ```bash
-    curl http://localhost:5000/api/stop-loss
+    python app.py
     ```
+    By default, the service listens on `http://localhost:5000`.
 
-11. **Winrate & Payoff stats (GET `/api/winrate-payoff`)**  
-    ```bash
-    curl http://localhost:5000/api/winrate-payoff
-    ```
+## API Reference
 
-12. **Goals progress (GET `/api/goals`)**  
-    ```bash
-    curl http://localhost:5000/api/goals
-    ```
+### Core Analysis
 
-## Future Enhancements
+**POST `/api/analyze`** - Upload and analyze NinjaTrader CSV data
+```bash
+curl -X POST "http://localhost:5000/api/analyze?sigma=1.0" \
+  -F "file=@/path/to/your_ninjatrader_data.csv"
+```
 
-*   Analytics dashboard for behavioral analytics visualization.
-*   Support for other data formats to get visibility into all order modifications.
+**GET `/api/summary`** - High-level dashboard summary with streaks and diagnostics
+```bash
+curl http://localhost:5000/api/summary
+```
+
+**GET `/api/insights`** - Comprehensive behavioral analysis with prioritized recommendations
+```bash
+curl http://localhost:5000/api/insights
+```
+
+### Detailed Analytics
+
+**GET `/api/trades`** - Complete trade list with metadata
+```bash
+curl http://localhost:5000/api/trades
+```
+
+**GET `/api/losses`** - Loss-dispersion analysis with statistical outlier detection
+```bash
+curl "http://localhost:5000/api/losses?sigma=1.0&symbol=MNQH5"
+```
+
+**GET `/api/revenge`** - Revenge trading analysis with configurable detection window
+```bash
+curl "http://localhost:5000/api/revenge?k=1.0"
+```
+
+**GET `/api/risk-sizing`** - Position sizing consistency analysis
+```bash
+curl "http://localhost:5000/api/risk-sizing?vr=0.35"
+```
+
+**GET `/api/excessive-risk`** - Statistical risk exposure analysis
+```bash
+curl "http://localhost:5000/api/excessive-risk?sigma=1.5"
+```
+
+**GET `/api/stop-loss`** - Stop-loss usage and effectiveness summary
+```bash
+curl http://localhost:5000/api/stop-loss
+```
+
+**GET `/api/winrate-payoff`** - Win rate and payoff ratio analysis
+```bash
+curl http://localhost:5000/api/winrate-payoff
+```
+
+### Goal Tracking
+
+**GET `/api/goals`** - Predefined goal progress (Clean Trades, Risk Management, etc.)
+```bash
+curl http://localhost:5000/api/goals
+```
+
+**POST `/api/goals/calculate`** - Calculate custom goal progress
+```bash
+curl -X POST http://localhost:5000/api/goals/calculate \
+  -H "Content-Type: application/json" \
+  -d '[{"id":"custom1","title":"Clean 20 Trades","target":20,"mistake_types":[]}]'
+```
+
+### Configuration
+
+**GET/POST `/api/settings`** - Read or update analysis thresholds
+```bash
+# Get current settings
+curl http://localhost:5000/api/settings
+
+# Update thresholds
+curl -X POST http://localhost:5000/api/settings \
+  -H "Content-Type: application/json" \
+  -d '{"sigma_loss":1.2,"k":1.5}'
+```
+
+**GET `/api/health`** - System health check
+```bash
+curl http://localhost:5000/api/health
+```
+
+### Query Parameters
+
+Most endpoints support optional query parameters for customization:
+- `sigma` - σ-multiplier for outsized-loss threshold (default: 1.0)
+- `sigma_risk` - σ-multiplier for excessive-risk threshold (default: 1.5)  
+- `k` - Revenge-window multiplier on median hold time (default: 1.0)
+- `vr` - Coefficient-of-variation cutoff for risk-sizing (default: 0.35)
+- `symbol` - Filter analysis to specific instrument
+
+## Development
+
+### Running Tests
+```bash
+# Test with sample data
+python -m parsing data/test_data.csv --verbose
+```
+
+### Local Development with Frontend
+The frontend expects the backend to run on `localhost:5000`. For local development:
+
+1. Start the backend: `python app.py`
+2. Clone and run the frontend from [tradehabit-frontend](https://github.com/terrybvaughn/tradehabit-frontend)
+3. The frontend will automatically connect to the local backend
+
+## Deployment
+
+The application is production-ready with:
+- **Gunicorn WSGI server** configuration in `Procfile`
+- **Environment-based configuration** for host/port binding
+- **CORS setup** for multiple frontend origins
+- **Error handling** with structured JSON responses
+- **File upload validation** and size limits
+
+Current deployment: Backend on Replit, Frontend at app.tradehab.it
+
+## Frontend Integration
+
+The complete TradeHabit experience includes a modern React frontend:
+- **Repository**: [tradehabit-frontend](https://github.com/terrybvaughn/tradehabit-frontend)
+- **Live Application**: [app.tradehab.it](https://app.tradehab.it)
+- **Technology**: React 19, TypeScript, Zustand, TanStack Query
+- **Features**: Interactive charts, goal tracking, real-time insights
+
