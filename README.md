@@ -8,7 +8,9 @@ Use the demo data link if you don't have your own NinjaTrader CSV files.
 
 ## Overview
 
-TradeHabit is a full-stack behavioral analytics platform that helps novice traders identify and fix bad trading habits. The application combines a Python-based backend for sophisticated data analysis with a modern React frontend for interactive visualization. It analyzes trader order data to identify and quantify common trading mistakes, starting with data exported from NinjaTrader (in CSV format).
+TradeHabit is a **prototype** behavioral analytics platform that helps novice traders identify and fix bad trading habits. Currently in development, the application combines a Python-based backend for sophisticated data analysis with a modern React frontend for interactive visualization. It analyzes trader order data to identify and quantify common trading mistakes, starting with data exported from NinjaTrader (in CSV format).
+
+**Current Status**: Prototype - not a commercial software application. Designed for demonstration and research purposes.
 
 ## Current Features
 
@@ -18,9 +20,8 @@ TradeHabit is a full-stack behavioral analytics platform that helps novice trade
 * **Trade Identification**  
   Rebuilds discrete trades from the event stream—handles new entries, partial exits, scale-ins, and full exits to yield a list of completed `Trade` objects.
 
-* **PnL & Points-Lost Calculation**  
-  - Computes each trade's dollar P&L.  
-  - Computes "points lost" per contract for loss-dispersion charts.
+* **Points Won-Lost Calculation**  
+  Computes each trade's points won or lost per contract.
 
 * **Comprehensive Mistake Detection Framework**  
   All trades are passed through a suite of analyzers that identify common trading mistakes:
@@ -93,9 +94,11 @@ All analytics live behind a Flask REST API with query-parameter overrides, enabl
 ## Technology Stack
 
 ### Backend
-*   **Python 3.x** with Flask web framework
+*   **Python 3.10+** with Flask web framework
 *   **Pandas & NumPy** for data manipulation and statistical analysis
 *   **Flask-CORS** for cross-origin resource sharing
+*   **Werkzeug** for WSGI utilities and development server
+*   **Python-dateutil** for advanced datetime handling
 *   **Gunicorn** for production WSGI deployment
 
 ### Frontend
@@ -114,7 +117,7 @@ All analytics live behind a Flask REST API with query-parameter overrides, enabl
 
 ```
 tradehabit-backend/
-├── app.py                          # Flask entry point with 14+ API endpoints
+├── app.py                          # Flask entry point with 14 API endpoints
 ├── analytics/                      # Behavioral analysis modules
 │   ├── goal_tracker.py            # Goal progress and streak analysis
 │   ├── stop_loss_analyzer.py      # Stop-loss detection and analysis
@@ -141,7 +144,22 @@ tradehabit-backend/
 └── README.md                      # This file
 ```
 
+## Current Limitations
+
+As a prototype application, TradeHabit has several current limitations:
+
+* **NinjaTrader-only support**: Currently only supports CSV exports from NinjaTrader
+* **No data persistence**: No database or user history - data uploaded per session
+* **Session-based analysis**: Data is lost when the application restarts
+* **Single-user design**: No account creation or user authentication
+* **Limited analytics depth**: Focused feature set for behavioral analysis demonstration
+
 ## Setup
+
+### Prerequisites
+* **Python 3.10+**: Required for modern type hints and dataclass features
+* **pip**: Python package manager
+* **Virtual Environment**: Recommended for dependency isolation
 
 1.  **Clone the repository:**
     ```bash
@@ -163,6 +181,8 @@ tradehabit-backend/
     By default, the service listens on `http://localhost:5000`.
 
 ## API Reference
+
+TradeHabit provides a RESTful API with **14 endpoints** for behavioral trading analysis. All endpoints return JSON responses with consistent error handling and CORS support.
 
 ### Core Analysis
 
@@ -260,31 +280,89 @@ Most endpoints support optional query parameters for customization:
 - `vr` - Coefficient-of-variation cutoff for risk-sizing (default: 0.35)
 - `symbol` - Filter analysis to specific instrument
 
-## Development
+## Error Handling
 
-### Running Tests
-```bash
-# Test with sample data
-python -m parsing data/test_data.csv --verbose
+### Standard Error Response Format
+All API endpoints return consistent JSON error responses:
+
+```json
+{
+  "status": "ERROR",
+  "message": "Descriptive error message",
+  "details": ["Additional error details"]
+}
 ```
 
-### Local Development with Frontend
-The frontend expects the backend to run on `localhost:5000`. For local development:
+### Common Error Codes
 
-1. Start the backend: `python app.py`
-2. Clone and run the frontend from [tradehabit-frontend](https://github.com/terrybvaughn/tradehabit-frontend)
-3. The frontend will automatically connect to the local backend
+#### **400 Bad Request**
+- No file part in request
+- Invalid file format (must be CSV)
+- File size exceeds 2MB limit
+- Missing required columns in CSV
+- No trades analyzed yet
+- Invalid JSON in request body
 
-## Deployment
+#### **500 Internal Server Error**
+- CSV parsing error
+- Data processing failure
+- Unexpected server error
 
-The application is production-ready with:
-- **Gunicorn WSGI server** configuration in `Procfile`
-- **Environment-based configuration** for host/port binding
-- **CORS setup** for multiple frontend origins
-- **Error handling** with structured JSON responses
-- **File upload validation** and size limits
+### Error Examples
 
-Current deployment: Backend on Replit, Frontend at app.tradehab.it
+#### File Validation Error
+```json
+{
+  "status": "ERROR",
+  "message": "This file is missing required columns:\nMissing columns: Fill Time, B/S",
+  "details": []
+}
+```
+
+#### Data Processing Error
+```json
+{
+  "status": "ERROR",
+  "message": "This CSV format is not recognized.",
+  "details": []
+}
+```
+
+#### State Validation Error
+```json
+{
+  "status": "ERROR",
+  "message": "No trades have been analyzed yet",
+  "details": []
+}
+```
+
+### Error Handling Features
+- **Centralized Error Handling**: `errors.py` provides consistent JSON error responses
+- **Validation Layers**: File validation (size, format), data schema validation, statistical calculation error handling
+- **User-Friendly Messages**: Maps internal column names to original CSV headers, provides specific missing column information
+- **Graceful Degradation**: Handles malformed data without crashing
+
+## Development vs Production
+
+### **Development Environment**
+- **Local Setup**: Flask development server with debug mode
+- **Hot Reload**: Automatic restart on code changes
+- **Debug Output**: Detailed error messages and stack traces
+- **CORS Origins**: Includes local development servers (localhost:5173)
+
+### **Production Environment**
+- **Deployment**: Backend hosted on Replit with auto-scaling
+- **WSGI Server**: Gunicorn for production-grade request handling
+- **Frontend**: Deployed separately at [app.tradehab.it](https://app.tradehab.it)
+- **Error Handling**: Graceful error responses without sensitive information exposure
+- **CORS Configuration**: Restricted to production frontend origins
+
+### **Architecture**
+The application follows a **three-tier architecture**:
+1. **Presentation Layer**: React frontend (separate repository)
+2. **Business Logic Layer**: Flask API with behavioral analysis modules  
+3. **Data Layer**: In-memory data processing with CSV file uploads
 
 ## Frontend Integration
 
