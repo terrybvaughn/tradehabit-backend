@@ -55,11 +55,10 @@ Success at the interpretation stage unlocks the entire customer journey. Failure
 2. **Can't identify behavior-performance connection** - LLMs can analyze patterns in data and articulate cause-and-effect relationships between specific behaviors and trading outcomes in clear, narrative form
 3. **Doesn't understand magnitude/severity of mistakes** - LLMs can provide contextual comparisons and relative severity assessments ("This revenge trading pattern is costing you 23% of your profits compared to typical traders")
 4. **Overwhelmed by multiple issues, can't prioritize** - LLMs can synthesize complex information across multiple behavioral patterns and provide clear, reasoned prioritization frameworks
-5. **Sets unrealistic goals (too hard)** - LLMs can analyze historical performance data and calibrate realistic improvement targets based on the user's actual trading patterns and progression capability
-6. **Sets goals that are too easy** - LLMs can identify when targets aren't sufficiently challenging based on performance trends and suggest appropriately ambitious goals
-7. **Doesn't know how to implement behavioral corrections** - LLMs excel at providing specific, actionable guidance ("Here are 3 concrete steps to improve your stop-loss discipline based on your trading style")
-8. **Lacks motivation to stick with changes** - LLMs can provide personalized motivational coaching, celebrate progress, and reframe setbacks constructively
-9. **Doesn't know how to course-correct** - LLMs can analyze current performance against goals and provide specific corrective strategies tailored to the user's situation
+5. **Sets goals that are poorly calibrated (too hard or too easy)** - LLMs can analyze historical performance data to set appropriately challenging goals that are realistic yet ambitious based on the user's trading patterns and progression capability
+6. **Doesn't know how to implement behavioral corrections** - LLMs excel at providing specific, actionable guidance ("Here are 3 concrete steps to improve your stop-loss discipline based on your trading style")
+7. **Lacks motivation to stick with changes** - LLMs can provide personalized motivational coaching, celebrate progress, and reframe setbacks constructively
+8. **Doesn't know how to course-correct** - LLMs can analyze current performance against goals and provide specific corrective strategies tailored to the user's situation
 
 **Pain Points NOT Well-Suited for Generative AI:**
 - Data upload format issues (technical validation problem)
