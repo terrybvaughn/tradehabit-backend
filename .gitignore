@@ -6,8 +6,10 @@ __pycache__/
 # VSCode
 .vscode/
 
-# Cursor
+# Cursor (ignore most, but track valuable rules)
 .cursor/
+!.cursor/rules/
+.cursor/rules/.DS_Store
 
 # pyenv
 .python-version
