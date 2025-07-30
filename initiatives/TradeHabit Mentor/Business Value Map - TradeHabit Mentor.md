@@ -64,7 +64,7 @@ TradeHabit will operate a **freemium SaaS model** offering personalized behavior
 
 Major AI trading platforms focus exclusively on generating trading signals, automating strategies and providing market insights, but none address the trader's behavioral patterns that drive consistent losses. Meanwhile, leading trading analytics and journaling apps fixate on P&L performance metrics, relegating behavioral analysis to manual, subjective tagging systems that fail to create systematic change.
 
-**TradeHabit is the only platform that puts behavioral transformation at its core**. Rather than promising better picks or smarter algorithms, TradeHabit promises better traders through automated behavioral pattern recognition, evidence-based accountability and systematic habit formation.
+**TradeHabit is the only platform that puts behavioral transformation at its core**. Rather than promising better picks or smarter algorithms, TradeHabit promises better trading discipline through automated behavioral pattern recognition, evidence-based accountability and systematic habit formation.
 
 **Two core differentiators define TradeHabit's unique market position:**
 
