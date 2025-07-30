@@ -5,20 +5,20 @@
 ### Industry
 - Financial Services > Trading Education
 
-### Primary customer base
+### Primary Customer Base
 - B2C > Novice retail traders
 
-### Current growth stage
+### Current Growth Stage
 - Solo / bootstrapping / idea stage
 
-### Key challenges / headwinds
+### Key Challenges / Headwinds
 - **Data-access friction** - Many brokers do no expose historical trade data via API, inconsistent CSV formats across platforms
 - **Regulatory overhead & security** - CPRA compliance for sensitive financial data, disclosure requirements
 - **Subscription fatigue** - Consumer pruning of paid apps, higher churn rates for discretionary SaaS
 - **Volatile retail-trading engagement** - Activity drops during market downturns, unpredictable revenue cycles
 - **Consumer trust in AI guidance** - Only 32% of U.S. consumers trust AI broadly, concerns about hallucinations and transparency
 
-### Key opportunities / tailwinds
+### Key Cpportunities / Tailwinds
 - **Persistent retail-trading passion** - Retail participation remains structurally higher than pre-2020, driving demand for tools
 - **AI normalisation in investing** - Traders now expect AI-augmented insights, creating acceptance for behavioral coaching
 - **Fast-growing journaling/analytics market** - Digital journal apps forecasted >11% CAGR through 2029
@@ -26,11 +26,11 @@
 - **Hybrid monetisation trends** - Apps mixing subscriptions with one-time purchases see higher retention
 
 
-### Key competitors
+### Key Competitors
 TradeHabit Mentor faces competition from two distinct categories: **1) Trading analytics/journaling apps** (TradesViz, TraderSync, Edgewonk) offering data-driven insights, and **2) Individual trading mentors/coaches** providing personalized guidance but lacking scalable, data-integrated solutions. None of the incumbent software solutions offer a truly adaptive, goal-calibrating coach, which leaves a clear differentiation gap for TradeHabit Mentor's unique positioning that combines the systematic analysis of the former with the behavioral coaching approach of the latter.
 
 
-### Market size estimates
+### (Very Preliminary) Market Size Estimates
 
 - Combined TAM: **$750M-1.3B globally**
 
@@ -53,12 +53,12 @@ The trading analytics and journaling software market shows strong growth potenti
 *Note: These estimates are triangulated from proxy markets, competitive analysis, and underlying market drivers due to limited direct research on this specialized niche.*
 
 
-### Business model
+### Business Model
 
 TradeHabit will operate a **freemium SaaS model** offering personalized behavioral analytics and AI coaching services for retail traders. The core platform provides comprehensive trade performance analytics, behavioral insights and manual goal-setting tools at no cost, establishing user engagement and demonstrating value. Revenue is generated through **monthly subscriptions** that unlock expanded access to the AI-powered TradeHabit Mentor feature. Free users receive a limited number of monthly Mentor interactions, while paid subscribers gain unlimited or significantly higher usage limits, with request/response parameters optimized to control AI infrastructure costs while maximizing coaching value.
 
 
-### Key differentiators
+### Key Differentiators
 
 **"TradeHabit puts discipline before profits"** – a fundamentally different philosophy in a market obsessed with signal services, strategy automation, and financial performance analytics.
 
