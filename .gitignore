@@ -8,7 +8,7 @@ __pycache__/
 
 # Cursor (ignore most, but track valuable rules)
 .cursor/
-!.cursor/rules/
+!.cursor/rules/  # Exception: track project rules
 .cursor/rules/.DS_Store
 
 # pyenv
