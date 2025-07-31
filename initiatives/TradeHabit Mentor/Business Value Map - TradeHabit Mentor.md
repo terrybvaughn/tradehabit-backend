@@ -18,7 +18,7 @@
 - **Volatile retail-trading engagement** - Activity drops during market downturns, unpredictable revenue cycles
 - **Consumer trust in AI guidance** - Only 32% of U.S. consumers trust AI broadly, concerns about hallucinations and transparency
 
-### Key Cpportunities / Tailwinds
+### Key Opportunities / Tailwinds
 - **Persistent retail-trading passion** - Retail participation remains structurally higher than pre-2020, driving demand for tools
 - **AI normalisation in investing** - Traders now expect AI-augmented insights, creating acceptance for behavioral coaching
 - **Fast-growing journaling/analytics market** - Digital journal apps forecasted >11% CAGR through 2029
