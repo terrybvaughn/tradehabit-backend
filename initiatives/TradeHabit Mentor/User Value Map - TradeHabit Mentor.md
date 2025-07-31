@@ -27,8 +27,8 @@ Retail traders that are struggling with discipline problems.
 | Lacks motivation to stick with changes | High | Medium | Medium | Strong | Medium | **Medium** |
 | Doesn't notice slipping back into bad habits | Medium | High | Medium | Medium | Medium | **Medium** |
 | Doesn't know how to course-correct | Medium | Medium | Medium | Medium | Medium | **Medium** |
-| Data upload format issues | Medium | Low | Medium | Weak | Low | **Lower** |
-| Finding/downloading correct data | Low | Low | Low | N/A | N/A | **Lower** |
+| Data upload format issues | Medium | Low | Medium | Weak | Low | **Low** |
+| Finding/downloading correct data | Low | Low | Low | N/A | N/A | **Low** |
 
 ### Strategic Implementation Priority
 
