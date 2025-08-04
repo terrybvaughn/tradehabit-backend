@@ -15,7 +15,7 @@
 
 | Step | User | System | AI Assistant |
 |------|------|--------|--------------|
-| P | | Output analytics package | |
+| P | | Output analytics package with default parameters | |
 | 1 | | | Consume system outputs |
 | 2 | | | - Output a friendly introduction<br />- Present prompt suggestions based on common user questions |
 | 3 | - Click a prompt suggestion, or<br />- Input question(s) | | |
@@ -31,5 +31,23 @@
 
 ## 2. Adjust Parameters
 
+- **User Goal:** Calibrate analytics parameters to match their specific trading style and approach
+- **Preconditions:** User understands the basic analytics methodology and has seen initial results
+- **Success Criteria:** AI Assistant has helped user set appropriate parameter thresholds that produce meaningful, relevant behavioral insights
+
+### Happy Path
+
+| Step | User | System | AI Assistant |
+|------|------|--------|--------------|
+| 1 | | | - Assess current parameter settings and results<br />- Explain importance of parameter calibration |
+| 2 | | | Present current parameter settings and what they mean in trading terms |
+| 3 | Responds with trading style info (timeframes, risk tolerance, etc.) | | |
+| 4 | | | - Analyze user's trading approach<br />- Recommend specific parameter adjustments<br />- Explain rationale for recommendations |
+| 5 | Approves/modifies recommended parameters | Update analytics with new parameters | |
+| 6 | | Re-generate analytics package with calibrated parameters | Confirm parameters are now properly calibrated |
 
 ## 3. Understand Performance Analysis
+
+- **User Goal:** Understand the trading performance analysis and insights presented
+- **Preconditions:** Parameters are calibrated and user has basic understanding of analytics methodology
+- **Success Criteria:** AI Assistant can provide meaningful behavioral insights based on properly calibrated analysis
