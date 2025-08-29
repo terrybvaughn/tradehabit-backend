@@ -2,7 +2,7 @@
 
 **Metadata:**
 - Purpose: Comprehensive reference for all TradeHabit features and capabilities
-- Last Updated: [DATE]
+- Last Updated: 2025-08-28
 - Dependencies: /docs/ folder, API documentation
 - Priority: Critical
 
@@ -108,30 +108,6 @@
 - **Real-time updates**: Goals recalculated after each data upload
 - **Historical tracking**: Progress maintained across sessions (future feature)
 - **Achievement recognition**: Celebration of goal completion
-
-## API Endpoints
-
-### Core Analysis
-- `POST /api/analyze`: Upload and analyze trading data
-- `GET /api/summary`: High-level performance dashboard
-- `GET /api/insights`: Comprehensive behavioral analysis
-- `GET /api/trades`: Complete trade list with mistake flags
-
-### Detailed Analytics
-- `GET /api/losses`: Loss distribution analysis
-- `GET /api/revenge`: Revenge trading analysis  
-- `GET /api/risk-sizing`: Position sizing consistency
-- `GET /api/excessive-risk`: Statistical risk exposure
-- `GET /api/stop-loss`: Stop-loss usage and effectiveness
-- `GET /api/winrate-payoff`: Win rate and payoff analysis
-
-### Goal Management
-- `GET /api/goals`: Predefined goal progress
-- `POST /api/goals/calculate`: Custom goal evaluation
-
-### Configuration
-- `GET /api/settings`: Current analysis parameters
-- `POST /api/settings`: Update analysis thresholds
 
 ## Parameter Customization
 
