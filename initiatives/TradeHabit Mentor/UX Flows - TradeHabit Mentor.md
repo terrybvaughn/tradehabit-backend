@@ -5,7 +5,7 @@
 2. Adjust Parameters: User can adjust analytics parameters to fit the user's trading style
 3. Understand Performance Analysis: User understands the trading performance analysis and insights presented
 
-## 1. Comprehend Analytic Package
+## 1. Comprehend Analytics Package
 
 - **User Goal:** Make sense of TradeHabit metrics, analytics, parameters, insights and methodology
 - **Preconditions:** User has successfully uploaded data and the system has output all of its analytic data
