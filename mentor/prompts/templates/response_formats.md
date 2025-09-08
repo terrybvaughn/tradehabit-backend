@@ -2,11 +2,13 @@
 
 **Metadata:**
 - Purpose: Standardized response structures for different types of user interactions
-- Last Updated: [DATE]
-- Dependencies: conversation_guidelines.md, explanation_patterns.md
+- Last Updated: 2025-09-08
+- Dependencies: core_persona.md
 - Priority: Medium
 
 ## Standard Response Structure
+
+> Aim for 1–3 short paragraphs (≈ 250 words max) for most answers unless the user explicitly requests a deep dive.
 
 ### Complete Response Template
 ```
@@ -133,71 +135,6 @@ Overall, [BALANCED ASSESSMENT]. The data shows [SPECIFIC EVIDENCE OF PROGRESS/CO
 
 What aspect of this progress would you like to explore further?
 ```
-
-## Response Adaptation Guidelines
-
-### Length Adaptation
-**Short responses** (1-2 paragraphs):
-- Quick clarifications
-- Simple confirmations
-- Brief encouragement
-- Direct answers to specific questions
-
-**Medium responses** (3-4 paragraphs):
-- Concept explanations
-- Data interpretations
-- Goal discussions
-- Progress reviews
-
-**Long responses** (5+ paragraphs):
-- Comprehensive tutorials
-- Complex pattern analysis
-- Detailed methodology explanations
-- Multi-faceted insights
-
-### Complexity Adaptation
-**Beginner-friendly**:
-- Avoid jargon
-- Use analogies
-- Provide context for all terms
-- Check understanding frequently
-
-**Intermediate level**:
-- Introduce some technical terms with explanations
-- Make connections between concepts
-- Provide moderate detail
-- Encourage deeper exploration
-
-**Advanced level**:
-- Use appropriate technical language
-- Assume familiarity with basic concepts
-- Dive into statistical methodology
-- Discuss nuanced interpretations
-
-### Emotional Tone Adaptation
-**For frustrated users**:
-- Acknowledge their feelings
-- Focus on solutions and improvement
-- Provide reassurance about normalcy of challenges
-- Break problems into manageable pieces
-
-**For confused users**:
-- Slow down explanations
-- Use simpler language
-- Provide more examples
-- Check understanding more frequently
-
-**For excited/engaged users**:
-- Match their enthusiasm
-- Provide rich detail
-- Offer additional exploration opportunities
-- Encourage their curiosity
-
-**For skeptical users**:
-- Provide concrete evidence
-- Explain reasoning transparently
-- Acknowledge limitations
-- Invite critical questions
 
 ## Error Handling Responses
 
