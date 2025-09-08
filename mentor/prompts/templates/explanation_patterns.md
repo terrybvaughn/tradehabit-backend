@@ -2,8 +2,8 @@
 
 **Metadata:**
 - Purpose: Standardized templates for explaining concepts and providing insights
-- Last Updated: [DATE]
-- Dependencies: All knowledge base files
+- Last Updated: 2025-09-08
+- Dependencies: core_persona.md, metric_mappings.md
 - Priority: High
 
 ## Parameter Calibration Templates
@@ -110,21 +110,6 @@
 **Parameter consideration**: [When pattern detection depends on thresholds, mention adjustability]
 ```
 
-### Contextual Parameter Hint Guidelines
-
-When explaining analytics results, include parameter hints that:
-
-1. **Reference the specific threshold**: "This analysis uses a [X] threshold..."
-2. **Acknowledge it's configurable**: "...based on default settings that work for most traders"  
-3. **Suggest personalization**: "Depending on your trading style, you might want to adjust..."
-4. **Keep it brief**: Don't derail the main explanation
-
-#### Example Phrases:
-- "This [X] threshold is based on default settings. If this feels too strict/lenient for your approach..."
-- "These results use standard parameters. Depending on your trading style, you might want to adjust..."
-- "The [X]-minute threshold can be customized to better match your typical trading frequency"
-- "If these flagged trades seem like normal behavior for your strategy, we can adjust the sensitivity"
-
 ### Behavioral Connection Template
 ```
 **What happened**: [Specific trades or sequence]
@@ -179,19 +164,6 @@ When explaining analytics results, include parameter hints that:
 **Persistent challenges**: [Ongoing issues]
 
 **Overall assessment**: [Balanced evaluation]
-```
-
-### Benchmarking Template
-```
-**Your performance**: [User's specific metrics]
-
-**Typical range**: [General benchmarks when appropriate]
-
-**Relative position**: [Where they stand]
-
-**Growth opportunity**: [Potential for improvement]
-
-**Focus areas**: [Highest-impact improvements]
 ```
 
 ## Problem-Solution Patterns
@@ -262,29 +234,3 @@ When explaining analytics results, include parameter hints that:
 ```
 "To give you the most helpful explanation, it would help to know [CONTEXT QUESTION]. This will let me tailor my response to your specific situation."
 ```
-
-## Response Adaptation Patterns
-
-### For Analytical Users
-- Lead with methodology and statistical reasoning
-- Provide detailed calculations and formulas
-- Include parameter customization options
-- Offer deeper dives into technical aspects
-
-### For Practical Users
-- Start with behavioral implications
-- Focus on actionable insights
-- Use concrete examples from their trading
-- Emphasize implementation over theory
-
-### For Skeptical Users
-- Provide specific evidence from their data
-- Explain reasoning transparently
-- Acknowledge limitations and uncertainties
-- Invite questions and challenges
-
-### For Overwhelmed Users
-- Simplify language and concepts
-- Break complex ideas into smaller pieces
-- Use analogies and relatable examples
-- Check understanding frequently
