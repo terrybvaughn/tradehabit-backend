@@ -2,34 +2,90 @@
 
 **Metadata:**
 - Purpose: Detailed explanations for TradeHabit analytics and statistical methods
-- Last Updated: [DATE]
+- Last Updated: 2025-09-08
 - Dependencies: tradehabit_functionality.md
 - Priority: Critical
 
+## Data Processing & Quality
+
+### Stop-Loss Detection Logic
+TradeHabit identifies stop-loss orders by analyzing order data patterns:
+
+- **Order type analysis**: Looks for explicit stop-loss order types in CSV data
+- **Price relationship detection**: Identifies exits that occurred at or near logical stop levels
+- **Sequence analysis**: Examines order timing and price movements to infer stop usage
+- **Manual exit classification**: Distinguishes between stopped-out trades vs. discretionary exits
+
+**Impact on analysis**: Trades without detectable stops are flagged for "No Stop-Loss Order" mistakes and excluded from risk sizing calculations.
+
+### Data Quality Impacts
+Missing or incomplete order data directly affects analysis accuracy:
+
+- **Missing stop orders**: Reduces sample size for risk calculations and may undercount "No Stop-Loss" mistakes
+- **Incomplete price data**: Prevents accurate P&L and risk point calculations
+- **Missing timestamps**: Affects holding time calculations and revenge trade detection
+- **Partial fill data**: May result in incorrect position sizing or exit timing analysis
+- **Date range gaps**: Can skew statistical calculations and trend analysis
+
+**User guidance**: Upload complete order data for most accurate behavioral insights.
+
+### Multi-Mistake Classification
+Individual trades can be flagged with multiple mistake types simultaneously:
+
+- **Common combinations**: No Stop-Loss + Excessive Risk, Outsized Loss + Revenge Trade
+- **Independent detection**: Each mistake type is evaluated separately using its own criteria
+- **Aggregate counting**: Total mistake count may exceed flagged trade count due to overlapping classifications
+- **Analysis impact**: Multi-mistake trades often represent the highest-priority behavioral issues
+
 ## Statistical Methodology
+
+### Statistical Robustness
+TradeHabit's analysis reliability depends on adequate sample sizes and data quality:
+
+#### Minimum Data Requirements
+- **Risk sizing analysis**: Requires at least 10 trades with stop-loss orders for meaningful statistics
+- **Loss analysis**: Needs minimum 5 losing trades to establish reliable loss patterns
+- **Revenge detection**: Requires sufficient trade history to calculate median holding times
+- **Win rate calculations**: Most reliable with 20+ total trades
+
+#### Distribution Assumptions
+- **Normal distribution baseline**: Statistical thresholds assume roughly normal data distribution
+- **Outlier sensitivity**: Small sample sizes make analysis more sensitive to extreme values
+- **Skewed data handling**: Heavily skewed loss or risk distributions may require parameter adjustment
+
+#### Sample Size Warnings
+- **Low trade counts**: Analysis confidence decreases significantly below minimum thresholds
+- **Recent data only**: Short time periods may not capture full behavioral patterns
+- **Incomplete categories**: Some mistake types may not be detectable with limited data
 
 ### Distribution Analysis
 TradeHabit uses statistical distribution analysis to identify unusual trading behavior:
 
-#### Mean and Standard Deviation
-- **Mean (μ)**: Average value of losses or risk amounts
-- **Standard deviation (σ)**: Measure of variability around the mean
-- **Normal distribution assumption**: Most values cluster around the mean
-- **Outlier identification**: Values beyond μ + σ×(multiplier) are flagged
+#### Parameter Settings
 
-#### Z-Score Calculation
-- **Formula**: (Value - Mean) / Standard Deviation
-- **Interpretation**: How many standard deviations from the mean
-- **Significance levels**: 
-  - 1σ: ~68% of data within this range
-  - 2σ: ~95% of data within this range
-  - 3σ: ~99.7% of data within this range
+**Sigma Multiplier (Excessive Risk)**
+- **Purpose**: Controls sensitivity for flagging unusually large position sizes
+- **How it works**: Higher values flag only the most extreme risk sizes; lower values catch more moderate risk increases
+- **Adjustment impact**: Increase to reduce false positives; decrease to catch subtler risk management issues
+- **Calibration guidance**: Conservative traders may prefer lower settings (1.0-1.5); aggressive traders may use higher settings (2.0+)
 
-#### Threshold Setting
-- **Sigma multipliers**: User-adjustable sensitivity parameters
-- **Conservative approach**: Higher multipliers (2.0+) flag only extreme outliers
-- **Aggressive approach**: Lower multipliers (1.0) flag more potential issues
-- **Customization rationale**: Different trading styles require different thresholds
+**Sigma Multiplier (Outsized Losses)**
+- **Purpose**: Controls sensitivity for flagging unusually large losses
+- **How it works**: Compares each loss to your typical loss pattern to identify outliers
+- **Adjustment impact**: Higher values flag only catastrophic losses; lower values catch moderately large losses
+- **Calibration guidance**: Adjust based on your stop-loss discipline and acceptable loss variance
+
+**Revenge Window Multiplier (k-factor)**
+- **Purpose**: Defines the time window after a loss for detecting potential revenge trades
+- **How it works**: Multiplies your median holding time to set the revenge detection window
+- **Adjustment impact**: Higher values cast a wider net for revenge trades; lower values focus on immediate reactions
+- **Calibration guidance**: Day traders may need lower settings; swing traders typically use higher settings
+
+**Risk Variation Ratio Threshold**
+- **Purpose**: Sets the cutoff for flagging inconsistent position sizing
+- **How it works**: Measures how much your position sizes vary compared to your average
+- **Adjustment impact**: Lower thresholds flag smaller inconsistencies; higher thresholds only catch major sizing errors
+- **Calibration guidance**: Systematic traders should use lower thresholds; discretionary traders may prefer higher thresholds
 
 ### Mistake Detection Algorithms
 
@@ -64,28 +120,39 @@ TradeHabit uses statistical distribution analysis to identify unusual trading be
 
 **Behavioral interpretation**: Quick trades after losses often indicate emotional responses rather than rational analysis.
 
+#### Holding Time Calculations
+TradeHabit uses holding time patterns to establish revenge trade detection windows:
+
+- **Entry to exit measurement**: Time difference between position open and close timestamps
+- **Median calculation**: Uses middle value of all holding times to avoid outlier distortion
+- **Window scaling**: Multiplies median by k-factor to set revenge detection threshold
+- **Adaptive thresholds**: Different trading styles (scalping vs. swing) automatically get appropriate windows
+- **Pattern recognition**: Unusually quick entries after losses suggest emotional decision-making
+
+**Example**: If median holding time is 2 hours and k-factor is 0.5, trades entered within 1 hour of a loss are flagged as potential revenge trades.
+
 ## Performance Metrics Explained
 
 ### Win Rate Analysis
-- **Calculation**: (Winning trades / Total trades) × 100
-- **Behavioral significance**: Very high win rates (>80%) may indicate premature profit-taking
-- **Optimal ranges**: Most successful traders have win rates between 40-70%
-- **Relationship to payoff**: Higher win rates often paired with lower payoff ratios
+- **Calculation**: See "Win Rate" in metric_mappings.md glossary
+- **Behavioral significance**: Very high Win Rates (>80%) may indicate premature profit-taking
+- **Optimal ranges**: Most successful traders have Win Rates between 40-70%
+- **Relationship to payoff**: Higher Win Rates often paired with lower Payoff Ratios
 
 ### Payoff Ratio Analysis
-- **Calculation**: Average winning trade / Average losing trade
-- **Breakeven requirement**: Win rate > 1 / (1 + payoff ratio)
-- **Example**: 2:1 payoff ratio requires 33.3% win rate to break even
-- **Behavioral insight**: Low payoff ratios often indicate fear-based early exits
+- **Calculation**: See "Payoff Ratio" in metric_mappings.md glossary
+- **Breakeven requirement**: Win Rate > 1 / (1 + Payoff Ratio)
+- **Example**: 2:1 Payoff Ratio requires 33.3% Win Rate to break even
+- **Behavioral insight**: Low Payoff Ratios often indicate fear-based early exits
 
-### Required Win Rate
-- **Purpose**: Shows minimum win rate needed for profitability
-- **Formula**: 1 / (1 + payoff_ratio)
-- **Interpretation**: If actual win rate < required rate, strategy is unprofitable
-- **Action items**: Either improve win rate or increase payoff ratio
+### Required Win Rate Analysis
+- **Calculation**: See "Required Win Rate" in metric_mappings.md glossary
+- **Purpose**: Shows minimum Win Rate needed for profitability
+- **Interpretation**: If actual Win Rate < Required Win Rate, strategy is unprofitable
+- **Action items**: Either improve Win Rate or increase Payoff Ratio
 
-### Clean Trade Rate
-- **Calculation**: (Trades without mistakes / Total trades) × 100
+### Clean Trade Rate Analysis
+- **Calculation**: See "Clean Trade Rate" in metric_mappings.md glossary
 - **Behavioral metric**: Measures overall trading discipline
 - **Improvement tracking**: Primary indicator for behavioral progress
 - **Target setting**: Realistic improvement goals based on current rate
@@ -121,6 +188,17 @@ TradeHabit uses statistical distribution analysis to identify unusual trading be
 - **Best streak**: Longest historical streak achieved
 - **Progress percentage**: (Current streak / Goal target) × 100
 - **Behavioral significance**: Measures consistency of improvement
+
+#### Streak Definitions
+TradeHabit defines "clean" trades and streaks with specific criteria:
+
+- **Clean trade requirements**: Trade must have zero mistake flags (no stop-loss, excessive risk, outsized loss, or revenge trade violations)
+- **Streak counting**: Consecutive clean trades from most recent backward in time
+- **Streak breaking**: Any single mistake flag immediately resets current streak to zero
+- **Historical tracking**: Best streak represents longest consecutive clean period in entire trade history
+- **Goal integration**: Streak targets can be set based on current discipline level and improvement objectives
+
+**Behavioral insight**: Consistent streaks indicate developing trading discipline, while frequent resets suggest ongoing behavioral challenges requiring parameter adjustment or additional focus.
 
 ### Goal Types
 - **Trade-based**: Count consecutive clean trades

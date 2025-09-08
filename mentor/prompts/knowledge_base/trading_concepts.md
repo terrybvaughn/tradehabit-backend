@@ -2,7 +2,7 @@
 
 **Metadata:**
 - Purpose: Fundamental trading and behavioral psychology concepts for Mentor
-- Last Updated: [DATE]
+- Last Updated: 2025-09-08
 - Dependencies: None (general trading knowledge)
 - Priority: High
 
