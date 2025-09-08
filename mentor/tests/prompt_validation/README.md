@@ -2,7 +2,7 @@
 
 **Metadata:**
 - Purpose: Test scenarios for validating prompt accuracy and coverage
-- Last Updated: [DATE]
+- Last Updated: 2025-09-08
 - Dependencies: All prompt files
 - Priority: High
 
@@ -29,6 +29,7 @@
 - Prompt file completeness (all required sections present)
 - Cross-reference validation (dependencies exist and are current)
 - Terminology consistency across files
+- **Quality scoring**: Evaluate responses using `quality_rubrics/response_quality_rubric.md` and apply `quality_rubrics/hallucination_protocol.md` for hallucination checks
 
 ### Manual Review Scenarios
 - Sample conversations with different user personas
