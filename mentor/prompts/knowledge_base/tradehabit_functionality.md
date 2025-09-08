@@ -2,13 +2,13 @@
 
 **Metadata:**
 - Purpose: Comprehensive reference for all TradeHabit features and capabilities
-- Last Updated: 2025-08-28
+- Last Updated: 2025-09-08
 - Dependencies: /docs/ folder, API documentation
 - Priority: Critical
 
 ## Critical Foundation: Parameter Calibration
 
-**⚠️ IMPORTANT**: Parameter calibration is the foundational requirement for meaningful analytics. Without proper parameter settings, all downstream analysis may be irrelevant or misleading to the user's trading style.
+**IMPORTANT**: Parameter calibration is the foundational requirement for meaningful analytics. Without proper parameter settings, all downstream analysis may be irrelevant or misleading to the user's trading style.
 
 ### Why Parameter Calibration Matters
 - **Trading styles vary significantly**: Day traders vs swing traders have different risk tolerances, hold times, and loss thresholds
@@ -45,28 +45,28 @@
 
 #### Excessive Risk
 - **Definition**: Position sizes exceeding statistical risk parameters
-- **Calculation**: Uses μ + σ×(multiplier) on risk distribution
+- **Detection**: See analytics_explanations.md for detailed methodology
 - **Default threshold**: 1.5 sigma multiplier
 - **Customization**: User can adjust sigma_risk parameter
 - **Behavioral insight**: Often indicates emotional position sizing
 
 #### Outsized Losses
 - **Definition**: Losses exceeding typical loss distribution
-- **Calculation**: Uses μ + σ×(multiplier) on loss distribution  
+- **Detection**: See analytics_explanations.md for detailed methodology
 - **Default threshold**: 1.0 sigma multiplier
 - **Customization**: User can adjust sigma_loss parameter
 - **Behavioral insight**: May indicate poor stop-loss discipline or revenge trading
 
 #### Revenge Trading
 - **Definition**: Trades entered too quickly after losses
-- **Detection window**: Based on median hold time × k multiplier
+- **Detection**: See analytics_explanations.md for detailed methodology
 - **Default multiplier**: 1.0 (k parameter)
 - **Customization**: User can adjust k parameter
 - **Behavioral insight**: Emotional response to losses driving impulsive decisions
 
 #### Risk Sizing Inconsistency
 - **Definition**: High variation in position sizing decisions
-- **Measurement**: Coefficient of variation on risk amounts
+- **Detection**: See analytics_explanations.md for detailed methodology
 - **Threshold**: Default 0.35 (vr parameter)
 - **Customization**: User can adjust vr parameter
 - **Behavioral insight**: Lack of systematic approach to position sizing
@@ -74,18 +74,18 @@
 ### Analytics and Insights
 
 #### Performance Metrics
-- **Total trades**: Complete trade count
-- **Win rate**: Percentage of profitable trades
-- **Average win/loss**: Mean profit and loss amounts
-- **Payoff ratio**: Average win ÷ Average loss
-- **Required win rate**: Breakeven win rate given current payoff ratio
+- **Total trades**: See "Total Trades" in metric_mappings.md glossary
+- **Win rate**: See "Win Rate" in metric_mappings.md glossary
+- **Average win/loss**: See "Average Win" and "Average Loss" in metric_mappings.md glossary
+- **Payoff ratio**: See "Payoff Ratio" in metric_mappings.md glossary
+- **Required win rate**: See "Required Win Rate" in metric_mappings.md glossary
 
 #### Behavioral Metrics
-- **Clean trade rate**: Percentage of trades without flagged mistakes
-- **Mistake counts**: Total and by category
-- **Current streak**: Consecutive mistake-free trades
-- **Best streak**: Longest streak of clean trades
-- **Flagged trades**: Total trades with one or more mistakes
+- **Clean trade rate**: See "Clean Trade Rate" in metric_mappings.md glossary
+- **Mistake counts**: See "Total Mistakes" and "Mistakes by Type" in metric_mappings.md glossary
+- **Current streak**: See "Current Clean Streak" in metric_mappings.md glossary
+- **Best streak**: See "Best Clean Streak" in metric_mappings.md glossary
+- **Flagged trades**: See "Trades with Mistakes" in metric_mappings.md glossary
 
 #### Visualizations
 - **Loss Consistency Chart**: Distribution analysis of trading losses
@@ -118,6 +118,5 @@
 - **vr**: Risk sizing variation threshold (default: 0.35)
 
 ### Parameter Impact
-- **Higher values**: Less sensitive detection, fewer flagged mistakes
-- **Lower values**: More sensitive detection, more flagged mistakes
+- **Sensitivity control**: See analytics_explanations.md for detailed parameter effects
 - **User customization**: Allows adaptation to different trading styles
