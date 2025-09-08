@@ -33,8 +33,6 @@ curl -X POST "http://localhost:5000/api/analyze?sigma=1.0" \
 
 #### Query Parameters
 - `sigma` (optional): σ-multiplier for outsized-loss threshold (default: 1.0)
-- `sigma_risk` (optional): σ-multiplier for excessive-risk threshold (default: 1.5)
-- `k` (optional): Revenge-window multiplier on median hold time (default: 1.0)
 
 #### Response
 ```json
