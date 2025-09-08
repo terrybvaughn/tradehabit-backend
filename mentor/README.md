@@ -1,30 +1,17 @@
-# TradeHabit Mentor - Prompt Corpus
+# TradeHabit Mentor
 
-This directory contains the complete prompt engineering corpus for TradeHabit Mentor, the AI-powered trading coach that helps retail traders understand their behavioral patterns and improve their trading discipline.
+This directory contains the complete TradeHabit Mentor feature implementation - an AI-powered trading coach that helps retail traders understand their behavioral patterns and improve their trading discipline through data-driven insights.
 
 ## Directory Structure
 
-### `/prompts/system_instructions/`
-Core system prompts that define Mentor's personality, expertise, and interaction patterns:
-- `core_persona.md` - Fundamental personality and coaching philosophy
-- `trading_expert.md` - Domain expertise and analytical capabilities
-- `conversation_guidelines.md` - Interaction patterns and conversation management
+### `/prompts/`
+Complete prompt engineering corpus for TradeHabit Mentor. **See [prompts/README.md](prompts/README.md) for detailed processing order and usage guidelines.**
 
-### `/prompts/knowledge_base/`
-Comprehensive knowledge reference for all TradeHabit functionality and trading concepts:
-- `tradehabit_functionality.md` - Complete feature reference and API capabilities
-- `trading_concepts.md` - Behavioral psychology and trading fundamentals
-- `analytics_explanations.md` - Statistical methodology and interpretation guidance
-
-### `/prompts/conversation_starters/`
-Templates for initial user engagement based on user type and session context:
-- `first_time_user.md` - Onboarding patterns for new users
-- `returning_user.md` - Re-engagement patterns for experienced users
-
-### `/prompts/templates/`
-Standardized response patterns and formatting guidelines:
-- `explanation_patterns.md` - Templates for teaching concepts and providing insights
-- `response_formats.md` - Structured approaches for different interaction types
+Key components:
+- `system_instructions/` - Core personality and interaction patterns
+- `knowledge_base/` - TradeHabit functionality and trading concepts reference
+- `conversation_starters/` - Initial user engagement templates
+- `templates/` - Standardized response patterns and formatting
 
 ### `/tests/`
 Validation and quality assurance for prompt effectiveness:
@@ -33,17 +20,14 @@ Validation and quality assurance for prompt effectiveness:
 
 ## Usage Guidelines
 
+### Prompt Corpus Management
+**For detailed prompt usage guidelines, processing order, and document hierarchy, see [prompts/README.md](prompts/README.md).**
+
 ### Development Workflow
-1. **Reference existing templates** before creating new response patterns
-2. **Update knowledge base** when TradeHabit functionality changes
+1. **Follow prompt roadmap** for optimal model comprehension
+2. **Update knowledge base** when TradeHabit functionality changes  
 3. **Test prompt changes** using validation scenarios
 4. **Version control** all changes for rollback capability
-
-### Maintenance Priorities
-1. **System instructions** - Core personality and expertise (highest priority)
-2. **Knowledge base** - Accuracy of TradeHabit functionality (critical)
-3. **Conversation starters** - User engagement patterns (important)
-4. **Templates** - Response standardization (helpful)
 
 ### Integration Points
 - **Backend APIs**: Knowledge base must stay synchronized with actual TradeHabit endpoints
