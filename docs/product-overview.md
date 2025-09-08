@@ -2,7 +2,7 @@
 
 ## What Is TradeHabit?
 
-**TradeHabit** is a browser-based behavioral analytics tool designed to help novice and intermediate traders identify costly trading mistakes using only their historical trade order data.
+**TradeHabit** is a browser-based behavioral analytics tool designed to help traders identify costly trading mistakes using only their historical trade order data.
 
 Unlike other trade journaling and analytics apps that overwhelm new traders with complicated configurations and advanced analytics, TradeHabit focuses on the root cause of poor trade performance: behavior. By focusing on trading behavior, TradeHabit provides a set of easy-to-understand diagnostic tools that enable traders to quickly identify and correct the behaviors that are affecting their performance. And by setting goals, TradeHabit enables traders to develop good trading habits that drive personal accountability, consistency and better performance.
 
