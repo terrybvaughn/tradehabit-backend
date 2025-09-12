@@ -82,3 +82,11 @@ These are the mistake categories that can be applied to individual trades.
 | /api/stop-loss averageLossWithStop | Currency | Average Loss (With Stop) | Mean loss among trades that used a stop |
 | /api/stop-loss averageLossWithoutStop | Currency | Average Loss (Without Stop) | Mean loss among trades without a stop |
 | /api/stop-loss maxLossWithoutStop | Currency | Max Loss (Without Stop) | Largest loss among trades without a stop |
+
+## Key Alias Map (JSON → Canonical)
+| Canonical Key | JSON Key |
+|---------------|----------|
+| excessive_risk | excessive risk |
+| outsized_loss | outsized loss |
+| no_stop_loss | no stop-loss order |
+| revenge_trade | revenge trade |
