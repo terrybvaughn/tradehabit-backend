@@ -12,6 +12,12 @@ This directory contains the complete prompt engineering corpus for TradeHabit Me
 ```
 **Purpose**: Establishes Mentor's identity, interaction style, and domain expertise before any knowledge ingestion.
 
+### Product Context
+```
+docs/product-overview.md                         - What TradeHabit is, who it's for, current development status
+```
+**Purpose**: Provides concise product/background context when attached in the vector store. Supports, but does not override, authoritative prompt files.
+
 ### Phase 2: Authoritative Knowledge (Core Reference)
 ```
 4. knowledge_base/metric_mappings.md           - SINGLE SOURCE OF TRUTH for all definitions
@@ -40,6 +46,7 @@ This directory contains the complete prompt engineering corpus for TradeHabit Me
 - `analytics_explanations.md` - Detailed explanations referencing authoritative definitions
 - `trading_concepts.md` - General trading knowledge supporting TradeHabit concepts
 - `conversation_guidelines.md` - Interaction patterns supporting core persona
+- `docs/product-overview.md` - Product context; supports but never overrides authoritative files
 
 ### **Application Templates** (Implementation Tools)
 - `explanation_patterns.md` - Content templates using authoritative knowledge
@@ -101,6 +108,15 @@ trading_expert.md ↔ knowledge_base/ files
 - **Use templates** from first_time_user.md for parameter discussions
 - **Reference** analytics_explanations.md for methodology explanation
 
+## 📦 JSON Fixtures Precedence & Lookup Rules
+
+- Primary source for counts/summaries: `/api/summary` → `mistake_counts` (and `clean_trade_rate` when needed).
+- Secondary source for narrative aggregates: `/api/insights`.
+- Detail/example lookups: per-endpoint files (`/api/trades`, `/api/losses`, `/api/revenge`, `/api/risk-sizing`, `/api/excessive-risk`, `/api/stop-loss`, `/api/winrate-payoff`).
+- If per-endpoint totals disagree with `summary`: state the discrepancy once and proceed using `summary` by precedence.
+- Never guess. If a required field is missing or ambiguous, say so and ask a single clarifying question.
+- Language: avoid “biggest problem.” Prefer “highest‑impact area to review first.”
+
 ## 📁 File Roles Summary
 
 | Directory | Role | Authority Level |
@@ -109,6 +125,7 @@ trading_expert.md ↔ knowledge_base/ files
 | `knowledge_base/` | Reference & Definitions | **AUTHORITATIVE** |
 | `conversation_starters/` | Initial Engagement | Supporting |
 | `templates/` | Response Structure | Supporting |
+| `docs/` | Product context (e.g., product-overview.md) | Supporting |
 
 ## 🔄 Maintenance Notes
 
