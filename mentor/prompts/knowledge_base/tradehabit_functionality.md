@@ -2,7 +2,7 @@
 
 **Metadata:**
 - Purpose: Comprehensive reference for all TradeHabit features and capabilities
-- Last Updated: 2025-09-08
+- Last Updated: 2025-09-14
 - Dependencies: /docs/ folder, API documentation
 - Priority: Critical
 
@@ -15,61 +15,54 @@
 - **Analytics become meaningless without context**: A $100 loss might be "outsized" for a micro-trader but normal for someone trading larger positions
 - **User engagement depends on relevance**: Incorrectly flagged "mistakes" will cause users to lose trust in the system
 
-### Parameter Adjustment Process
-1. **Assess trading style**: Understand user's timeframes, position sizes, and risk approach
-2. **Review current thresholds**: Check if existing parameters align with their style
-3. **Adjust as needed**: Modify sigma multipliers, time windows, and risk thresholds
-4. **Validate results**: Ensure adjusted parameters produce meaningful, actionable insights
+**For detailed parameter configuration, calibration guidance, and technical implementation, see `analytics_explanations.md`.**
 
-### Key Adjustable Parameters
-- **sigma_risk**: Risk sizing threshold multiplier (default: 1.5)
-- **sigma_loss**: Outsized loss threshold multiplier (default: 1.0)  
-- **k**: Revenge trading time window multiplier (default: 1.0)
-- **vr**: Risk sizing consistency threshold (default: 0.35)
 
 ## Core TradeHabit Features
 
 ### Data Processing
 - **Supported formats**: Currently NinjaTrader CSV exports only
-- **Required columns**: [List specific columns from order_loader.py]
 - **Data validation**: Automatic format checking and error reporting
 - **Trade construction**: Converts order data into complete trade objects
+- **Quality requirements**: Complete order data needed for accurate analysis
 
 ### Mistake Detection Engine
 
 #### No Stop-Loss Orders
 - **Definition**: Trades executed without protective stop-loss orders
-- **Detection method**: Analyzes order sequences to identify missing stop orders
+- **Detection method**: Primary check scans post-entry order history; fallback scans brief window before entry for opposite-side stop orders
 - **Significance**: Indicates poor risk management discipline
 - **Impact**: Can lead to larger losses than planned
 
 #### Excessive Risk
-- **Definition**: Position sizes exceeding statistical risk parameters
+- **Definition**: Risk sizes (in points) exceeding statistical risk parameters
 - **Detection**: See analytics_explanations.md for detailed methodology
-- **Default threshold**: 1.5 sigma multiplier
-- **Customization**: User can adjust sigma_risk parameter
-- **Behavioral insight**: Often indicates emotional position sizing
+- **Default threshold**: 1.5
+- **Customization**: User can adjust Excessive Risk parameter
+- **Behavioral insight**: Often indicates emotional risk sizing
 
 #### Outsized Losses
 - **Definition**: Losses exceeding typical loss distribution
 - **Detection**: See analytics_explanations.md for detailed methodology
-- **Default threshold**: 1.0 sigma multiplier
-- **Customization**: User can adjust sigma_loss parameter
+- **Default threshold**: 1.0
+- **Customization**: User can adjust Outsized Loss parameter
 - **Behavioral insight**: May indicate poor stop-loss discipline or revenge trading
 
 #### Revenge Trading
 - **Definition**: Trades entered too quickly after losses
 - **Detection**: See analytics_explanations.md for detailed methodology
-- **Default multiplier**: 1.0 (k parameter)
-- **Customization**: User can adjust k parameter
+- **Default multiplier**: 1.0
+- **Customization**: User can adjust Revenge Trading Window Multiplier parameter
 - **Behavioral insight**: Emotional response to losses driving impulsive decisions
 
-#### Risk Sizing Inconsistency
-- **Definition**: High variation in position sizing decisions
-- **Detection**: See analytics_explanations.md for detailed methodology
-- **Threshold**: Default 0.35 (vr parameter)
-- **Customization**: User can adjust vr parameter
-- **Behavioral insight**: Lack of systematic approach to position sizing
+### Pattern Analysis
+
+#### Risk Sizing Consistency Analysis
+- **Definition**: Evaluates consistency of risk sizing decisions across trades
+- **Analysis type**: Pattern analysis (not individual trade flagging)
+- **Default threshold**: 0.35 coefficient of variation
+- **Customization**: User can adjust Risk Sizing Consistency parameter
+- **Behavioral insight**: Indicates systematic vs. inconsistent risk management approach
 
 ### Analytics and Insights
 
@@ -108,15 +101,3 @@
 - **Real-time updates**: Goals recalculated after each data upload
 - **Historical tracking**: Progress maintained across sessions (future feature)
 - **Achievement recognition**: Celebration of goal completion
-
-## Parameter Customization
-
-### Adjustable Thresholds
-- **sigma_loss**: Outsized loss detection sensitivity (default: 1.0)
-- **sigma_risk**: Excessive risk detection sensitivity (default: 1.5)
-- **k**: Revenge trading window multiplier (default: 1.0)
-- **vr**: Risk sizing variation threshold (default: 0.35)
-
-### Parameter Impact
-- **Sensitivity control**: See analytics_explanations.md for detailed parameter effects
-- **User customization**: Allows adaptation to different trading styles
