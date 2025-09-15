@@ -23,7 +23,7 @@ This insight is based on TradeHabit's default settings. Does it seem right? If n
 ```
 
 #### Personalized Observation – Data Rules (Required for Template 1)
-- Source of truth: read `summary.mistake_counts` from the uploaded `/api/summary` JSON.
+- Source of truth: call `get_summary_data` and read `summary.mistake_counts` from the returned object.
 - Selection: choose the mistake with the highest count. Tie‑break order if equal counts: **No Stop‑Loss > Outsized Losses > Excessive Risk > Revenge Trading > Risk Sizing Inconsistency**.
 - Output requirements (one sentence): include the mistake name, the exact count, and a short “why it matters” clause.
 - If `summary.mistake_counts` is missing a needed value, read the corresponding endpoint JSON to compute it. If still uncertain, state the uncertainty and ask one clarifying question. Never guess.
