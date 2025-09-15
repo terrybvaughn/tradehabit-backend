@@ -11,10 +11,10 @@ TradeHabit analyzes trading behavior to identify and quantify common trading mis
 The core business logic revolves around identifying five primary mistake categories:
 
 - **No Stop-Loss Orders**: Trades executed without protective stops
-- **Excessive Risk**: Position sizes exceeding statistical risk parameters  
+- **Excessive Risk**: Risk size (in points) exceeding statistical risk parameters  
 - **Outsized Losses**: Losses exceeding μ + σ·(multiplier) on loss distribution
 - **Revenge Trading**: Trades entered too quickly after losses
-- **Risk Sizing Inconsistency**: High variation in position sizing
+- **Risk Sizing Inconsistency**: High variation in risk sizing
 
 #### 2. **Statistical Analysis Engine**
 - **Outlier Detection**: Uses Z-score methodology with configurable sigma multipliers
@@ -90,10 +90,11 @@ def analyze_trades_for_no_stop_mistake(trades, order_df)
 ```
 - **Purpose**: Identifies trades without protective stop-loss orders
 - **Algorithm**:
-  - Scans 60-second window before trade entry
+  - Primary: Scans post-entry order history for opposite-side stop orders
+  - Fallback: Scans 60-second window before trade entry (for partial-exit edge cases)
   - Detects stop-loss orders using order type and proximity
-  - Handles OCO (One-Cancels-Other) scenarios
-  - Flags trades lacking protective stops
+  - Handles cancelled stops (2+ second minimum lifetime)
+  - Flags trades lacking protective stops in either window
 - **Business Rule**: Essential for risk management discipline
 
 #### **excessive_risk_analyzer.py** - Risk Outlier Detection
@@ -106,7 +107,7 @@ def analyze_trades_for_excessive_risk(trades, sigma_risk=1.5)
   - Computes mean and standard deviation of risk distribution
   - Flags trades exceeding mean + (sigma_risk × std_dev)
   - Provides statistical context for risk assessment
-- **Business Rule**: Prevents position sizing mistakes
+- **Business Rule**: Prevents risk sizing mistakes
 
 #### **outsized_loss_analyzer.py** - Loss Control
 ```python
@@ -136,7 +137,7 @@ def analyze_trades_for_revenge(trades, k=1.0)
 ```python
 def analyze_trades_for_risk_sizing_consistency(trades, vr_threshold=0.35)
 ```
-- **Purpose**: Evaluates consistency of position sizing
+- **Purpose**: Evaluates consistency of risk sizing
 - **Algorithm**:
   - Calculates risk_points from stop-loss distances
   - Computes coefficient of variation (std_dev / mean)
@@ -246,13 +247,13 @@ THRESHOLDS = {   # Configurable analysis parameters
 
 ### **Risk Management Rules**
 - Traders should use stop-loss orders on all positions
-- Position sizes should be consistent with risk parameters
+- Risk sizeing should be consistent with risk parameters
 - Losses should not exceed statistical expectations
 - Risk exposure should be proportional to account size
 
 ### **Behavioral Rules**
 - Avoid trading immediately after losses (revenge trading)
-- Maintain consistent position sizing methodology
+- Maintain consistent risk sizing methodology
 - Focus on process improvement over profit maximization
 - Track measurable behavioral goals
 
