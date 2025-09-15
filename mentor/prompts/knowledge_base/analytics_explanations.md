@@ -2,21 +2,11 @@
 
 **Metadata:**
 - Purpose: Detailed explanations for TradeHabit analytics and statistical methods
-- Last Updated: 2025-09-08
+- Last Updated: 2025-09-14
 - Dependencies: tradehabit_functionality.md
 - Priority: Critical
 
 ## Data Processing & Quality
-
-### Stop-Loss Detection Logic
-TradeHabit identifies stop-loss orders by analyzing order data patterns:
-
-- **Order type analysis**: Looks for explicit stop-loss order types in CSV data
-- **Price relationship detection**: Identifies exits that occurred at or near logical stop levels
-- **Sequence analysis**: Examines order timing and price movements to infer stop usage
-- **Manual exit classification**: Distinguishes between stopped-out trades vs. discretionary exits
-
-**Impact on analysis**: Trades without detectable stops are flagged for "No Stop-Loss Order" mistakes and excluded from risk sizing calculations.
 
 ### Data Quality Impacts
 Missing or incomplete order data directly affects analysis accuracy:
@@ -32,7 +22,6 @@ Missing or incomplete order data directly affects analysis accuracy:
 ### Multi-Mistake Classification
 Individual trades can be flagged with multiple mistake types simultaneously:
 
-- **Common combinations**: No Stop-Loss + Excessive Risk, Outsized Loss + Revenge Trade
 - **Independent detection**: Each mistake type is evaluated separately using its own criteria
 - **Aggregate counting**: Total mistake count may exceed flagged trade count due to overlapping classifications
 - **Analysis impact**: Multi-mistake trades often represent the highest-priority behavioral issues
@@ -40,13 +29,13 @@ Individual trades can be flagged with multiple mistake types simultaneously:
 ## Statistical Methodology
 
 ### Statistical Robustness
-TradeHabit's analysis reliability depends on adequate sample sizes and data quality:
+TradeHabit's analysis reliability depends on adequate sample sizes and data quality. Ideally, TradeHabit needs enough data to reach a 95% confidence level—this ensures our insights are trustworthy and actionable, rather than guesses based on too little information.
 
 #### Minimum Data Requirements
-- **Risk sizing analysis**: Requires at least 10 trades with stop-loss orders for meaningful statistics
-- **Loss analysis**: Needs minimum 5 losing trades to establish reliable loss patterns
-- **Revenge detection**: Requires sufficient trade history to calculate median holding times
-- **Win rate calculations**: Most reliable with 20+ total trades
+- **Risk sizing analysis**: Needs at least 50 trades with stop-loss orders to accurately identify what's "too risky" for your trading style. With fewer trades, TradeHabit can't tell the difference between normal risk-taking and genuinely excessive risk—it might flag your regular position size as a problem, or miss real risk issues. 50 trades gives us enough data to spot patterns that matter.
+- **Loss analysis**: Requires minimum 25 losing trades to reliably identify when your losses are unusually large. With just 5 losses, TradeHabit can't distinguish between normal losing trades and truly "outsized" losses that signal emotional trading or poor risk management. 25 losses provides enough data to spot concerning loss patterns.
+- **Revenge detection**: Needs 75+ trades to accurately detect revenge trading patterns. This analysis looks for trades that happen too quickly after losses, which requires enough trading history to establish your normal pace and identify when you're trading emotionally. Fewer trades make it impossible to distinguish between normal quick trades and revenge trading.
+- **Win rate calculations**: Most reliable with 100+ total trades to give you meaningful win rate insights. With only 20 trades, your win rate could easily swing from 30% to 70% just by chance—making it impossible to know if you're actually improving or just experiencing normal ups and downs. 100 trades provides a stable picture of your true performance.
 
 #### Distribution Assumptions
 - **Normal distribution baseline**: Statistical thresholds assume roughly normal data distribution
@@ -58,36 +47,68 @@ TradeHabit's analysis reliability depends on adequate sample sizes and data qual
 - **Recent data only**: Short time periods may not capture full behavioral patterns
 - **Incomplete categories**: Some mistake types may not be detectable with limited data
 
-### Distribution Analysis
-TradeHabit uses statistical distribution analysis to identify unusual trading behavior:
+## Parameter Configuration
 
-#### Parameter Settings
+### Parameter Settings
 
-**Sigma Multiplier (Excessive Risk)**
-- **Purpose**: Controls sensitivity for flagging unusually large position sizes
+**Excessive Risk**
+- **Purpose**: Controls sensitivity for flagging unusually large risk sizing
 - **How it works**: Higher values flag only the most extreme risk sizes; lower values catch more moderate risk increases
 - **Adjustment impact**: Increase to reduce false positives; decrease to catch subtler risk management issues
 - **Calibration guidance**: Conservative traders may prefer lower settings (1.0-1.5); aggressive traders may use higher settings (2.0+)
 
-**Sigma Multiplier (Outsized Losses)**
+**Outsized Losses**
 - **Purpose**: Controls sensitivity for flagging unusually large losses
 - **How it works**: Compares each loss to your typical loss pattern to identify outliers
 - **Adjustment impact**: Higher values flag only catastrophic losses; lower values catch moderately large losses
 - **Calibration guidance**: Adjust based on your stop-loss discipline and acceptable loss variance
 
-**Revenge Window Multiplier (k-factor)**
+**Revenge Window Multiplier**
 - **Purpose**: Defines the time window after a loss for detecting potential revenge trades
 - **How it works**: Multiplies your median holding time to set the revenge detection window
 - **Adjustment impact**: Higher values cast a wider net for revenge trades; lower values focus on immediate reactions
 - **Calibration guidance**: Day traders may need lower settings; swing traders typically use higher settings
 
-**Risk Variation Ratio Threshold**
-- **Purpose**: Sets the cutoff for flagging inconsistent position sizing
-- **How it works**: Measures how much your position sizes vary compared to your average
-- **Adjustment impact**: Lower thresholds flag smaller inconsistencies; higher thresholds only catch major sizing errors
+**Risk Sizing Consistency Threshold**
+- **Purpose**: Sets the threshold for measuring risk sizing consistency patterns
+- **How it works**: Measures how much your risk sizing varies compared to your average across all trades
+- **Adjustment impact**: Lower thresholds identify smaller consistency variations; higher thresholds only detect major sizing inconsistencies
 - **Calibration guidance**: Systematic traders should use lower thresholds; discretionary traders may prefer higher thresholds
 
+### Parameter Customization Impact
+
+#### Sensitivity Adjustment
+- **Higher thresholds**: Fewer flagged mistakes, less sensitive detection
+- **Lower thresholds**: More flagged mistakes, more sensitive detection
+- **Trading style adaptation**: Conservative vs. aggressive threshold setting
+- **Progress tracking**: Adjusting as discipline improves
+
+#### Common Adjustments
+- **New traders**: Often need more sensitive detection (lower thresholds)
+- **Experienced traders**: May prefer less sensitive detection for major issues only
+- **Strategy specific**: Different approaches require different sensitivity
+- **Market conditions**: Volatility changes may warrant threshold adjustments
+
+#### Calibration Process
+1. **Start with defaults**: Use standard parameters initially
+2. **Assess results**: Review flagged mistakes for relevance
+3. **Adjust sensitivity**: Modify parameters based on trading style
+4. **Validate changes**: Ensure adjusted parameters provide actionable insights
+5. **Regular review**: Periodically reassess parameter appropriateness
+
 ### Mistake Detection Algorithms
+
+#### Stop-Loss Detection
+```
+1. Primary: Check post-entry order history for opposite-side stop orders
+2. Fallback: Scan brief window before entry time (for partial-exit edge cases)
+3. Look for stop-loss orders using order type and proximity
+4. Handle cancelled stops (must have 2+ second lifetime to count)
+5. Check if exit order itself was a stop order
+6. Flag trades lacking protective stops in either window
+```
+
+**Behavioral interpretation**: Trading without stop-loss orders exposes you to unlimited risk and indicates a lack of systematic risk management discipline.
 
 #### Excessive Risk Detection
 ```
@@ -97,7 +118,7 @@ TradeHabit uses statistical distribution analysis to identify unusual trading be
 4. Flag trades where risk > threshold
 ```
 
-**Behavioral interpretation**: Large position sizes often indicate emotional decision-making rather than systematic risk management.
+**Behavioral interpretation**: Large risk size often indicate emotional decision-making rather than systematic risk management.
 
 #### Outsized Loss Detection
 ```
@@ -211,24 +232,3 @@ TradeHabit defines "clean" trades and streaks with specific criteria:
 - **Streak preservation**: Understanding what breaks positive patterns
 - **Motivation maintenance**: Positive reinforcement for progress
 - **Realistic targeting**: Goals calibrated to current ability level
-
-## Parameter Customization Impact
-
-### Sensitivity Adjustment
-- **Higher thresholds**: Fewer flagged mistakes, less sensitive detection
-- **Lower thresholds**: More flagged mistakes, more sensitive detection
-- **Trading style adaptation**: Conservative vs. aggressive threshold setting
-- **Progress tracking**: Adjusting as discipline improves
-
-### Common Adjustments
-- **New traders**: Often need more sensitive detection (lower thresholds)
-- **Experienced traders**: May prefer less sensitive detection for major issues only
-- **Strategy specific**: Different approaches require different sensitivity
-- **Market conditions**: Volatility changes may warrant threshold adjustments
-
-### Calibration Process
-1. **Start with defaults**: Use standard parameters initially
-2. **Assess results**: Review flagged mistakes for relevance
-3. **Adjust sensitivity**: Modify parameters based on trading style
-4. **Validate changes**: Ensure adjusted parameters provide actionable insights
-5. **Regular review**: Periodically reassess parameter appropriateness
