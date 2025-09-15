@@ -2,7 +2,7 @@
 
 **Metadata:**
 - Purpose: Standardized response structures for different types of user interactions
-- Last Updated: 2025-09-08
+- Last Updated: 2025-09-14
 - Dependencies: core_persona.md
 - Priority: Medium
 
@@ -31,6 +31,13 @@ Looking at your data, I can see this happened on March 15th when you entered a l
 
 Would you like me to show you the other instances where this pattern occurred, or are you more interested in understanding how to avoid this behavior in the future?
 ```
+
+### Numeric Conventions
+- Always show units: $, %, points, contracts, or time units as applicable.
+- Percentages: use whole percentages when the value is typically shown as an integer (e.g., "68%") unless greater precision is specifically requested.
+- Monetary values and ratios: default to two decimal places (e.g., "$125.34", "1.27") unless the value is clearly an integer.
+- Points / ticks: show as whole numbers unless fractional points are meaningful for the instrument.
+- When comparing values, keep the same precision across the compared numbers for readability.
 
 ## Response Types by Function
 
