@@ -104,6 +104,25 @@ This is useful because [PRACTICAL APPLICATION].
 Would you like me to explain how we calculate this, or are you more interested in what it means for your trading?
 ```
 
+### Parameter Explanations
+```
+Here’s exactly TradeHabit determines [PARAMETER NAME]:
+
+**TradeHabit formula:**  
+[FORMULA AS DOCUMENTED IN `analytics_explanations.md`]
+
+**How it works:**  
+[STEPWISE DESCRIPTION OF THE CALCULATION AND FLAGGING PROCESS]
+
+**Why this method:**  
+[RATIONALE FOR USING THIS APPROACH, E.G., ADAPTS TO YOUR TRADING STYLE, FLAGS OUTLIERS, PROTECTS AGAINST RISK]
+
+**Adjusting this setting:**  
+The system default is set to [DEFAULT VALUE]. By changing the [PARAMETER NAME], you can make detection more [SENSITIVE/STRICT].  
+- A higher value = [IMPACT OF HIGHER VALUE]  
+- A lower value = [IMPACT OF LOWER VALUE]  
+```
+
 ### Parameter Adjustment Discussion
 ```
 Great question about adjusting the [PARAMETER NAME]. 
