@@ -13,6 +13,9 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "static")
 
+# Simple in-memory cache for loaded snapshots
+CACHE: dict[str, Any] = {}
+
 # -----------------------------
 # Helpers
 # -----------------------------
@@ -26,12 +29,17 @@ def err(status_code: int, message: str, details: list | None = None):
 
 
 def load_json(filename: str) -> Tuple[Dict[str, Any], int]:
+    # check cache first
+    if filename in CACHE:
+        return CACHE[filename], 200
+
     path = os.path.join(DATA_DIR, filename)
     if not os.path.exists(path):
         return {"status": "ERROR", "message": f"{filename} not found"}, 404
     try:
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
+        CACHE[filename] = data  # store in cache
         return data, 200
     except json.JSONDecodeError:
         return {"status": "ERROR", "message": f"Invalid JSON format in {filename}"}, 400
@@ -168,6 +176,12 @@ def list_endpoints():
     }), 200
 
 
+@app.route("/refresh_cache", methods=["POST"])
+def refresh_cache():
+    CACHE.clear()
+    return jsonify({"status": "OK", "message": "Cache cleared"}), 200
+
+
 @app.route("/get_summary_data", methods=["POST", "OPTIONS"])
 def get_summary_data():
     if request.method == "OPTIONS":
@@ -226,6 +240,13 @@ def get_endpoint_data():
     # ---- optional paging of a specific top-level array (e.g., "losses", "trades") ----
     top_key = payload.get("top")
     if top_key and isinstance(data, dict):
+        # Redirect to dedicated filter endpoints which already handle
+        # pagination, filtering, sorting, and field projection.
+        if top_key == "losses":
+            return filter_losses()
+        if top_key == "trades":
+            return filter_trades()
+
         arr = data.get(top_key, None)
         if isinstance(arr, list):
             page = _paginate_list(arr, payload, default_limit=10)
@@ -330,10 +351,20 @@ def filter_trades():
             min_key = f"{field}_min"
             max_key = f"{field}_max"
             val = trade.get(field)
-            if min_key in payload and (val is None or val < payload[min_key]):
-                return False
-            if max_key in payload and (val is None or val > payload[max_key]):
-                return False
+
+            if min_key in payload:
+                threshold = payload[min_key]
+                if val is None:
+                    return False
+                if val < threshold:
+                    return False
+
+            if max_key in payload:
+                threshold = payload[max_key]
+                if val is None:
+                    return False
+                if val > threshold:
+                    return False
 
         # Result (win/loss)
         if payload.get("result") in {"win", "loss"}:
@@ -427,10 +458,16 @@ def filter_losses():
             min_key = f"{field}_min"
             max_key = f"{field}_max"
             val = rec.get(field)
-            if min_key in payload and (val is None or val < payload[min_key]):
-                return False
-            if max_key in payload and (val is None or val > payload[max_key]):
-                return False
+
+            if min_key in payload:
+                threshold = payload[min_key]
+                if val is None or val < threshold:
+                    return False
+
+            if max_key in payload:
+                threshold = payload[max_key]
+                if val is None or val > threshold:
+                    return False
 
         return True
 
