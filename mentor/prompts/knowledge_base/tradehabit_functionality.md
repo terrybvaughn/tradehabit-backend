@@ -6,6 +6,21 @@
 - Dependencies: /docs/ folder, API documentation
 - Priority: Critical
 
+## ⚠️ AUTHORITATIVE SCOPE: FUNCTIONALITY
+
+This file is the authoritative source for what TradeHabit does:
+- Core features and analytics parameters
+- Default parameter values
+- User-facing capabilities and limitations
+
+Mentor must not:
+- Invent new features or parameters not listed here
+- Suggest defaults beyond those documented
+- Expand functionality beyond what is explicitly described
+
+For detection algorithms and methodology details, see `analytics_explanations.md`.
+
+
 ## Critical Foundation: Parameter Calibration
 
 **IMPORTANT**: Parameter calibration is the foundational requirement for meaningful analytics. Without proper parameter settings, all downstream analysis may be irrelevant or misleading to the user's trading style.
@@ -30,29 +45,29 @@
 
 #### No Stop-Loss Orders
 - **Definition**: Trades executed without protective stop-loss orders
-- **Detection method**: Primary check scans post-entry order history; fallback scans brief window before entry for opposite-side stop orders
+- **Detection**: See *Stop-Loss Detection* in `analytics_explanations.md` for detailed methodology
 - **Significance**: Indicates poor risk management discipline
 - **Impact**: Can lead to larger losses than planned
 
 #### Excessive Risk
 - **Definition**: Risk sizes (in points) exceeding statistical risk parameters
-- **Detection**: See analytics_explanations.md for detailed methodology
+- **Detection**: See *Excessive Risk Detection* `analytics_explanations.md` for detailed methodology
 - **Default threshold**: 1.5
 - **Customization**: User can adjust Excessive Risk parameter
 - **Behavioral insight**: Often indicates emotional risk sizing
 
 #### Outsized Losses
 - **Definition**: Losses exceeding typical loss distribution
-- **Detection**: See analytics_explanations.md for detailed methodology
+- **Detection**: See *Outsized Loss Detection* `analytics_explanations.md` for detailed methodology
 - **Default threshold**: 1.0
 - **Customization**: User can adjust Outsized Loss parameter
 - **Behavioral insight**: May indicate poor stop-loss discipline or revenge trading
 
 #### Revenge Trading
 - **Definition**: Trades entered too quickly after losses
-- **Detection**: See analytics_explanations.md for detailed methodology
+- **Detection**: See *Revenge Trading Detection* `analytics_explanations.md` for detailed methodology
 - **Default multiplier**: 1.0
-- **Customization**: User can adjust Revenge Trading Window Multiplier parameter
+- **Customization**: User can adjust Revenge Window Multiplier parameter
 - **Behavioral insight**: Emotional response to losses driving impulsive decisions
 
 ### Pattern Analysis
@@ -63,6 +78,13 @@
 - **Default threshold**: 0.35 coefficient of variation
 - **Customization**: User can adjust Risk Sizing Consistency parameter
 - **Behavioral insight**: Indicates systematic vs. inconsistent risk management approach
+
+#### Loss Consistency Analysis
+- **Definition**: Visualizes the distribution of loss amounts across all losing trades
+- **Detection method**: Plots each losing trade's points lost to show dispersion patterns
+- **Default threshold**: 1.0
+- **Customization**: User can adjust Outsized Loss parameter
+- **Behavioral insight**: Tight clustering indicates disciplined stop-loss execution; wide dispersion suggests inconsistent risk management
 
 ### Analytics and Insights
 
@@ -101,3 +123,8 @@
 - **Real-time updates**: Goals recalculated after each data upload
 - **Historical tracking**: Progress maintained across sessions (future feature)
 - **Achievement recognition**: Celebration of goal completion
+
+## TradeHabit Limitations
+- For upload, TradeHabit only supports NinjaTrader order data CSV files 
+- No data persistence or user history
+- No real-time monitoring or alerts: TradeHabit only analyzes uploaded CSV order data after trading sessions. It cannot send notifications, generate alerts, or intervene during live trading.
