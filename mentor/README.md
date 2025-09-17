@@ -8,7 +8,8 @@ This directory contains the complete TradeHabit Mentor feature implementation - 
 Complete prompt engineering corpus for TradeHabit Mentor. **See [prompts/README.md](prompts/README.md) for detailed processing order and usage guidelines.**
 
 Key components:
-- `system_instructions/` - Core personality and interaction patterns
+- `assistant/` - Core system instructions and function schemas
+- `persona/` - Personality, conversation guidelines, and trading expertise
 - `knowledge_base/` - TradeHabit functionality and trading concepts reference
 - `conversation_starters/` - Initial user engagement templates
 - `templates/` - Standardized response patterns and formatting
@@ -31,6 +32,7 @@ Validation and quality assurance for prompt effectiveness:
 
 ### Integration Points
 - **Backend APIs**: Knowledge base must stay synchronized with actual TradeHabit endpoints
+- **Tool Runner**: Optimized with in-memory caching and smart API routing for performance
 - **Frontend flows**: Conversation starters should align with UX design
 - **Analytics engine**: Statistical explanations must match actual algorithms
 
@@ -40,7 +42,7 @@ Validation and quality assurance for prompt effectiveness:
 All prompts emphasize trading behavior and discipline improvement over market predictions or strategy recommendations.
 
 ### Data-Driven Insights
-Responses should always reference the user's actual trading data when providing explanations or guidance.
+Responses should always reference the user's actual trading data when providing explanations or guidance. Tool usage is mandatory for any data-related responses to ensure accuracy and prevent hallucination.
 
 ### Progressive Disclosure
 Information should be presented in digestible chunks, building complexity based on user engagement and comprehension.
@@ -54,11 +56,14 @@ Maintain supportive tone while delivering direct feedback about behavioral patte
 - All TradeHabit functionality references must be current and correct
 - Statistical methodology explanations must align with actual implementation
 - Trading psychology concepts must be evidence-based
+- Authoritative scope compliance: No feature invention or parameter modification beyond documented capabilities
+- Real-time capability accuracy: Clear representation of post-session analysis limitations
 
 ### Consistency Standards
 - Personality and tone should be consistent across all interactions
-- Terminology and explanations should be standardized
+- Terminology and explanations should be standardized using canonical mappings
 - Response patterns should follow established templates
+- Parameter explanations must reference authoritative documentation sources
 
 ### Completeness Criteria
 - All TradeHabit features must have explanation coverage
@@ -90,6 +95,7 @@ Each prompt file includes metadata header with:
 - Prompts designed for modern LLM capabilities (GPT-4 class models)
 - Context window management through modular prompt structure
 - Token efficiency balanced with prompt completeness
+- Performance optimizations: In-memory caching and smart API routing reduce response times
 
 ### Personalization Approach
 - Dynamic content insertion based on user's trading data
@@ -100,3 +106,4 @@ Each prompt file includes metadata header with:
 - Graceful degradation when data is insufficient
 - Clear boundaries for out-of-scope questions
 - Helpful redirections to appropriate resources or topics
+- Authoritative scope enforcement prevents hallucination and feature invention
