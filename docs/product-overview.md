@@ -84,6 +84,7 @@ TradeHabit solves this by:
   - NinjaTrader-only support
   - No data persistence or user history
   - Small feature set, limited analytics depth
+  - No real-time monitoring or alerts
 
 
 ## Vision
