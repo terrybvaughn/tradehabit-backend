@@ -1,46 +1,113 @@
 {
-    "name": "filter_losses",
-    "description": "Paginate or fetch extremes from losses.losses (outsized-loss records).",
-    "strict": false,
-    "parameters": {
-      "type": "object",
-      "properties": {
-        "hasMistake": { "type": "boolean", "description": "Filter for records flagged with a mistake" },
-        "time_of_day": { "type": "string", "enum": ["morning", "afternoon", "evening"] },
-        "time_range": {
-          "type": "object",
-          "properties": { "start": { "type": "string" }, "end": { "type": "string" } },
-          "description": "Clock-time HH:MM range"
-        },
-        "datetime_range": {
-          "type": "object",
-          "properties": { "start": { "type": "string" }, "end": { "type": "string" } },
-          "description": "ISO datetime range"
-        },
-        "side": { "type": "string" },
-        "symbol": { "type": "string" },
-        "pointsLost_min": { "type": "number" },
-        "pointsLost_max": { "type": "number" },
-  
-        "sort_by": { "type": "string", "enum": ["pointsLost", "entryTime"], "description": "Sort field" },
-        "sort_dir": { "type": "string", "enum": ["asc", "desc"], "description": "Sort direction" },
-  
-        "extrema": {
-          "type": "object",
-          "properties": {
-            "field": { "type": "string", "enum": ["pointsLost"] },
-            "mode": { "type": "string", "enum": ["max", "min"] }
-          },
-          "description": "Return only the single max/min record by field (ignores sort/paging)."
-        },
-  
-        "include_total": { "type": "boolean", "default": true },
-        "offset": { "type": "integer", "default": 0 },
-        "max_results": { "type": "integer", "default": 10 },
-        "fields": { "type": "array", "items": { "type": "string" } }
+  "name": "filter_losses",
+  "description": "Paginate or fetch extremes from losses.losses (outsized-loss records).",
+  "strict": false,
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "hasMistake": {
+        "type": "boolean",
+        "description": "Filter for records flagged with a mistake"
       },
-      "required": [],
-      "additionalProperties": false
-    }
+      "time_of_day": {
+        "type": "string",
+        "enum": [
+          "morning",
+          "afternoon",
+          "evening"
+        ]
+      },
+      "time_range": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string"
+          },
+          "end": {
+            "type": "string"
+          }
+        },
+        "description": "Clock-time HH:MM range"
+      },
+      "datetime_range": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string"
+          },
+          "end": {
+            "type": "string"
+          }
+        },
+        "description": "ISO datetime range"
+      },
+      "side": {
+        "type": "string"
+      },
+      "symbol": {
+        "type": "string"
+      },
+      "pointsLost_min": {
+        "type": "number"
+      },
+      "pointsLost_max": {
+        "type": "number"
+      },
+      "sort_by": {
+        "type": "string",
+        "enum": [
+          "pointsLost",
+          "entryTime"
+        ],
+        "description": "Sort field"
+      },
+      "sort_dir": {
+        "type": "string",
+        "enum": [
+          "asc",
+          "desc"
+        ],
+        "description": "Sort direction"
+      },
+      "extrema": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "enum": [
+              "pointsLost"
+            ]
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "max",
+              "min"
+            ]
+          }
+        },
+        "description": "Return only the single max/min record by field (ignores sort/paging)."
+      },
+      "include_total": {
+        "type": "boolean",
+        "default": true
+      },
+      "offset": {
+        "type": "integer",
+        "default": 0
+      },
+      "max_results": {
+        "type": "integer",
+        "default": 10
+      },
+      "fields": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [],
+    "additionalProperties": false
   }
-  
+}
