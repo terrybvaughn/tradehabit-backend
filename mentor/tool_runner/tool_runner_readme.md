@@ -1,9 +1,10 @@
 # TradeHabit Mentor – Tool Runner
 
 This service acts as a **local tool runner** for the TradeHabit Mentor assistant.  
-It bridges between OpenAI’s **Assistants API** (function calling) and TradeHabit’s analytics data.
+It bridges between OpenAI's **Assistants API** (function calling) and TradeHabit's analytics data.
 
 - In **testing mode**, it serves **static JSON snapshots** from `/static/` (e.g., `summary.json`, `losses.json`, etc.).  
+- Features **in-memory caching** and **smart API routing** for optimal performance
 - Later, you can replace the file loader with direct calls to the **live TradeHabit API** (e.g., `https://app.tradehab.it/api/summary`) once session priming is in place.
 
 ---
@@ -74,13 +75,78 @@ Returns the full contents of `summary.json`.
 Full JSON object (win rate, payoff ratio, mistake counts, streaks, etc.)
 
 ### `POST /get_endpoint_data`
-Fetches any other whitelisted JSON file.  
+Fetches any other whitelisted JSON file with smart routing optimization.  
 **Request body:**
 ```json
-{ "name": "losses" }   // one of: summary, losses, revenge, excessive_risk, risk_sizing, stop-loss, winrate_payoff, trades, insights
+{ 
+  "name": "losses",           // one of: summary, losses, revenge, excessive_risk, risk_sizing, stop-loss, winrate_payoff, trades, insights
+  "top": "losses",           // optional: automatically routes to filter_losses() for pagination
+  "keys_only": true,         // optional: returns metadata only
+  "max_results": 10,         // optional: limits results when using top parameter
+  "fields": ["entryTime", "pointsLost"]  // optional: field projection
+}
 ```
 **Response:**  
-Full JSON contents of the requested file.
+- With `top="losses"` or `top="trades"`: Paginated results via dedicated filter endpoints
+- With `keys_only=true`: Metadata about available keys and array lengths
+- Default: Full JSON contents of the requested file
+
+### `POST /filter_trades`
+Advanced trade filtering with pagination and field projection.  
+**Request body:**
+```json
+{
+  "mistakes": ["no stop-loss order"],
+  "time_of_day": "morning",
+  "side": "Buy",
+  "symbol": "MNQH4",
+  "max_results": 10,
+  "offset": 0,
+  "fields": ["entryTime", "pnl", "mistakes"]
+}
+```
+
+### `POST /filter_losses`
+Advanced loss filtering with pagination and sorting.  
+**Request body:**
+```json
+{
+  "hasMistake": true,
+  "pointsLost_min": 10,
+  "sort_by": "pointsLost",
+  "sort_dir": "desc",
+  "max_results": 5
+}
+```
+
+### `POST /refresh_cache`
+Clears the in-memory cache to force fresh data loading.  
+**Request body:** `{}`  
+**Response:**
+```json
+{ "status": "OK", "message": "Cache cleared" }
+```
+
+---
+
+## ⚡ Performance Features
+
+### In-Memory Caching
+- **Automatic caching**: JSON files are loaded once and cached in memory
+- **Cache invalidation**: Use `/refresh_cache` endpoint to clear cache when data updates
+- **Performance boost**: Eliminates repeated file reads for better response times
+
+### Smart API Routing
+- **Automatic delegation**: `get_endpoint_data` with `top="losses"` → `filter_losses()`
+- **Automatic delegation**: `get_endpoint_data` with `top="trades"` → `filter_trades()`
+- **Payload optimization**: Prevents returning full arrays, uses existing pagination
+- **Token efficiency**: Reduces response sizes for repeated API calls
+
+### Pagination & Filtering
+- **Built-in pagination**: All endpoints support `max_results`, `offset`, and `fields`
+- **Advanced filtering**: Time ranges, mistake types, numeric ranges, sorting
+- **Field projection**: Return only specific fields to reduce payload size
+- **Metadata queries**: Use `keys_only=true` for structure exploration
 
 ---
 
@@ -115,6 +181,23 @@ Full JSON contents of the requested file.
      }
      ```
 
-2. Point the tool’s **URL** to your ngrok URL, e.g.:  
+2. Point the tool's **URL** to your ngrok URL, e.g.:  
    - `https://abcd1234.ngrok-free.app/get_summary_data`  
    - `https://abcd1234.ngrok-free.app/get_endpoint_data`
+   - `https://abcd1234.ngrok-free.app/filter_trades`
+   - `https://abcd1234.ngrok-free.app/filter_losses`
+   - `https://abcd1234.ngrok-free.app/refresh_cache`
+
+## 🚨 Troubleshooting
+
+### Common Issues
+- **Large payloads**: Use `max_results` and `fields` parameters to limit response size
+- **Stale data**: Call `/refresh_cache` after updating JSON files
+- **Memory usage**: Cache grows with file size; restart service if needed
+- **API slamming**: Smart routing prevents repeated full-array requests
+
+### Performance Tips
+- Use `keys_only=true` for structure exploration
+- Leverage `top` parameter for automatic pagination
+- Apply field projection to reduce token usage
+- Cache invalidation only when data actually changes
