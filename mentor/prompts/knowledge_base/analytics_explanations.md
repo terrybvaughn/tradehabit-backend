@@ -6,6 +6,22 @@
 - Dependencies: tradehabit_functionality.md
 - Priority: Critical
 
+
+## ⚠️ AUTHORITATIVE SCOPE: METHODOLOGY
+
+This file is the authoritative source for how TradeHabit works:
+- Detection algorithms for each mistake type
+- Parameter definitions and statistical basis
+- Calibration process and methodological constraints
+
+Mentor must not:
+- Add extra behavioral conditions to detection logic
+- Reinterpret parameters or introduce alternative definitions
+- Blend general trading psychology into algorithm descriptions
+
+For feature list, defaults, and scope of functionality, see `tradehabit_functionality.md`.
+
+
 ## Data Processing & Quality
 
 ### Data Quality Impacts
@@ -52,24 +68,28 @@ TradeHabit's analysis reliability depends on adequate sample sizes and data qual
 ### Parameter Settings
 
 **Excessive Risk**
+- **Formula:** Risk Threshold = Mean Risk + (σ × Standard Deviation of Risks), where σ = Excessive Risk Threshold (default = 1.5)
 - **Purpose**: Controls sensitivity for flagging unusually large risk sizing
 - **How it works**: Higher values flag only the most extreme risk sizes; lower values catch more moderate risk increases
 - **Adjustment impact**: Increase to reduce false positives; decrease to catch subtler risk management issues
 - **Calibration guidance**: Conservative traders may prefer lower settings (1.0-1.5); aggressive traders may use higher settings (2.0+)
 
 **Outsized Losses**
+- **Formula:** Loss Threshold = Mean Loss + (σ × Standard Deviation of Losses), where σ = Outsized Loss Threshold (default = 1.0)
 - **Purpose**: Controls sensitivity for flagging unusually large losses
 - **How it works**: Compares each loss to your typical loss pattern to identify outliers
 - **Adjustment impact**: Higher values flag only catastrophic losses; lower values catch moderately large losses
 - **Calibration guidance**: Adjust based on your stop-loss discipline and acceptable loss variance
 
 **Revenge Window Multiplier**
+- **Formula:** Revenge Window = Median Holding Time × Revenge Window Multiplier (default = 1.0)
 - **Purpose**: Defines the time window after a loss for detecting potential revenge trades
 - **How it works**: Multiplies your median holding time to set the revenge detection window
 - **Adjustment impact**: Higher values cast a wider net for revenge trades; lower values focus on immediate reactions
 - **Calibration guidance**: Day traders may need lower settings; swing traders typically use higher settings
 
 **Risk Sizing Consistency Threshold**
+- **Formula:** Consistency = Coefficient of Variation of Risk Sizes ≤ Risk Sizing Consistency Threshold (default = 0.35)
 - **Purpose**: Sets the threshold for measuring risk sizing consistency patterns
 - **How it works**: Measures how much your risk sizing varies compared to your average across all trades
 - **Adjustment impact**: Lower thresholds identify smaller consistency variations; higher thresholds only detect major sizing inconsistencies
@@ -101,14 +121,13 @@ TradeHabit's analysis reliability depends on adequate sample sizes and data qual
 #### Stop-Loss Detection
 ```
 1. Primary: Check post-entry order history for opposite-side stop orders
-2. Fallback: Scan brief window before entry time (for partial-exit edge cases)
+2. Fallback: Scan brief window before entry time (because stop-loss orders sometimes get timestamped before entry executions)
 3. Look for stop-loss orders using order type and proximity
 4. Handle cancelled stops (must have 2+ second lifetime to count)
 5. Check if exit order itself was a stop order
 6. Flag trades lacking protective stops in either window
 ```
 
-**Behavioral interpretation**: Trading without stop-loss orders exposes you to unlimited risk and indicates a lack of systematic risk management discipline.
 
 #### Excessive Risk Detection
 ```
@@ -118,7 +137,6 @@ TradeHabit's analysis reliability depends on adequate sample sizes and data qual
 4. Flag trades where risk > threshold
 ```
 
-**Behavioral interpretation**: Large risk size often indicate emotional decision-making rather than systematic risk management.
 
 #### Outsized Loss Detection
 ```
@@ -129,28 +147,26 @@ TradeHabit's analysis reliability depends on adequate sample sizes and data qual
 5. Flag losses exceeding threshold
 ```
 
-**Behavioral interpretation**: Unusually large losses suggest discipline breakdowns in stop-loss execution or risk management.
 
 #### Revenge Trading Detection
 ```
 1. Calculate median holding time for all trades
-2. Set revenge window = median_hold_time × k_multiplier
+2. Set revenge window = median_hold_time × revenge_window_multiplier
 3. For each losing trade, check if next trade occurs within window
 4. Flag subsequent trades as potential revenge trades
 ```
 
-**Behavioral interpretation**: Quick trades after losses often indicate emotional responses rather than rational analysis.
-
-#### Holding Time Calculations
+**Holding Time Calculations**
 TradeHabit uses holding time patterns to establish revenge trade detection windows:
 
 - **Entry to exit measurement**: Time difference between position open and close timestamps
 - **Median calculation**: Uses middle value of all holding times to avoid outlier distortion
-- **Window scaling**: Multiplies median by k-factor to set revenge detection threshold
+- **Window scaling**: Multiplies median by revenge window multiplier to set revenge detection threshold
 - **Adaptive thresholds**: Different trading styles (scalping vs. swing) automatically get appropriate windows
 - **Pattern recognition**: Unusually quick entries after losses suggest emotional decision-making
 
-**Example**: If median holding time is 2 hours and k-factor is 0.5, trades entered within 1 hour of a loss are flagged as potential revenge trades.
+**Example**: If median holding time is 2 hours and revenge window multiplier is 0.5, trades entered within 1 hour of a loss are flagged as potential revenge trades.
+
 
 ## Performance Metrics Explained
 
@@ -178,29 +194,18 @@ TradeHabit uses holding time patterns to establish revenge trade detection windo
 - **Improvement tracking**: Primary indicator for behavioral progress
 - **Target setting**: Realistic improvement goals based on current rate
 
-## Visualization Interpretations
+### Loss Consistency Analysis
+- **Calculation**: Uses all losing trades in the dataset. Each trade's loss size (in points) is measured and plotted to show distribution patterns
+- **Purpose**: Visualizes the dispersion of loss amounts across all losing trades to assess risk management consistency
+- **Behavioral significance**: Tight distribution indicates disciplined stop-loss execution; wide dispersion suggests inconsistent risk management or emotional trading
 
-### Loss Consistency Chart
-- **Purpose**: Shows distribution of trading losses
-- **X-axis**: Loss amount or percentage
-- **Y-axis**: Frequency of occurrence
-- **Normal pattern**: Bell curve with most losses near the mean
-- **Problem patterns**: 
-  - Fat tails: Occasional very large losses
-  - Bimodal: Two distinct loss clusters
-  - Right skew: More large losses than expected
+#### Loss Consistency Chart
+- **Chart interpretation**:
+  - **Tight clustering**: Most losses near the mean indicates consistent stop-loss discipline
+  - **Wide dispersion**: Scattered losses suggest inconsistent risk management or emotional decision-making
+  - **Outlier identification**: Individual losses that deviate significantly from the typical pattern
+- **Relationship to outsized loss detection**: While this chart shows overall loss dispersion, the outsized loss analyzer specifically flags losses exceeding mean + (σ × standard deviation) threshold
 
-#### Reading the Chart
-- **Central tendency**: Where most losses cluster
-- **Outliers**: Losses in the tail regions
-- **Consistency**: Tighter distribution = more consistent loss control
-- **Risk management**: Wide distribution suggests inconsistent stops
-
-### Performance Timeline
-- **Purpose**: Shows trades and mistakes over time
-- **Pattern recognition**: Clusters of mistakes, improvement trends
-- **Trigger identification**: External factors affecting performance
-- **Progress validation**: Visual evidence of behavioral improvement
 
 ## Goal Tracking Analytics
 
