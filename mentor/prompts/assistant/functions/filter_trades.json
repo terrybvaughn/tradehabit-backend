@@ -1,106 +1,106 @@
 {
-    "name": "filter_trades",
-    "description": "Filter trades based on mistake type, time, side, symbol, and outcome. Optionally return paginated results and a deterministic total count.",
-    "strict": false,
-    "parameters": {
-      "type": "object",
-      "properties": {
-        "mistakes": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Filter for trades with one or more mistakes (e.g. 'revenge trade', 'no stop-loss order')"
+  "name": "filter_trades",
+  "description": "Filter trades based on mistake type, time, side, symbol, and outcome. Optionally return paginated results and a deterministic total count.",
+  "strict": false,
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "mistakes": {
+        "type": "array",
+        "items": {
+          "type": "string"
         },
-        "time_of_day": {
-          "type": "string",
-          "enum": [
-            "morning",
-            "afternoon",
-            "evening"
-          ],
-          "description": "Optional filter for time of day the trade occurred"
-        },
-        "time_range": {
-          "type": "object",
-          "properties": {
-            "start": {
-              "type": "string",
-              "description": "Start time (HH:MM)"
-            },
-            "end": {
-              "type": "string",
-              "description": "End time (HH:MM)"
-            }
-          },
-          "description": "Optional clock-time range filter (e.g., 07:00 to 11:30)"
-        },
-        "datetime_range": {
-          "type": "object",
-          "properties": {
-            "start": {
-              "type": "string",
-              "description": "Start datetime (ISO format)"
-            },
-            "end": {
-              "type": "string",
-              "description": "End datetime (ISO format)"
-            }
-          },
-          "description": "Optional full datetime range (e.g., for backtesting periods)"
-        },
-        "side": {
-          "type": "string",
-          "description": "Filter by trade side (Buy/Sell)"
-        },
-        "symbol": {
-          "type": "string",
-          "description": "Filter by futures symbol (e.g., MNQH4)"
-        },
-        "riskPoints_min": {
-          "type": "number"
-        },
-        "riskPoints_max": {
-          "type": "number"
-        },
-        "pointsLost_min": {
-          "type": "number"
-        },
-        "pointsLost_max": {
-          "type": "number"
-        },
-        "pnl_min": {
-          "type": "number"
-        },
-        "pnl_max": {
-          "type": "number"
-        },
-        "result": {
-          "type": "string",
-          "enum": [
-            "win",
-            "loss",
-            "any"
-          ],
-          "description": "Optional filter for trade outcome"
-        },
-        "include_total": {
-          "type": "boolean",
-          "description": "If true, include `total` = count of all matches (ignores pagination).",
-          "default": true
-        },
-        "offset": {
-          "type": "integer",
-          "description": "Start index for pagination (0-based).",
-          "default": 0
-        },
-        "max_results": {
-          "type": "integer",
-          "description": "Number of trades to return in `results`. Use 0 to return only the `total` count with no items.",
-          "default": 10
-        }
+        "description": "Filter for trades with one or more mistakes (e.g. 'revenge trade', 'no stop-loss order')"
       },
-      "required": [],
-      "additionalProperties": false
-    }
+      "time_of_day": {
+        "type": "string",
+        "enum": [
+          "morning",
+          "afternoon",
+          "evening"
+        ],
+        "description": "Optional filter for time of day the trade occurred"
+      },
+      "time_range": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "description": "Start time (HH:MM)"
+          },
+          "end": {
+            "type": "string",
+            "description": "End time (HH:MM)"
+          }
+        },
+        "description": "Optional clock-time range filter (e.g., 07:00 to 11:30)"
+      },
+      "datetime_range": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "description": "Start datetime (ISO format)"
+          },
+          "end": {
+            "type": "string",
+            "description": "End datetime (ISO format)"
+          }
+        },
+        "description": "Optional full datetime range (e.g., for backtesting periods)"
+      },
+      "side": {
+        "type": "string",
+        "description": "Filter by trade side (Buy/Sell)"
+      },
+      "symbol": {
+        "type": "string",
+        "description": "Filter by futures symbol (e.g., MNQH4)"
+      },
+      "riskPoints_min": {
+        "type": "number"
+      },
+      "riskPoints_max": {
+        "type": "number"
+      },
+      "pointsLost_min": {
+        "type": "number"
+      },
+      "pointsLost_max": {
+        "type": "number"
+      },
+      "pnl_min": {
+        "type": "number"
+      },
+      "pnl_max": {
+        "type": "number"
+      },
+      "result": {
+        "type": "string",
+        "enum": [
+          "win",
+          "loss",
+          "any"
+        ],
+        "description": "Optional filter for trade outcome"
+      },
+      "include_total": {
+        "type": "boolean",
+        "description": "If true, include `total` = count of all matches (ignores pagination).",
+        "default": true
+      },
+      "offset": {
+        "type": "integer",
+        "description": "Start index for pagination (0-based).",
+        "default": 0
+      },
+      "max_results": {
+        "type": "integer",
+        "description": "Number of trades to return in `results`. Use 0 to return only the `total` count with no items.",
+        "default": 10
+      }
+    },
+    "required": [],
+    "additionalProperties": false
   }
+}

@@ -1,45 +1,45 @@
 {
-    "name": "get_endpoint_data",
-    "description": "Fetch a snapshot file; optionally return keys-only or a paginated slice of a top-level array.",
-    "strict": false,
-    "parameters": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Endpoint name (e.g., losses, revenge, excessive-risk / risk-sizing / winrate-payoff / stop-loss). Hyphens/underscores/spaces are equivalent."
-        },
-        "keys_only": {
-          "type": "boolean",
-          "description": "If true, return only top-level keys and array lengths."
-        },
-        "top": {
-          "type": "string",
-          "description": "Name of a top-level array to page through (e.g., 'trades', 'records')."
-        },
-        "fields": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Projection of fields to return for items in the paginated array (used with 'top')."
-        },
-        "include_total": {
-          "type": "boolean",
-          "description": "When paginating a top-level array, include `total` = full count."
-        },
-        "offset": {
-          "type": "integer",
-          "description": "Start index for pagination (0-based)."
-        },
-        "max_results": {
-          "type": "integer",
-          "description": "Number of items to return from the top-level array; 0 = return only the total."
-        }
+  "name": "get_endpoint_data",
+  "description": "Fetch a snapshot file; optionally return keys-only or a paginated slice of a top-level array.",
+  "strict": false,
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "Endpoint name (e.g., losses, revenge, excessive-risk / risk-sizing / winrate-payoff / stop-loss). Hyphens/underscores/spaces are equivalent."
       },
-      "required": [
-        "name"
-      ],
-      "additionalProperties": false
-    }
+      "keys_only": {
+        "type": "boolean",
+        "description": "If true, return only top-level keys and array lengths."
+      },
+      "top": {
+        "type": "string",
+        "description": "Name of a top-level array to page through (e.g., 'trades', 'records')."
+      },
+      "fields": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Projection of fields to return for items in the paginated array (used with 'top')."
+      },
+      "include_total": {
+        "type": "boolean",
+        "description": "When paginating a top-level array, include `total` = full count."
+      },
+      "offset": {
+        "type": "integer",
+        "description": "Start index for pagination (0-based)."
+      },
+      "max_results": {
+        "type": "integer",
+        "description": "Number of items to return from the top-level array; 0 = return only the total."
+      }
+    },
+    "required": [
+      "name"
+    ],
+    "additionalProperties": false
   }
+}

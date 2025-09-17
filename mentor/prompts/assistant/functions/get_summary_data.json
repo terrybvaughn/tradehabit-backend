@@ -1,11 +1,11 @@
 {
-    "name": "get_summary_data",
-    "description": "Returns summary-level trading metrics and mistake counts",
-    "strict": true,
-    "parameters": {
-      "type": "object",
-      "properties": {},
-      "required": [],
-      "additionalProperties": false
-    }
+  "name": "get_summary_data",
+  "description": "Returns summary-level trading metrics and mistake counts",
+  "strict": true,
+  "parameters": {
+    "type": "object",
+    "properties": {},
+    "required": [],
+    "additionalProperties": false
   }
+}
