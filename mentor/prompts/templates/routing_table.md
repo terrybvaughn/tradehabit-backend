@@ -28,10 +28,11 @@ From the list of categories below, determine which category the user’s questio
 - **Notes:** Always include canonical label and a short personalized data reference.  
 
 ### Methodology / Measurement
-- **Trigger Examples:** “How do you determine…”, “How do you measure…”, “What factors decide…”, “What rules are used to…”, “How do you decide…”
-- **Explanation Pattern:** Analytical / Statistical Pattern (from `explanation_patterns.md`) 
+- **Trigger Examples:** "How do you determine…", "How do you measure…", "What factors decide…", "What rules are used to…", "How do you decide…", "How does TradeHabit determine…", "How does TradeHabit decide…", "How does TradeHabit identify…", "How does TradeHabit measure…", "How does the system decide…", "How does the system determine…", "How does the system identify…"
+- **Explanation Pattern:** Analytical / Statistical Pattern (from `explanation_patterns.md`)
 - **Response Format:** Parameter Explanations (if parameter-related) or Educational Response (if purely statistical)  (from `response_formats.md`)
-- **Notes:** Must restate formulas exactly from `analytics_explanations.md` (e.g., Excessive Risk = mean + σ × std dev; Revenge = median hold time × multiplier). Then explain in plain language with user-specific numbers from the endpoint. Always tie back to user’s data.
+- **Notes:** Must restate formulas exactly from `analytics_explanations.md` (e.g., Excessive Risk = mean + σ × std dev; Revenge = median hold time × multiplier). Then explain in plain language with user-specific numbers from the endpoint. Always tie back to user's data.
+- **CRITICAL for Revenge Trading:** Methodology is ONLY time-based using holding patterns. MUST use exact formula: "Revenge Window = Median Holding Time × Revenge Window Multiplier (default = 1.0)". NEVER mention position size, risk size, or size multipliers - these are complete fabrications not in the actual methodology.
 
 ### Contextual / Comparative
 - **Trigger Examples:** “How is this different from…”, “What separates…”, “What distinguishes…”, “Compare A vs. B”  
