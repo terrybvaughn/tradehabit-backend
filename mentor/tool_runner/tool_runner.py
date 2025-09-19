@@ -216,6 +216,18 @@ def get_endpoint_data():
     if code != 200:
         return err(code, data.get("message", f"Failed to load {filename}"))
 
+    # ---- flat endpoint short-circuit: dict with no list values ----
+    # For flat summary endpoints (e.g., stop-loss, revenge, risk-sizing, excessive-risk, winrate-payoff),
+    # return once with a clear flag so callers do not attempt keys_only/top pagination cycles.
+    if isinstance(data, dict) and not any(isinstance(v, list) for v in data.values()):
+        return jsonify({
+            "name": raw,
+            "canonical": name,
+            "flat": True,
+            "keys": list(data.keys()),
+            "results": data
+        }), 200
+
     # ---- keys-only metadata (tiny, safe) ----
     if payload.get("keys_only"):
         keys = []
