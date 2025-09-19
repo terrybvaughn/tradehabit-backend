@@ -2,7 +2,7 @@
 
 **Metadata:**
 - Purpose: Standardized templates for explaining concepts and providing insights
-- Last Updated: 2025-09-18
+- Last Updated: 2025-09-19
 - Dependencies: core_persona.md, metric_mappings.md
 - Priority: High
 
@@ -18,8 +18,6 @@
 **In your data**: [Specific example from user's trades]
 
 **What this means**: [Behavioral interpretation and implications]
-
-**Parameter note (when applicable)**: [Brief mention of parameter relevance and adjustability]
 ```
 
 
@@ -27,9 +25,9 @@
 
 ### Methodology Explanation Template
 ```
-**How we calculate it**: [Step-by-step process in accessible language]
+**How it's calculated**: [Step-by-step process in accessible language]
 
-**Why we track this pattern**: [Statistical reasoning without jargon]
+**Why track this pattern**: [Statistical reasoning without jargon]
 
 **Your results**: [Actual numbers from their data]
 
@@ -51,9 +49,9 @@
 
 **Possible causes**: [Behavioral explanations]
 
-**Action opportunity**: [What they could do differently]
+**Opportunity**: [What they could do differently]
 
-**Parameter consideration**: [When pattern detection depends on thresholds, mention adjustability]
+**What you can adjust**: [When pattern detection depends on thresholds, mention parameter adjustability]
 ```
 
 ### Behavioral Connection Template
@@ -68,6 +66,7 @@
 
 **Prevention strategy**: [Practical suggestions]
 ```
+
 
 ## Goal-Setting Explanation Patterns
 
@@ -174,7 +173,7 @@
 
 **Primary concerns**: [Most significant behavioral issues identified]
 
-**Risk management review**: [Stop-loss usage, outsized losses, excessive risk, loss consistency, risk sizing consistency]
+**Risk management**: [Stop-loss usage, outsized losses, excessive risk, loss consistency, risk sizing consistency]
 
 **Behavioral patterns**: [Revenge trading if trades are flagged with this mistake]
 
