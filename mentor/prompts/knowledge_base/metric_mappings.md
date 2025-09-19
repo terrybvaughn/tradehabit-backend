@@ -2,7 +2,7 @@
 
 **Metadata:**
 - Purpose: Single source of truth mapping API fields → user-facing labels → help-doc anchors
-- Last Updated: 2025-09-08
+- Last Updated: 2025-09-19
 - Dependencies: docs/api.md, UI labels
 - Priority: Critical
 
@@ -15,12 +15,20 @@
 These are the mistake categories that can be applied to individual trades.
 
 | Internal Tag | Canonical Label | Definition |
-|--------------|-----------------|--------------------------|
+|--------------|-----------------|------------|
 | no stop-loss order | No Stop-Loss Order | Trade executed without a stop-loss order |
 | excessive risk | Excessive Risk | Risk size exceeded the configured risk threshold |
 | outsized loss | Outsized Loss | Loss amount exceeded the configured outsized-loss threshold |
 | revenge trade | Revenge Trade | Trade entered within the configured revenge-trade time window after a loss |
-| risk sizing inconsistency | Risk Sizing Inconsistency | High variation in position sizing decisions indicating lack of systematic approach |
+
+
+## Behavioral Patterns
+These are patterns that TradeHabit detects for behavioral analysis. They are not formally classified as mistakes, but are still important.
+
+| Internal Tag | Canonical Label | Definition |
+|--------------|-----------------|------------|
+| risk sizing consistency | Risk Sizing Consistency | Analysis of risk size (entry-to-stop distance) across trades to assess risk execution discipline  |
+| loss consistency | Loss Consistency | Analysis of loss amount distribution patterns to assess stop-loss discipline |
 
 
 ## API Key Glossary
@@ -68,7 +76,7 @@ These are the mistake categories that can be applied to individual trades.
 | /api/risk-sizing minRiskPoints | Points | Min Risk Points | Smallest risk size (in points) among trades |
 | /api/risk-sizing maxRiskPoints | Points | Max Risk Points | Largest risk size (in points) among trades |
 | /api/risk-sizing variationRatio | Ratio | Risk Variation Ratio | Measure of your position sizing consistency |
-| /api/risk-sizing variationThreshold | Ratio | Variation Threshold | Cutoff for determining if your position sizing is inconsistent |
+| /api/risk-sizing variationThreshold | Ratio | Risk Sizing Consistency | Cutoff for determining if your position sizing is inconsistent |
 | /api/revenge revenge_multiplier | Scalar | Revenge Window Multiplier | Multiplier applied to median hold time to define the revenge window (k) |
 | /api/revenge total_revenge_trades | Count | Revenge Trade Count | Number of trades identified within the revenge window after a loss |
 | /api/revenge net_pnl_revenge<br>/api/revenge net_pnl_per_trade_revenge | Currency | Net P&L (Revenge) | Total and per-trade profit/loss from revenge trades |
@@ -82,6 +90,7 @@ These are the mistake categories that can be applied to individual trades.
 | /api/stop-loss averageLossWithStop | Currency | Average Loss (With Stop) | Mean loss among trades that used a stop |
 | /api/stop-loss averageLossWithoutStop | Currency | Average Loss (Without Stop) | Mean loss among trades without a stop |
 | /api/stop-loss maxLossWithoutStop | Currency | Max Loss (Without Stop) | Largest loss among trades without a stop |
+
 
 ## Key Alias Map (JSON → Canonical)
 | Canonical Key | JSON Key |
