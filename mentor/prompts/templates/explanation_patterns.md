@@ -2,46 +2,12 @@
 
 **Metadata:**
 - Purpose: Standardized templates for explaining concepts and providing insights
-- Last Updated: 2025-09-08
+- Last Updated: 2025-09-18
 - Dependencies: core_persona.md, metric_mappings.md
 - Priority: High
 
-## Parameter Calibration Templates
 
-### Parameter Importance Explanation
-```
-**Why calibration matters**: TradeHabit's analytics use statistical thresholds to identify behavioral patterns. These thresholds need to match your trading style, or the results won't be meaningful.
-
-**Think of it like this**: [ANALOGY - e.g., "It's like adjusting a thermostat - what feels 'too hot' varies by person"]
-
-**Your current settings**: [List current parameter values and what they mean]
-
-**Does this feel right?**: [Ask for validation based on their recent trading experience]
-```
-
-### Parameter Adjustment Guidance Template
-```
-**Current threshold**: Your [PARAMETER] is set to [VALUE], which means [EXPLANATION IN TRADING TERMS]
-
-**What this captures**: With this setting, we're flagging [X] trades as [MISTAKE TYPE] out of your last [Y] trades
-
-**If this feels wrong**: We can adjust it [UP/DOWN] to be [MORE/LESS] sensitive. For example, [SPECIFIC EXAMPLE]
-
-**Recommended adjustment**: Based on your trading style, I suggest [SPECIFIC RECOMMENDATION WITH REASONING]
-```
-
-### Parameter Validation Template
-```
-**Let's check your calibration**: Looking at the trades flagged as [MISTAKE TYPE], do these feel like actual behavioral issues or normal parts of your strategy?
-
-**Specific examples**: [List 2-3 flagged trades with dates/details]
-
-**Your assessment**: Do these flagged instances represent behaviors you want to change, or are they acceptable within your trading approach?
-
-**Adjustment needed**: [Based on their feedback, propose parameter changes]
-```
-
-## Concept Explanation Framework
+## Conceptual / Definition Pattern
 
 ### Basic Concept Template
 ```
@@ -56,7 +22,7 @@
 **Parameter note (when applicable)**: [Brief mention of parameter relevance and adjustability]
 ```
 
-### Example Application
+#### Example Application
 ```
 **What it is**: Revenge trading means entering new trades very quickly after losses, often driven by emotion rather than analysis.
 
@@ -69,7 +35,7 @@
 **Parameter note**: This analysis uses a [X]-minute threshold based on default settings. Depending on your trading style and typical trade frequency, you might want to adjust this timing to be more or less sensitive.
 ```
 
-## Statistical Explanation Patterns
+## Analytical / Statistical Pattern
 
 ### Methodology Explanation Template
 ```
@@ -82,7 +48,7 @@
 **What you can adjust**: [Parameter customization options]
 ```
 
-### Example Application
+#### Example Application
 ```
 **How we calculate it**: We look at all your loss amounts, find the average loss, measure how spread out they are, then identify losses that are unusually large compared to your typical pattern.
 
@@ -93,7 +59,7 @@
 **Parameter consideration**: This $150 threshold is based on default settings that work for most traders. If this feels too strict or too lenient for your position sizing approach, we can adjust the sensitivity to better match your trading style.
 ```
 
-## Data-Driven Insight Patterns
+## Practical / Diagnostic Pattern
 
 ### Pattern Identification Template
 ```
@@ -151,7 +117,7 @@
 **Next milestone**: [Logical next goal]
 ```
 
-## Comparative Analysis Patterns
+## Contextual / Comparative Pattern
 
 ### Before vs. After Template
 ```
@@ -207,7 +173,7 @@
 **Consistency factor**: [Maintaining good patterns]
 ```
 
-### Encouragement Template
+### Encouragement Pattern
 ```
 **Progress made**: [Specific improvements]
 
@@ -218,19 +184,30 @@
 **Confidence builder**: [Reason for optimism]
 ```
 
-## Clarification Request Patterns
+## Assessment / Evaluation Pattern
 
-### When User Question is Unclear
+### Comprehensive Assessment Template
 ```
-"I want to make sure I understand what you're looking for. Are you asking about [OPTION A] or [OPTION B]? Or would you like me to explain [OPTION C]?"
+**Overall performance**: [High-level summary of trading performance]
+
+**Key strengths**: [Positive patterns and areas of good discipline]
+
+**Primary concerns**: [Most significant behavioral issues identified]
+
+**Risk management review**: [Stop-loss usage, outsized losses, excessive risk, loss consistency, risk sizing consistency]
+
+**Behavioral patterns**: [Revenge trading if trades are flagged with this mistake]
+
+**Recommendations**: [Top 2-3 actionable improvements to focus on]
 ```
 
-### When Multiple Interpretations Exist
-```
-"That's a great question that could go in a few directions. Would you like me to focus on [ASPECT 1], [ASPECT 2], or [ASPECT 3]? Or shall I cover all three briefly?"
-```
+## Default Pattern
+This minimal pattern is used when a user question does not clearly map to any specialized category. Use it to deliver a helpful yet concise answer while optionally requesting clarification.
 
-### When Concept Needs Context
 ```
-"To give you the most helpful explanation, it would help to know [CONTEXT QUESTION]. This will let me tailor my response to your specific situation."
+[CORE ANSWER]: Provide a brief, good-faith answer based on the question and available data or documentation.
+
+[OPTIONAL CONTEXT]: One short sentence that orients the user to how this ties to TradeHabit analytics (if relevant).
+
+[NEXT STEP / CLARIFICATION]: If the question is ambiguous, politely ask one specific clarifying question or suggest a next area to explore.
 ```
