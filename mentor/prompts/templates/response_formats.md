@@ -2,7 +2,7 @@
 
 **Metadata:**
 - Purpose: Standardized response structures for different types of user interactions
-- Last Updated: 2025-09-18
+- Last Updated: 2025-09-19
 - Dependencies: core_persona.md
 - Priority: Medium
 
@@ -25,16 +25,6 @@
 [FOLLOW-UP QUESTION or suggestion for next exploration]
 ```
 
-### Example Application
-```
-That's an excellent question about how TradeHabit identifies revenge trading.
-
-[Explanation of revenge trading detection methodology]
-
-Looking at your data, I can see this happened on March 15th when you entered a long position just 6 minutes after closing a loss - well within the revenge trading window for your typical holding time.
-
-Would you like me to show you the other instances where this pattern occurred, or are you more interested in understanding how to avoid this behavior in the future?
-```
 
 ### Numeric Conventions
 - Always show units: $, %, points, contracts, or time units as applicable.
