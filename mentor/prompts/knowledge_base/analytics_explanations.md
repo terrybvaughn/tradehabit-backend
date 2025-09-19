@@ -89,9 +89,12 @@ TradeHabit's analysis reliability depends on adequate sample sizes and data qual
 - **Calibration guidance**: Day traders may need lower settings; swing traders typically use higher settings
 
 **Risk Sizing Consistency Threshold**
+**⚠️ DISTINCT FROM LOSS CONSISTENCY**: Risk Sizing Consistency analyzes **planned risk size** (entry-to-stop distance) across all trades; Loss Consistency analyzes **actual loss amounts** on completed losing trades.
+
 - **Formula:** Consistency = Coefficient of Variation of Risk Sizes ≤ Risk Sizing Consistency Threshold (default = 0.35)
 - **Purpose**: Sets the threshold for measuring risk sizing consistency patterns
 - **How it works**: Measures how much your risk sizing varies compared to your average across all trades
+- **Data source**: Risk size (entry-to-stop distance) at trade entry, not actual loss outcomes
 - **Adjustment impact**: Lower thresholds identify smaller consistency variations; higher thresholds only detect major sizing inconsistencies
 - **Calibration guidance**: Systematic traders should use lower thresholds; discretionary traders may prefer higher thresholds
 
@@ -195,9 +198,12 @@ TradeHabit uses holding time patterns to establish revenge trade detection windo
 - **Target setting**: Realistic improvement goals based on current rate
 
 ### Loss Consistency Analysis
+**⚠️ DISTINCT FROM RISK SIZING CONSISTENCY**: Loss Consistency analyzes **actual loss amounts** on completed losing trades; Risk Sizing Consistency analyzes **planned risk size** (entry-to-stop distance) before trade execution.
+
 - **Calculation**: Uses all losing trades in the dataset. Each trade's loss size (in points) is measured and plotted to show distribution patterns
-- **Purpose**: Visualizes the dispersion of loss amounts across all losing trades to assess risk management consistency
+- **Purpose**: Visualizes the dispersion of loss amounts across all losing trades to assess stop-loss execution discipline
 - **Behavioral significance**: Tight distribution indicates disciplined stop-loss execution; wide dispersion suggests inconsistent risk management or emotional trading
+- **Data source**: Actual points lost on completed trades, not planned risk sizing
 
 #### Loss Consistency Chart
 - **Chart interpretation**:
