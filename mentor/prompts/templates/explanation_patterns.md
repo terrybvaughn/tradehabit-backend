@@ -22,18 +22,6 @@
 **Parameter note (when applicable)**: [Brief mention of parameter relevance and adjustability]
 ```
 
-#### Example Application
-```
-**What it is**: Revenge trading means entering new trades very quickly after losses, often driven by emotion rather than analysis.
-
-**Why it matters**: These impulsive trades typically have lower success rates because they're based on frustration rather than sound reasoning.
-
-**In your data**: I found 3 potential revenge trades where you entered new positions within [X] minutes of closing a loss, including your trade on [DATE] where you went long MNQH5 just 8 minutes after taking a $45 loss.
-
-**What this means**: When you're feeling the sting of a loss, your decision-making might be compromised. Taking a brief pause could help you make more objective trading decisions.
-
-**Parameter note**: This analysis uses a [X]-minute threshold based on default settings. Depending on your trading style and typical trade frequency, you might want to adjust this timing to be more or less sensitive.
-```
 
 ## Analytical / Statistical Pattern
 
@@ -41,23 +29,15 @@
 ```
 **How we calculate it**: [Step-by-step process in accessible language]
 
-**Why this method works**: [Statistical reasoning without jargon]
+**Why we track this pattern**: [Statistical reasoning without jargon]
 
-**Your specific results**: [Actual numbers from their data]
+**Your results**: [Actual numbers from their data]
+
+**What this means**: [Behavioral interpretation, implications, and (if applicable) opportunity for improvment]
 
 **What you can adjust**: [Parameter customization options]
 ```
 
-#### Example Application
-```
-**How we calculate it**: We look at all your loss amounts, find the average loss, measure how spread out they are, then identify losses that are unusually large compared to your typical pattern.
-
-**Why this method works**: Most of your losses should cluster around a predictable range. When losses are much larger than usual, it often indicates a breakdown in your stop-loss discipline or risk management.
-
-**Your specific results**: Your average loss is $67, with most losses between $35-$95. However, 4 trades had losses over $150, which is where we draw the "outsized loss" line for your trading.
-
-**Parameter consideration**: This $150 threshold is based on default settings that work for most traders. If this feels too strict or too lenient for your position sizing approach, we can adjust the sensitivity to better match your trading style.
-```
 
 ## Practical / Diagnostic Pattern
 
