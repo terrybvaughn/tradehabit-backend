@@ -67,36 +67,38 @@ TradeHabit's analysis reliability depends on adequate sample sizes and data qual
 
 ### Parameter Settings
 
-**Excessive Risk**
-- **Formula:** Risk Threshold = Mean Risk + (σ × Standard Deviation of Risks), where σ = Excessive Risk Threshold (default = 1.5)
+**Excessive Risk Multiplier**
+- **Default:** 1.5
+- **Formula:** Excessive Risk Threshold = Mean Risk + (σ × Standard Deviation of Risks), where σ = Excessive Risk Multiplier
 - **Purpose**: Controls sensitivity for flagging unusually large risk sizing
 - **How it works**: Higher values flag only the most extreme risk sizes; lower values catch more moderate risk increases
 - **Adjustment impact**: Increase to reduce false positives; decrease to catch subtler risk management issues
 - **Calibration guidance**: Conservative traders may prefer lower settings (1.0-1.5); aggressive traders may use higher settings (2.0+)
 
-**Outsized Losses**
-- **Formula:** Loss Threshold = Mean Loss + (σ × Standard Deviation of Losses), where σ = Outsized Loss Threshold (default = 1.0)
+**Outsized Loss Multiplier**
+- **Default:** 1.0
+- **Formula:** Outsized Loss Threshold = Mean Loss + (σ × Standard Deviation of Losses), where σ = Outsized Loss Multiplier
 - **Purpose**: Controls sensitivity for flagging unusually large losses
 - **How it works**: Compares each loss to your typical loss pattern to identify outliers
 - **Adjustment impact**: Higher values flag only catastrophic losses; lower values catch moderately large losses
 - **Calibration guidance**: Adjust based on your stop-loss discipline and acceptable loss variance
 
 **Revenge Window Multiplier**
-- **Formula:** Revenge Window = Median Holding Time × Revenge Window Multiplier (default = 1.0)
+- **Default:** 1.0
+- **Formula:** Revenge Window = Median Holding Time × Revenge Window Multiplier
 - **Purpose**: Defines the time window after a loss for detecting potential revenge trades
 - **How it works**: Multiplies your median holding time to set the revenge detection window
 - **Adjustment impact**: Higher values cast a wider net for revenge trades; lower values focus on immediate reactions
 - **Calibration guidance**: Day traders may need lower settings; swing traders typically use higher settings
 
-**Risk Sizing Consistency Threshold**
-**⚠️ DISTINCT FROM LOSS CONSISTENCY**: Risk Sizing Consistency analyzes **planned risk size** (entry-to-stop distance) across all trades; Loss Consistency analyzes **actual loss amounts** on completed losing trades.
-
-- **Formula:** Consistency = Coefficient of Variation of Risk Sizes ≤ Risk Sizing Consistency Threshold (default = 0.35)
-- **Purpose**: Sets the threshold for measuring risk sizing consistency patterns
-- **How it works**: Measures how much your risk sizing varies compared to your average across all trades
+**Risk Sizing Threshold**
+- **Default:** 0.35
+- **Evaluation**: Coefficient of Variation of Risk Sizes ≤ Risk Sizing Threshold
+- **Purpose**: Sets the cutoff for determining if risk sizing is consistent vs. inconsistent
+- **How it works**: Calculates coefficient of variation (standard deviation ÷ mean) of your risk sizes, then compares to threshold
 - **Data source**: Risk size (entry-to-stop distance) at trade entry, not actual loss outcomes
-- **Adjustment impact**: Lower thresholds identify smaller consistency variations; higher thresholds only detect major sizing inconsistencies
-- **Calibration guidance**: Systematic traders should use lower thresholds; discretionary traders may prefer higher thresholds
+- **Adjustment impact**: Lower thresholds require tighter consistency; higher thresholds allow more variation before flagging inconsistency
+- **Calibration guidance**: Systematic traders should use lower thresholds (0.25-0.30); discretionary traders may prefer higher thresholds (0.40-0.50)
 
 ### Parameter Customization Impact
 
@@ -198,19 +200,21 @@ TradeHabit uses holding time patterns to establish revenge trade detection windo
 - **Target setting**: Realistic improvement goals based on current rate
 
 ### Loss Consistency Analysis
-**⚠️ DISTINCT FROM RISK SIZING CONSISTENCY**: Loss Consistency analyzes **actual loss amounts** on completed losing trades; Risk Sizing Consistency analyzes **planned risk size** (entry-to-stop distance) before trade execution.
-
 - **Calculation**: Uses all losing trades in the dataset. Each trade's loss size (in points) is measured and plotted to show distribution patterns
 - **Purpose**: Visualizes the dispersion of loss amounts across all losing trades to assess stop-loss execution discipline
 - **Behavioral significance**: Tight distribution indicates disciplined stop-loss execution; wide dispersion suggests inconsistent risk management or emotional trading
 - **Data source**: Actual points lost on completed trades, not planned risk sizing
 
 #### Loss Consistency Chart
+- **Purpose**: Visual representation of loss amount distribution to assess stop-loss execution discipline
+- **Data visualization**: Each losing trade is plotted as a dot, with loss amount (in points) on the y-axis
 - **Chart interpretation**:
-  - **Tight clustering**: Most losses near the mean indicates consistent stop-loss discipline
-  - **Wide dispersion**: Scattered losses suggest inconsistent risk management or emotional decision-making
-  - **Outlier identification**: Individual losses that deviate significantly from the typical pattern
-- **Relationship to outsized loss detection**: While this chart shows overall loss dispersion, the outsized loss analyzer specifically flags losses exceeding mean + (σ × standard deviation) threshold
+  - **Individual losses**: Each dot represents one losing trade, positioned by its loss amount in points
+  - **Mistake visualization**: Losing trades flagged with any mistake type are displayed as pink dots
+  - **Outlier identification**: Losses exceeding the Outsized Loss Threshold are specifically flagged
+  - **Tight clustering**: Most losses clustered near the mean indicates disciplined stop-loss execution
+  - **Wide dispersion**: Scattered losses across a broad range suggest inconsistent risk management or emotional decision-making
+- **Relationship to outsized loss detection**: While this chart shows overall loss dispersion patterns, the outsized loss analyzer specifically flags individual losses that exceed the statistical threshold
 
 
 ## Goal Tracking Analytics
