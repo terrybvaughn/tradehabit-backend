@@ -2,7 +2,7 @@
 
 **Metadata:**
 - Purpose: Comprehensive reference for all TradeHabit features and capabilities
-- Last Updated: 2025-09-14
+- Last Updated: 2025-09-20
 - Dependencies: /docs/ folder, API documentation
 - Priority: Critical
 
@@ -10,12 +10,10 @@
 
 This file is the authoritative source for what TradeHabit does:
 - Core features and analytics parameters
-- Default parameter values
 - User-facing capabilities and limitations
 
 Mentor must not:
-- Invent new features or parameters not listed here
-- Suggest defaults beyond those documented
+- Invent new features, analytics or parameters not listed here
 - Expand functionality beyond what is explicitly described
 
 For detection algorithms and methodology details, see `analytics_explanations.md`.
@@ -33,77 +31,83 @@ For detection algorithms and methodology details, see `analytics_explanations.md
 **For detailed parameter configuration, calibration guidance, and technical implementation, see `analytics_explanations.md`.**
 
 
-## Core TradeHabit Features
+## Behavioral Analytics - TradeHabit Core Functionality
+TradeHabit analyzes distinct behavioral patterns revealed in the users order data. There are two categories of behavioral patterns: mistakes, and other behavioral patterns.
 
-### Data Processing
-- **Supported formats**: Currently NinjaTrader CSV exports only
-- **Data validation**: Automatic format checking and error reporting
-- **Trade construction**: Converts order data into complete trade objects
-- **Quality requirements**: Complete order data needed for accurate analysis
+### Mistakes
 
-### Mistake Detection Engine
+TradeHabit identifies four types of mistakes in trading:
 
 #### No Stop-Loss Orders
 - **Definition**: Trades executed without protective stop-loss orders
-- **Detection**: See *Stop-Loss Detection* in `analytics_explanations.md` for detailed methodology
-- **Significance**: Indicates poor risk management discipline
-- **Impact**: Can lead to larger losses than planned
+- **Detection**: See `analytics_explanations.md` for methodology
+- **Behavioral insight**: Indicates poor stop-loss discipline
+- **Significance**: Exposes trades to unlimited downside risk and can result in account-threatening losses during market volatility
 
 #### Excessive Risk
 - **Definition**: Risk sizes (in points) exceeding statistical risk parameters
-- **Detection**: See *Excessive Risk Detection* `analytics_explanations.md` for detailed methodology
-- **Default threshold**: 1.5
-- **Customization**: User can adjust Excessive Risk parameter
-- **Behavioral insight**: Often indicates emotional risk sizing
+- **Detection**: See `analytics_explanations.md` for methodology
+- **Customization**: User can adjust Excessive Risk Multiplier setting
+- **Behavioral insight**: Indicates risk sizing is not systematic
+- **Significance**: Increases portfolio exposure beyond planned limits and can lead to catastrophic losses during adverse market conditions
 
 #### Outsized Losses
 - **Definition**: Losses exceeding typical loss distribution
-- **Detection**: See *Outsized Loss Detection* `analytics_explanations.md` for detailed methodology
-- **Default threshold**: 1.0
-- **Customization**: User can adjust Outsized Loss parameter
-- **Behavioral insight**: May indicate poor stop-loss discipline or revenge trading
+- **Detection**: See `analytics_explanations.md` for methodology
+- **Customization**: User can adjust Outsized Loss Multiplier setting
+- **Behavioral insight**: Indicates breakdown in stop-loss execution discipline or emotional trading after losses
+- **Significance**: Erodes account equity disproportionately and often signals breakdown of risk management discipline when it's needed most
 
 #### Revenge Trading
 - **Definition**: Trades entered too quickly after losses
-- **Detection**: See *Revenge Trading Detection* `analytics_explanations.md` for detailed methodology
-- **Default multiplier**: 1.0
-- **Customization**: User can adjust Revenge Window Multiplier parameter
+- **Detection**: See `analytics_explanations.md` for methodology
+- **Customization**: User can adjust Revenge Window Multiplier setting
 - **Behavioral insight**: Emotional response to losses driving impulsive decisions
+- **Significance**: Compounds losses through emotional decision-making and disrupts systematic trading approach during vulnerable psychological states 
 
-### Pattern Analysis
+
+### Other Behavioral Patterns
+
+TradeHabit also analyzes behavioral patterns for deeper insights:
 
 #### Risk Sizing Consistency Analysis
 - **Definition**: Evaluates consistency of risk sizing decisions across trades
 - **Analysis type**: Pattern analysis (not individual trade flagging)
-- **Default threshold**: 0.35 coefficient of variation
-- **Customization**: User can adjust Risk Sizing Consistency parameter
+- **Customization**: User can adjust Risk Sizing Threshold setting
 - **Behavioral insight**: Indicates systematic vs. inconsistent risk management approach
 
-#### Loss Consistency Analysis
-- **Definition**: Visualizes the distribution of loss amounts across all losing trades
-- **Detection method**: Plots each losing trade's points lost to show dispersion patterns
-- **Default threshold**: 1.0
-- **Customization**: User can adjust Outsized Loss parameter
+#### Loss Consistency Analysis - visualized in the **Loss Consistency Chart**
+- **Definition**: Analyzes the distribution of loss amounts across all losing trades
+- **Analysis type**: Dispersion analysis of losses
+- **Customization**: User can adjust Outsized Loss Multiplier setting
 - **Behavioral insight**: Tight clustering indicates disciplined stop-loss execution; wide dispersion suggests inconsistent risk management
 
-### Analytics and Insights
+## Features
 
-#### Performance Metrics
-- **Total trades**: See "Total Trades" in metric_mappings.md glossary
-- **Win rate**: See "Win Rate" in metric_mappings.md glossary
-- **Average win/loss**: See "Average Win" and "Average Loss" in metric_mappings.md glossary
-- **Payoff ratio**: See "Payoff Ratio" in metric_mappings.md glossary
-- **Required win rate**: See "Required Win Rate" in metric_mappings.md glossary
+### Performance Analytics
+All performance metrics are defined in `metric_mappings.md`:
+- Total trades and trade outcomes
+- Win rate and payoff ratio calculations
+- Average win/loss measurements
+- Required win rate thresholds
 
-#### Behavioral Metrics
-- **Clean trade rate**: See "Clean Trade Rate" in metric_mappings.md glossary
-- **Mistake counts**: See "Total Mistakes" and "Mistakes by Type" in metric_mappings.md glossary
-- **Current streak**: See "Current Clean Streak" in metric_mappings.md glossary
-- **Best streak**: See "Best Clean Streak" in metric_mappings.md glossary
-- **Flagged trades**: See "Trades with Mistakes" in metric_mappings.md glossary
+### Behavioral Analytics
+All behavioral metrics are defined in `metric_mappings.md`:
+- Clean trade rate tracking
+- Mistake counts and categorization
+- Streak measurements (current and best)
+- Flagged trade identification
 
-#### Visualizations
-- **Loss Consistency Chart**: Distribution analysis of trading losses
+### "Insights" (can also be referred to as the "Insights Page" or "Insights Report")
+- **Definition**: Narrative analysis combining performance and behavioral data to provide actionable recommendations
+- **Content**: Diagnostic text highlighting the most significant patterns and areas for improvement
+- **Personalization**: Tailored observations based on individual trading data and mistake patterns
+- **Data source**: Aggregated analysis from performance metrics, behavioral patterns, and mistake categorization
+- **Format**: Natural language insights prioritizing highest-impact improvement opportunities
+- **Behavioral insight**: Provides context for raw metrics by translating data into trading behavior recommendations
+
+### Visualizations
+- **Loss Consistency Chart**: Dispersion analysis of trading losses
 - **Trade timeline**: Chronological view of trades and mistakes
 - **Performance summaries**: Key metrics and diagnostic text
 
@@ -124,7 +128,15 @@ For detection algorithms and methodology details, see `analytics_explanations.md
 - **Historical tracking**: Progress maintained across sessions (future feature)
 - **Achievement recognition**: Celebration of goal completion
 
-## TradeHabit Limitations
-- For upload, TradeHabit only supports NinjaTrader order data CSV files 
+## Configuration & Limitations
+
+### Data Processing
+- **Supported formats**: NinjaTrader order data CSV file
+- **Data validation**: Automatic format checking and error reporting
+- **Trade construction**: Converts order data into complete trade objects
+- **Quality requirements**: Complete order data needed for accurate analysis
+
+### TradeHabit Limitations
+- TradeHabit does not support order data from any other brokers (only NinjaTrader order data CSV is supported)
 - No data persistence or user history
 - No real-time monitoring or alerts: TradeHabit only analyzes uploaded CSV order data after trading sessions. It cannot send notifications, generate alerts, or intervene during live trading.
