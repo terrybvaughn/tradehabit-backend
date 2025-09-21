@@ -2,7 +2,7 @@
 
 **Metadata:**
 - Purpose: Single source of truth mapping API fields → user-facing labels → help-doc anchors
-- Last Updated: 2025-09-19
+- Last Updated: 2025-09-20
 - Dependencies: docs/api.md, UI labels
 - Priority: Critical
 
@@ -65,7 +65,7 @@ These are patterns that TradeHabit detects for behavioral analysis. They are not
 | /api/summary streak_record | Count | Best Clean Streak | Longest historical run of clean trades |
 | /api/summary required_wr_adj | Ratio (0–1) | Required Win Rate | Minimum win rate to be profitable according to the Payoff Ratio |
 | /api/summary mistake_counts | Map/Object | Mistakes by Type | Count of each mistake category in your trading |
-| /api/losses sigmaUsed<br>/api/excessive-risk sigmaUsed | Scalar (σ) | Sigma Used | Multiplier used in a threshold calculation |
+| /api/losses sigmaUsed | Scalar (σ) | Outsized Loss Multiplier | Multiplier used in the Outsized Loss Threshold calculation |
 | /api/losses thresholdPointsLost | Points | Outsized Loss Threshold | Cutoff used to flag unusually large losses |
 | /api/losses count<br>/api/losses percentage<br>/api/losses excessLossPoints | Count/Percentage/Points | Outsized Loss Statistics | Count, percentage, and excess points of flagged outsized losses |
 | /api/losses meanPointsLost | Points | Average Points Lost | Mean average points lost for losing trades |
@@ -76,10 +76,11 @@ These are patterns that TradeHabit detects for behavioral analysis. They are not
 | /api/risk-sizing minRiskPoints | Points | Min Risk Points | Smallest risk size (in points) among trades |
 | /api/risk-sizing maxRiskPoints | Points | Max Risk Points | Largest risk size (in points) among trades |
 | /api/risk-sizing variationRatio | Ratio | Risk Variation Ratio | Measure of your position sizing consistency |
-| /api/risk-sizing variationThreshold | Ratio | Risk Sizing Consistency | Cutoff for determining if your position sizing is inconsistent |
+| /api/risk-sizing variationThreshold | Ratio | Risk Sizing Threshold | Threshold for determining risk sizing consistency (coefficient of variation cutoff) |
 | /api/revenge revenge_multiplier | Scalar | Revenge Window Multiplier | Multiplier applied to median hold time to define the revenge window (k) |
 | /api/revenge total_revenge_trades | Count | Revenge Trade Count | Number of trades identified within the revenge window after a loss |
 | /api/revenge net_pnl_revenge<br>/api/revenge net_pnl_per_trade_revenge | Currency | Net P&L (Revenge) | Total and per-trade profit/loss from revenge trades |
+| /api/excessive-risk sigmaUsed | Scalar (σ) | Excessive Risk Multiplier | Multiplier used in the Excessive Risk Threshold calculation |
 | /api/excessive-risk totalTradesWithStops | Count | Trades with Stops | Number of trades where a stop-loss order was detected |
 | /api/excessive-risk excessiveRiskThreshold | Points | Excessive Risk Threshold | Cutoff for flagging excessive risk (in points) |
 | /api/excessive-risk excessiveRiskCount | Count | Excessive Risk Count | Number of trades exceeding the Excessive Risk Threshold |
