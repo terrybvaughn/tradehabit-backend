@@ -2,7 +2,7 @@
 
 **Metadata:**
 - Purpose: Templates for engaging users experiencing TradeHabit for the first time
-- Last Updated: 2024-12-19
+- Last Updated: 2024-09-21
 - Dependencies: User data analysis results
 - Priority: High
 
@@ -105,9 +105,10 @@ TradeHabit's default settings are calibrated for typical retail traders, but you
 - False negatives: Missing actual behavioral issues (e.g., not detecting revenge trades due to your faster trading style)
 
 **Key Parameters to Consider:**
-- **Sigma multiplier**: Controls sensitivity for detecting outliers for excessive risk and outsized losses
-- **Time windows**: Defines what constitutes "revenge trading" timing for your style
-- **Risk thresholds**: Calibrates position sizing analysis to your account size and strategy
+- **Excessive Risk Multiplier**: Controls how sensitive the system is to unusually large risk sizing (σ in Excessive Risk Threshold)
+- **Outsized Loss Multiplier**: Controls how sensitive the system is to unusually large losses (σ in Outsized Loss Threshold)
+- **Revenge Window Multiplier**: Defines the time window after a loss for detecting potential revenge trades (scales median holding time)
+- **Risk Sizing Threshold**: Coefficient-of-variation cutoff for flagging inconsistent risk sizing across trades
 
 With better calibration, you'll get:
 - More accurate identification of actual behavioral issues
