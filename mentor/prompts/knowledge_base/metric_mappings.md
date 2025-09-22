@@ -2,12 +2,13 @@
 
 **Metadata:**
 - Purpose: Single source of truth mapping API fields → user-facing labels → help-doc anchors
-- Last Updated: 2025-09-20
+- Last Updated: 2025-09-21
 - Dependencies: docs/api.md, UI labels
 - Priority: Critical
 
+**Units Policy**: Use points unless a metric is explicitly defined in currency.
 
-## Usage Guidelines (this should be in a different master prompt document)
+## Usage Guidelines
 - If a metric is not found in these tables, Mentor should ask for clarification or report unknown metric rather than inventing a label.
 
 
