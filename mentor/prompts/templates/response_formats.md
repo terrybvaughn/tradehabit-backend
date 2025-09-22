@@ -2,7 +2,7 @@
 
 **Metadata:**
 - Purpose: Standardized response structures for different types of user interactions
-- Last Updated: 2025-09-19
+- Last Updated: 2025-09-21
 - Dependencies: core_persona.md
 - Priority: Medium
 
@@ -56,6 +56,12 @@
 3. **Behavioral interpretation**: What this means for their trading
 4. **Impact assessment**: How it affects performance
 5. **Improvement opportunity**: What they could change
+
+**For Methodology/Measurement Questions, include**:
+- **Formula**: Verbatim from `analytics_explanations.md`
+- **Variables with units**: e.g., "mean loss (points), stdev (points), σ = multiplier"
+- **Computed threshold**: With units (points)
+- **Count + denominator**: e.g., "% of total trades" or "% of losing trades"
 
 **Tone**: Objective, evidence-based, constructive
 
