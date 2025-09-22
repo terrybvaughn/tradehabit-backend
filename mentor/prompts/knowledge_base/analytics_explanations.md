@@ -22,6 +22,35 @@ Mentor must not:
 For feature list, defaults, and scope of functionality, see `tradehabit_functionality.md`.
 
 
+## 🔒 EXACT FORMULAS - DO NOT MODIFY
+
+**CRITICAL**: These formulas must be stated exactly as written. Do not paraphrase, simplify, or substitute.
+
+### Outsized Loss Detection
+**EXACT FORMULA**: `Outsized Loss Threshold = Mean Loss + (σ × Standard Deviation of Losses)`
+- σ = **Outsized Loss Multiplier** (default: 1.0)
+- Canonical terms: "Outsized Loss Threshold", "Average Points Lost", "Standard Deviation of Points Lost"
+- Uses **mean**, not median
+- Uses **addition**, not multiplication
+
+### Excessive Risk Detection
+**EXACT FORMULA**: `Excessive Risk Threshold = Mean Risk + (σ × Standard Deviation of Risks)`
+- σ = **Excessive Risk Multiplier** (default: 1.5)
+- Canonical terms: "Excessive Risk Threshold", "Average Risk Points", "Standard Deviation Risk Points"
+
+### Risk Sizing Consistency
+**EXACT FORMULA**: `Risk Variation Ratio = Standard Deviation of Risk Size ÷ Mean Risk Size`
+- **Calculated Value**: "Risk Variation Ratio" (the computed ratio)
+- **Comparison Threshold**: "Risk Sizing Threshold" (default: 0.35)
+- **Evaluation**: Risk Variation Ratio ≤ Risk Sizing Threshold = consistent
+- **Overall Analysis**: Called "Risk Sizing Consistency"
+
+### Revenge Trading Window
+**EXACT FORMULA**: `Revenge Window = Median Holding Time × Revenge Window Multiplier`
+- Uses **median** holding time (this is the exception)
+- Multiplier term: "Revenge Window Multiplier" (default: 1.0)
+
+
 ## Data Processing & Quality
 
 ### Data Quality Impacts
@@ -93,9 +122,9 @@ TradeHabit's analysis reliability depends on adequate sample sizes and data qual
 
 **Risk Sizing Threshold**
 - **Default:** 0.35
-- **Evaluation**: Coefficient of Variation of Risk Sizes ≤ Risk Sizing Threshold
+- **Evaluation**: Risk Variation Ratio ≤ Risk Sizing Threshold
 - **Purpose**: Sets the cutoff for determining if risk sizing is consistent vs. inconsistent
-- **How it works**: Calculates coefficient of variation (standard deviation ÷ mean) of your risk sizes, then compares to threshold
+- **How it works**: Calculates Risk Variation Ratio (standard deviation ÷ mean) of your risk sizes, then compares to threshold
 - **Data source**: Risk size (entry-to-stop distance) at trade entry, not actual loss outcomes
 - **Adjustment impact**: Lower thresholds require tighter consistency; higher thresholds allow more variation before flagging inconsistency
 - **Calibration guidance**: Systematic traders should use lower thresholds (0.25-0.30); discretionary traders may prefer higher thresholds (0.40-0.50)
@@ -138,7 +167,7 @@ TradeHabit's analysis reliability depends on adequate sample sizes and data qual
 ```
 1. Calculate risk amount for each trade with stop-loss
 2. Compute mean and standard deviation of risk amounts
-3. Set threshold = mean + (sigma_risk × standard_deviation)
+3. Set threshold = mean + (Excessive Risk Multiplier × standard_deviation)
 4. Flag trades where risk > threshold
 ```
 
@@ -148,7 +177,7 @@ TradeHabit's analysis reliability depends on adequate sample sizes and data qual
 1. Identify all losing trades
 2. Calculate absolute loss amounts
 3. Compute mean and standard deviation of losses
-4. Set threshold = mean + (sigma_loss × standard_deviation)
+4. Set threshold = mean + (Outsized Loss Multiplier × standard_deviation)
 5. Flag losses exceeding threshold
 ```
 
@@ -156,7 +185,7 @@ TradeHabit's analysis reliability depends on adequate sample sizes and data qual
 #### Revenge Trading Detection
 ```
 1. Calculate median holding time for all trades
-2. Set revenge window = median_hold_time × revenge_window_multiplier
+2. Set revenge window = median_hold_time × Revenge Window Multiplier
 3. For each losing trade, check if next trade occurs within window
 4. Flag subsequent trades as potential revenge trades
 ```
@@ -166,11 +195,11 @@ TradeHabit uses holding time patterns to establish revenge trade detection windo
 
 - **Entry to exit measurement**: Time difference between position open and close timestamps
 - **Median calculation**: Uses middle value of all holding times to avoid outlier distortion
-- **Window scaling**: Multiplies median by revenge window multiplier to set revenge detection threshold
+- **Window scaling**: Multiplies median by Revenge Window Multiplier to set revenge detection threshold
 - **Adaptive thresholds**: Different trading styles (scalping vs. swing) automatically get appropriate windows
 - **Pattern recognition**: Unusually quick entries after losses suggest emotional decision-making
 
-**Example**: If median holding time is 2 hours and revenge window multiplier is 0.5, trades entered within 1 hour of a loss are flagged as potential revenge trades.
+**Example**: If median holding time is 2 hours and Revenge Window Multiplier is 0.5, trades entered within 1 hour of a loss are flagged as potential revenge trades.
 
 
 ## Performance Metrics Explained
