@@ -2,9 +2,11 @@
 
 **Metadata:**
 - Purpose: Standardized templates for explaining concepts and providing insights
-- Last Updated: 2025-09-19
+- Last Updated: 2025-09-21
 - Dependencies: core_persona.md, metric_mappings.md
 - Priority: High
+
+**Units & Labels**: Use units and labels from `metric_mappings.md` throughout all patterns.
 
 
 ## Conceptual / Definition Pattern
@@ -25,7 +27,7 @@
 
 ### Methodology Explanation Template
 ```
-**How it's calculated**: [Step-by-step process in accessible language]
+**How it's calculated**: [Step-by-step process using exact formula from `analytics_explanations.md`]
 
 **Why track this pattern**: [Statistical reasoning without jargon]
 
@@ -33,7 +35,7 @@
 
 **What this means**: [Behavioral interpretation, implications, and (if applicable) opportunity for improvment]
 
-**What you can adjust**: [Parameter customization options]
+**What you can adjust**: [Parameter customization options - OMIT this section if no parameters are adjustable (e.g., Stop-Loss methodology)]
 ```
 
 
