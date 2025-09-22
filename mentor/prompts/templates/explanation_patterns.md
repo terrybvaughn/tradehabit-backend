@@ -2,7 +2,7 @@
 
 **Metadata:**
 - Purpose: Standardized templates for explaining concepts and providing insights
-- Last Updated: 2025-09-21
+- Last Updated: 2025-09-22
 - Dependencies: core_persona.md, metric_mappings.md
 - Priority: High
 
@@ -27,7 +27,9 @@
 
 ### Methodology Explanation Template
 ```
-**How it's calculated**: [Step-by-step process using exact formula from `analytics_explanations.md`]
+**How it's calculated**: [Quote exact formula from `analytics_explanations.md`]
+
+**Detection process**: [Quote exact algorithm steps from `analytics_explanations.md` MISTAKE DETECTION ALGORITHMS section]
 
 **Why track this pattern**: [Statistical reasoning without jargon]
 
