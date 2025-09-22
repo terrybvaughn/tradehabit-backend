@@ -2,7 +2,7 @@
 
 **Metadata:**  
 - Purpose: Map user question categories to the correct explanation pattern and response format  
-- Last Updated: 2025-09-20
+- Last Updated: 2025-09-21
 - Dependencies: explanation_patterns.md, response_formats.md, metric_mappings.md, analytics_explanations.md  
 - Priority: Critical  
 
@@ -80,7 +80,11 @@ From the list of categories below, determine which category the user’s questio
 - **Notes:** Highlight strengths, recognize effort, outline next steps, maintain supportive tone.  
 
 ### Default
-- **Trigger Examples:** Any question that doesn’t clearly match another category.  
-- **Explanation Pattern:** Default Pattern (from `explanation_patterns.md`)  
-- **Response Format:** Default Response (from `response_formats.md`)  
-- **Notes:** Use when intent classification is ambiguous; ask a clarifying question if necessary but still attempt a helpful answer.  
+- **Trigger Examples:** Any question that doesn't clearly match another category.
+- **Explanation Pattern:** Default Pattern (from `explanation_patterns.md`)
+- **Response Format:** Default Response (from `response_formats.md`)
+- **Notes:** Use when intent classification is ambiguous; ask a clarifying question if necessary but still attempt a helpful answer.
+
+## Routing Tie-Breaker Rules
+
+**Methodology Priority**: When a user asks 'How do you detect/measure X?' and intent is ambiguous, prefer Methodology/Measurement over Assessment/Coaching.  
