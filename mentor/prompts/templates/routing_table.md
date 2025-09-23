@@ -1,3 +1,16 @@
+
+   > NOTE: Authoritative routing logic has moved to routing_table.json.
+   > This markdown file is retained only for human-readable reference.
+
+## Implementation Notes
+
+All detailed tool selection, counting rules, and usage guidelines have been migrated to the machine-readable JSON format. Refer to `routing_table.json` for:
+- Tool selection logic
+- Counting rules and fabrication prevention
+- Filter usage guidelines
+- Time semantics and discrepancy handling
+
+
 # Response Routing Table
 
 **Metadata:**  

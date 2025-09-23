@@ -194,6 +194,7 @@ For feature list, defaults, and scope of functionality, see `tradehabit_function
   - **Tight clustering**: Most losses clustered near the mean indicates disciplined stop-loss execution
   - **Wide dispersion**: Scattered losses across a broad range suggest inconsistent risk management or emotional decision-making
 - **Relationship to outsized loss detection**: While this chart shows overall loss dispersion patterns, the outsized loss analyzer specifically flags individual losses that exceed the statistical threshold
+- **CRITICAL DISTINCTION**: The **Loss Consistency Chart** analyzes **actual loss amounts** on losing trades. **Risk Sizing Consistency** analyzes **planned risk size** (entry-to-stop distance) across all trades. These are completely different analyses - NEVER conflate them.
 
 
 ## Goal Tracking Analytics

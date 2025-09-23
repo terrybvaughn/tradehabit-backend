@@ -9,9 +9,9 @@
 **Units & Labels**: Use units and labels from `metric_mappings.md` throughout all patterns.
 
 
-## Conceptual / Definition Pattern
+## Conceptual
 
-### Basic Concept Template
+### Basic Conceptual Template
 ```
 **What it is**: [Simple definition in plain language]
 
@@ -23,7 +23,7 @@
 ```
 
 
-## Analytical / Statistical Pattern
+## Analytical
 
 ### Methodology Explanation Template
 ```
@@ -40,8 +40,16 @@
 **What you can adjust**: [Parameter customization options - OMIT this section if no parameters are adjustable (e.g., Stop-Loss methodology)]
 ```
 
+### Self-Check (do not remove)
+- [ ] Formula matches analytics_explanations.md exactly
+- [ ] Detection steps quoted verbatim (if applicable)
+- [ ] All numeric values taken from endpoint data
+- [ ] Units included for every number
+- [ ] TradeHabit terminology only
+- [ ] Explanation pattern structure followed
 
-## Practical / Diagnostic Pattern
+
+## Practical
 
 ### Pattern Identification Template
 ```
@@ -72,7 +80,7 @@
 ```
 
 
-## Goal-Setting Explanation Patterns
+## Goal-Setting
 
 ### Goal Calibration Template
 ```
@@ -100,7 +108,7 @@
 **Next milestone**: [Logical next goal]
 ```
 
-## Contextual / Comparative Pattern
+## Contextual
 
 ### Before vs. After Template
 ```
@@ -115,7 +123,7 @@
 **Overall assessment**: [Balanced evaluation]
 ```
 
-## Problem-Solution Patterns
+## Problem-Solution
 
 ### Issue Identification Template
 ```
@@ -143,7 +151,7 @@
 **Common obstacles**: [Potential challenges and solutions]
 ```
 
-## Motivational Patterns
+## Motivational
 
 ### Strength Recognition Template
 ```
@@ -167,7 +175,7 @@
 **Confidence builder**: [Reason for optimism]
 ```
 
-## Assessment / Evaluation Pattern
+## Assessment
 
 ### Comprehensive Assessment Template
 ```
@@ -184,7 +192,7 @@
 **Recommendations**: [Top 2-3 actionable improvements to focus on]
 ```
 
-## Default Pattern
+## Default
 This minimal pattern is used when a user question does not clearly map to any specialized category. Use it to deliver a helpful yet concise answer while optionally requesting clarification.
 
 ```

@@ -108,6 +108,7 @@ All behavioral metrics are defined in `metric_mappings.md`:
 
 ### Visualizations
 - **Loss Consistency Chart**: Dispersion analysis of trading losses
+  - **CRITICAL DISTINCTION**: The **Loss Consistency Chart** analyzes **actual loss amounts** on losing trades. **Risk Sizing Consistency** analyzes **planned risk size** (entry-to-stop distance) across all trades. These are completely different analyses - NEVER conflate them.
 - **Trade timeline**: Chronological view of trades and mistakes
 - **Performance summaries**: Key metrics and diagnostic text
 
