@@ -1,0 +1,54 @@
+{
+  "version": "2025-09-22",
+  "global_tool_policy": "Tool usage is REQUIRED for any response that involves user data, counts, aggregates, or examples. Do not rely on memory or unstated assumptions.",
+  "deterministic_tool_selection": [
+    {"when": "portfolio_totals_or_rates", "tool": "get_summary_data"},
+    {"when": "mistake_category", "tool": "get_endpoint_data", "category": "auto", "notes": "Summary endpoints (flat dicts): stop-loss, excessive-risk, revenge, risk-sizing, winrate-payoff. Fetch once and use results directly. Do not call repeatedly or attempt keys_only/top exploration since these endpoints do not contain arrays."},
+    {"when": "outsized_losses", "tool": "filter_losses", "notes": "Required for outsized loss explanations, thresholds, examples, or distributions. Use hasMistake: true to restrict to outsized losses only."},
+    {"when": "trade_examples_or_filtered_counts", "tool": "filter_trades", "notes": "Use pagination (offset/limit) for large result sets. Default to max_results=10 unless user asks for more."},
+    {"when": "tie_breaker_winrate_payoff", "tool": "get_endpoint_data", "category": "winrate-payoff"}
+  ],
+  "counting_rules": {
+    "totals": "get_summary_data",
+    "category_counts": "endpoint_or_filter",
+    "filtered_counts": "filter_trades_or_losses",
+    "never_fabricate": true
+  },
+  "filter_trades_usage": {
+    "supported_filters": ["mistakes", "time_of_day", "time_range", "datetime_range", "side", "symbol", "riskPoints_min/max", "pointsLost_min/max", "pnl_min/max", "result", "max_results", "offset", "include_total"],
+    "default_max_results": 10,
+    "pagination_guidance": "For long lists, default to max_results=10 unless user asks for more; tell user if more exist",
+    "field_projection": "When user asks for specific fields, return only those fields",
+    "id_only_requests": "If asked for 'IDs only' or 'integer only', return exactly that"
+  },
+  "time_semantics": {
+    "entry_time_unit": "ISO 8601",
+    "buckets": {
+      "morning": ["05:00","11:59"],
+      "afternoon": ["12:00","16:59"],
+      "evening": ["17:00","01:59"],
+      "overnight": ["02:00","04:59"]
+    }
+  },
+  "discrepancies_policy": {
+    "global_totals_source": "get_summary_data",
+    "category_metrics_source": "endpoint",
+    "missing_key_response": "report_unavailable"
+  },
+  "categories": [
+    {"intent": "Conceptual", "triggers": ["what is", "meaning of", "define"], "pattern": "Conceptual", "format": "Educational"},
+    {"intent": "Methodology", "triggers": ["how do you determine", "how does tradehabit", "how do you measure", "what factors decide", "what rules are used to", "how do you decide", "how does tradehabit identify", "how does the system decide", "excessive risk multiplier", "outsized loss multiplier", "revenge window multiplier", "risk sizing threshold", "adjust parameter", "tweak threshold"], "pattern": "Analytical", "format": "Parameter", "tool_policy": "auto", "requirements": {"formulas": "Must restate formulas exactly from analytics_explanations.md", "algorithms": "Must quote algorithm steps exactly from analytics_explanations.md MISTAKE DETECTION ALGORITHMS section", "parameter_calibration": "Emphasize parameter calibration importance"}},
+    {"intent": "Contextual", "triggers": ["how is this different", "compare"], "pattern": "Contextual", "format": "Educational"},
+    {"intent": "Practical", "triggers": ["how do you spot", "diagnose", "what signs indicate", "how do you identify", "when reviewing history"], "pattern": "Practical", "format": "Analytical", "requirements": {"algorithms": "Must quote algorithm steps exactly from analytics_explanations.md MISTAKE DETECTION ALGORITHMS section when explaining detection processes", "parameter_calibration": "Emphasize parameter calibration importance"}},
+    {"intent": "Analytical", "triggers": ["outliers", "formula", "how do you statistically calculate", "what role does variance play"], "pattern": "Analytical", "format": "Educational", "requirements": {"formulas": "Always show formula from analytics_explanations.md", "algorithms": "Quote algorithm steps exactly from analytics_explanations.md MISTAKE DETECTION ALGORITHMS section when relevant", "parameter_calibration": "Emphasize parameter calibration importance"}},
+    {"intent": "Assessment", "triggers": ["assess", "evaluate"], "pattern": "Assessment", "format": "Analytical"},
+    {"intent": "Goal-Setting", "triggers": ["set a goal", "target"], "pattern": "Goal-Setting", "format": "Goals"},
+    {"intent": "Problem-Solution", "triggers": ["how do i fix", "improve"], "pattern": "Problem-Solution", "format": "Analytical"},
+    {"intent": "Motivational", "triggers": ["encourage", "progress"], "pattern": "Motivational", "format": "Motivational"},
+    {"intent": "Clarification", "triggers": ["unclear", "could you clarify", "what do you mean", "I don't understand"], "pattern": "Default", "format": "Clarification"},
+    {"intent": "Conversation Management", "triggers": ["wrap up", "summarize", "next topic", "that's all"], "pattern": "Default", "format": "Conversation Management"},
+    {"intent": "Error", "triggers": [], "pattern": "Default", "format": "Errors", "notes": "Use when the assistant must apologise or explain a limitation (out-of-scope, missing data, etc.)."},
+    {"intent": "Default", "triggers": [], "pattern": "Default", "format": "Default"}
+  ],
+  "routing_tie_breaker": "Methodology Priority: when a question could be Methodology or Assessment, classify as Methodology/Measurement."
+}
