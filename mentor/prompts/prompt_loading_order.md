@@ -15,7 +15,7 @@ This roadmap provides the optimal processing order and usage guidelines for AI m
 
 ### Product Context
 ```
-product-overview.md                         - What TradeHabit is, who it's for, current development status
+product-overview.md                     - What TradeHabit is, who it's for
 ```
 **Purpose**: Provides concise product/background context when attached in the vector store. Supports, but does not override, authoritative prompt files.
 
@@ -32,9 +32,8 @@ product-overview.md                         - What TradeHabit is, who it's for, 
 ```
 8. routing_table.json               - Question classification and response routing (machine-readable)
 9. explanation_patterns.md          - Content templates (what to say)
-10. response_formats.md              - Structure templates (how to say it)
+10. response_formats.md             - Structure templates (how to say it)
 11. first_time_user.md              - Narrative templates for greeting & orientation
-12. session_policies.md             - Session-state triggers & guardrails
 ```
 **Purpose**: Provides practical frameworks for applying the foundation and knowledge in real conversations.
 
@@ -56,7 +55,6 @@ product-overview.md                         - What TradeHabit is, who it's for, 
 - `explanation_patterns.md` - Content templates using authoritative knowledge
 - `response_formats.md` - Structure templates aligned with conversation guidelines
 - `first_time_user.md` - Narrative templates for greeting & orientation
-- `session_policies.md` - Session-state triggers & guardrails (cold-start greeting, cache, reminders)
 
 ## 🔗 Critical Dependencies
 
@@ -65,7 +63,7 @@ product-overview.md                         - What TradeHabit is, who it's for, 
 core_persona.md → ALL other files
 metric_mappings.md → analytics_explanations.md, explanation_patterns.md, routing_table.json
 conversation_guidelines.md → response_formats.md
-response_formats.md → session_policies.md → first_time_user.md
+response_formats.md → first_time_user.md
 routing_table.json → explanation_patterns.md, response_formats.md
 ```
 
@@ -73,7 +71,7 @@ routing_table.json → explanation_patterns.md, response_formats.md
 ```
 tradehabit_functionality.md ↔ analytics_explanations.md
 routing_table.json ↔ explanation_patterns.md ↔ response_formats.md
-session_policies.md ↔ response_formats.md ↔ first_time_user.md
+response_formats.md ↔ first_time_user.md
 ```
 
 ## ⚡ Quick Reference Guide
@@ -86,15 +84,13 @@ session_policies.md ↔ response_formats.md ↔ first_time_user.md
 5. **Fill with content** (explanation_patterns.md) - Am I explaining effectively?
 
 ### For New User Interactions:
-1. **Follow triggers & guardrails** in `session_policies.md` (cold-start greeting, cache logic, reminders)
-2. **Reference** `first_time_user.md` for greeting narrative templates
-3. **Reference** `conversation_guidelines.md` for flow management
-4. **Explain using** `explanation_patterns.md` content templates
-5. **Structure with** `response_formats.md` frameworks
+1. **Reference** `first_time_user.md` for greeting narrative templates
+2. **Reference** `conversation_guidelines.md` for flow management
+3. **Explain using** `explanation_patterns.md` content templates
+4. **Structure with** `response_formats.md` frameworks
 
 ### For Technical Questions:
 1. **Definitions from** `metric_mappings.md` (authoritative)
 2. **Functionality from** `tradehabit_functionality.md`
 3. **Methodology from** `analytics_explanations.md`
 4. **Context from** `trading_concepts.md`
-
