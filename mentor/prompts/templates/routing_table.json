@@ -1,18 +1,62 @@
 {
-  "version": "2025-09-22",
+  "version": "2025-09-23",
   "global_tool_policy": "Tool usage is REQUIRED for any response that involves user data, counts, aggregates, or examples. Do not rely on memory or unstated assumptions.",
+  "on_pattern_missing": "stop_with_message",
+  "on_format_missing": "stop_with_message",
+  "numeric_provenance_gate": true,
+  "when_detectors": [
+    {
+      "when": "trade_examples_or_filtered_counts",
+      "match": {
+        "all": [["any", ["show","list","display","give me","return","pull","fetch","export","example","examples"]],
+                ["any", ["trade","trades","entry","entries","position","positions"]]],
+        "not": ["outsized loss"]
+      },
+      "options": {
+        "limit_number_regex": "\\b(\\d{1,4})\\b",
+        "recent_phrases": ["most recent","latest","newest","desc","descending"],
+        "oldest_phrases": ["oldest","earliest","asc","ascending"]
+      }
+    },
+    {
+      "when": "outsized_losses",
+      "match": {
+        "all": [["any", ["outsized loss","outsized losses"]],
+                ["any", ["mean","average","avg","sigma","std","standard deviation","threshold","percent","percentage","proportion","examples","show"]]]
+      }
+    },
+    {
+      "when": "methodology_explanation",
+      "match": {
+        "any": ["how do you detect","how do you determine","how does tradehabit","how do you measure","what rules are used","how do you decide","formula","methodology","algorithm"]
+      }
+    }
+  ],
   "deterministic_tool_selection": [
-    {"when": "portfolio_totals_or_rates", "tool": "get_summary_data"},
-    {"when": "mistake_category", "tool": "get_endpoint_data", "category": "auto", "notes": "Summary endpoints (flat dicts): stop-loss, excessive-risk, revenge, risk-sizing, winrate-payoff. Fetch once and use results directly. Do not call repeatedly or attempt keys_only/top exploration since these endpoints do not contain arrays."},
-    {"when": "outsized_losses", "tool": "filter_losses", "notes": "Required for outsized loss explanations, thresholds, examples, or distributions. Use hasMistake: true to restrict to outsized losses only."},
-    {"when": "trade_examples_or_filtered_counts", "tool": "filter_trades", "notes": "Use pagination (offset/limit) for large result sets. Default to max_results=10 unless user asks for more."},
-    {"when": "tie_breaker_winrate_payoff", "tool": "get_endpoint_data", "category": "winrate-payoff"}
+  {"when": "session_start", "tool": "get_summary_data", "notes": "Trigger phrase: reset"},
+  {"when": "portfolio_totals_or_rates", "tool": "get_summary_data"},
+
+  {"when": "trade_examples_or_filtered_counts", "tool": "filter_trades",
+   "notes": "User requests lists/examples like 'show X trades', 'list N most recent', with fields (entry time, risk size, etc.). Supports pagination (offset/limit) and sorting (e.g., time desc)."},
+
+  {"when": "mistake_category", "tool": "get_endpoint_data", "category": "auto",
+   "notes": "Summary endpoints (flat dicts): stop-loss, excessive-risk, revenge, risk-sizing, winrate-payoff. Fetch once and use results directly. Do not call repeatedly or attempt keys_only/top exploration since these endpoints do not contain arrays."},
+
+  {"when": "outsized_losses", "tool": "filter_losses",
+   "notes": "Required for outsized-loss explanations, thresholds, examples, or distributions. Use losing-trades subset; compute mean/σ and threshold from that subset. If examples are requested, filter to losses exceeding the computed threshold."},
+
+  {"when": "methodology_explanation", "tool": "get_endpoint_data", "category": "auto",
+   "notes": "Any Methodology intent: fetch category-specific stats (means, σ, thresholds, counts) before answering."},
+
+  {"when": "tie_breaker_winrate_payoff", "tool": "get_endpoint_data", "category": "winrate-payoff"}
   ],
   "counting_rules": {
     "totals": "get_summary_data",
     "category_counts": "endpoint_or_filter",
     "filtered_counts": "filter_trades_or_losses",
-    "never_fabricate": true
+    "never_fabricate": true,
+    "forbid_summary_data_for_category": true,
+    "require_endpoint_numbers_in_output": true
   },
   "filter_trades_usage": {
     "supported_filters": ["mistakes", "time_of_day", "time_range", "datetime_range", "side", "symbol", "riskPoints_min/max", "pointsLost_min/max", "pnl_min/max", "result", "max_results", "offset", "include_total"],
@@ -36,8 +80,22 @@
     "missing_key_response": "report_unavailable"
   },
   "categories": [
+    {"intent": "Session Reset", "triggers": ["reset"], "pattern": "Default", "format": "Default", "requirements": {"tool_call": "Before responding, call get_summary_data to populate summary_data"}},
     {"intent": "Conceptual", "triggers": ["what is", "meaning of", "define"], "pattern": "Conceptual", "format": "Educational"},
-    {"intent": "Methodology", "triggers": ["how do you determine", "how does tradehabit", "how do you measure", "what factors decide", "what rules are used to", "how do you decide", "how does tradehabit identify", "how does the system decide", "excessive risk multiplier", "outsized loss multiplier", "revenge window multiplier", "risk sizing threshold", "adjust parameter", "tweak threshold"], "pattern": "Analytical", "format": "Parameter", "tool_policy": "auto", "requirements": {"formulas": "Must restate formulas exactly from analytics_explanations.md", "algorithms": "Must quote algorithm steps exactly from analytics_explanations.md MISTAKE DETECTION ALGORITHMS section", "parameter_calibration": "Emphasize parameter calibration importance"}},
+    {
+      "intent": "Methodology", 
+      "triggers": ["how do you determine", "how does tradehabit", "how do you measure", "what factors decide", "what rules are used to", "how do you decide", "how does tradehabit identify", "how does the system decide", "excessive risk multiplier", "outsized loss multiplier", "revenge window multiplier", "risk sizing threshold", "adjust parameter", "tweak threshold"], 
+      "pattern": "Analytical", 
+      "format": "Parameter", 
+      "tool_policy": "auto", 
+      "requirements": {
+        "formulas": "Must restate formulas exactly from analytics_explanations.md.",
+        "algorithms": "Must quote algorithm steps exactly from analytics_explanations.md MISTAKE DETECTION ALGORITHMS section.",
+        "parameter_calibration": "Explain calibration intent and impact; reference the canonical knob name(s).",
+        "tool_call": "Before answering, call get_endpoint_data for the target mistake category. For Outsized Loss content, call filter_losses (losers subset). Do not answer if tool fails or returns empty.",
+        "forbid_summary_data_for_category": true
+      }
+    },
     {"intent": "Contextual", "triggers": ["how is this different", "compare"], "pattern": "Contextual", "format": "Educational"},
     {"intent": "Practical", "triggers": ["how do you spot", "diagnose", "what signs indicate", "how do you identify", "when reviewing history"], "pattern": "Practical", "format": "Analytical", "requirements": {"algorithms": "Must quote algorithm steps exactly from analytics_explanations.md MISTAKE DETECTION ALGORITHMS section when explaining detection processes", "parameter_calibration": "Emphasize parameter calibration importance"}},
     {"intent": "Analytical", "triggers": ["outliers", "formula", "how do you statistically calculate", "what role does variance play"], "pattern": "Analytical", "format": "Educational", "requirements": {"formulas": "Always show formula from analytics_explanations.md", "algorithms": "Quote algorithm steps exactly from analytics_explanations.md MISTAKE DETECTION ALGORITHMS section when relevant", "parameter_calibration": "Emphasize parameter calibration importance"}},
@@ -50,5 +108,35 @@
     {"intent": "Error", "triggers": [], "pattern": "Default", "format": "Errors", "notes": "Use when the assistant must apologise or explain a limitation (out-of-scope, missing data, etc.)."},
     {"intent": "Default", "triggers": [], "pattern": "Default", "format": "Default"}
   ],
-  "routing_tie_breaker": "Methodology Priority: when a question could be Methodology or Assessment, classify as Methodology/Measurement."
+  "routing_tie_breaker": "Methodology Priority: when a question could be Methodology or Assessment, classify as Methodology.",
+  "filter_trades_keyword_map": {
+    "mistakes": {
+      "excessive risk": {"mistake.excessive_risk": true},
+      "no stop": {"mistake.no_stop_loss": true},
+      "no stop-loss": {"mistake.no_stop_loss": true},
+      "revenge": {"mistake.revenge": true},
+      "risk sizing inconsistent": {"mistake.risk_sizing_inconsistent": true},
+      "inconsistent risk sizing": {"mistake.risk_sizing_inconsistent": true}
+    },
+    "fields": {
+      "entry time": "entry_time",
+      "timestamp": "entry_time",
+      "risk size": "risk_size_points",
+      "stop distance": "risk_size_points",
+      "points risked": "risk_size_points",
+      "symbol": "symbol",
+      "instrument": "symbol",
+      "side": "side",
+      "direction": "side",
+      "p&l": "pnl_points",
+      "profit": "pnl_points",
+      "loss": "pnl_points"
+    }
+  },
+  "list_defaults": {
+    "limit": 10,
+    "sort_field": "entry_time",
+    "sort_direction_for_recent": "desc",
+    "sort_direction_for_oldest": "asc"
+  }
 }
