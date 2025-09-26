@@ -1,10 +1,36 @@
 {
-  "version": "2025-09-23",
+  "version": "2025-09-25",
   "global_tool_policy": "Tool usage is REQUIRED for any response that involves user data, counts, aggregates, or examples. Do not rely on memory or unstated assumptions.",
   "on_pattern_missing": "stop_with_message",
   "on_format_missing": "stop_with_message",
   "numeric_provenance_gate": true,
   "when_detectors": [
+    {
+      "when": "performance_stats",
+      "match": {
+        "all": [["any", ["summary","summary","summarize","overview","overall","assess","evaluate","analyze","analysis of"]],
+                ["any", ["trades","trading performance","performance","stats","statistics"]]]
+      }
+    },
+    {
+      "when": "date_filter_signal",
+      "match": {
+        "any": [
+          "jan","feb","mar","apr","may","jun","jul","aug","sep","sept","oct","nov","dec",
+          "yesterday","today","last week","last month","this week","this month",
+          "between","from","to","through","range"
+        ]
+      },
+      "options": {
+        "regex": [
+          "\\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\\s+\\d{4}\\b",
+          "\\b\\d{4}-\\d{2}\\b",
+          "\\b\\d{4}-\\d{2}-\\d{2}\\s*(?:to|–|-|through)\\s*\\d{4}-\\d{2}-\\d{2}\\b",
+          "\\bbetween\\s+\\d{4}-\\d{2}-\\d{2}\\s+and\\s+\\d{4}-\\d{2}-\\d{2}\\b"
+        ]
+      }
+    },
+    
     {
       "when": "trade_examples_or_filtered_counts",
       "match": {
@@ -13,40 +39,56 @@
         "not": ["outsized loss"]
       },
       "options": {
-        "limit_number_regex": "\\b(\\d{1,4})\\b",
+        "limit_number_regex": "(?:\\bshow|list|return|give|pull)\\s+(?:me\\s+)?(\\d{1,3})\\b",
         "recent_phrases": ["most recent","latest","newest","desc","descending"],
         "oldest_phrases": ["oldest","earliest","asc","ascending"]
       }
     },
     {
-      "when": "outsized_losses",
+      "when": "losses",
       "match": {
-        "all": [["any", ["outsized loss","outsized losses"]],
-                ["any", ["mean","average","avg","sigma","std","standard deviation","threshold","percent","percentage","proportion","examples","show"]]]
+        "all": [["any", ["loss","losses","outsized loss","outsized losses","losing trades","losers","trades that are losers","trades in which I took a loss","unprofitable trades"]],
+                ["any", ["list","display","give me","examples","ranked","top","worst","biggest","largest","maximum","max"]]]
       }
     },
     {
-      "when": "methodology_explanation",
+      "when": "outsized_losses_detection_explanation",
+      "match": {
+        "all": [["any", ["loss","losses","outsized loss","outsized losses"]],
+                ["any", ["list","display","give me","examples","ranked","top","worst","biggest","largest","maximum","max"]]]
+      }
+    },
+    {
+      "when": "mistake_detection_explanation",
       "match": {
         "any": ["how do you detect","how do you determine","how does tradehabit","how do you measure","what rules are used","how do you decide","formula","methodology","algorithm"]
+      }
+    },
+    {
+      "when": "session_start",
+      "match": {
+        "any": ["reset"]
       }
     }
   ],
   "deterministic_tool_selection": [
+  {"when": "losses", "tool": "filter_losses", "notes": "Most questions about losses. Lists or ranked losses should come from filter_losses; sort by pointsLost desc; use extrema for singular."},
+
+  {"when": "outsized_losses_detection_explanation", "tool": "filter_losses", "notes": "Required for outsized-loss explanations, thresholds, examples, or distributions. Use losing-trades subset; compute mean, σ and threshold from that subset. If examples are requested, filter to losses exceeding the Outsized Loss Threshold."},
+
+  {"when": "count_mistake_trades", "tool": "filter_trades", "notes": "Deterministic count via list path: hasMistake=true, include_total=true, max_results=0. Do NOT call get_endpoint_data with name='mistakes'."},
+
+  {"when": "date_filter_signal", "tool": "filter_trades", "notes": "If a date/month signal is present in a count question, prefer filter_trades with datetime_range so counts match list results."},
+
   {"when": "session_start", "tool": "get_summary_data", "notes": "Trigger phrase: reset"},
-  {"when": "portfolio_totals_or_rates", "tool": "get_summary_data"},
+
+  {"when": "performance_stats", "tool": "get_summary_data"},
 
   {"when": "trade_examples_or_filtered_counts", "tool": "filter_trades",
    "notes": "User requests lists/examples like 'show X trades', 'list N most recent', with fields (entry time, risk size, etc.). Supports pagination (offset/limit) and sorting (e.g., time desc)."},
 
-  {"when": "mistake_category", "tool": "get_endpoint_data", "category": "auto",
-   "notes": "Summary endpoints (flat dicts): stop-loss, excessive-risk, revenge, risk-sizing, winrate-payoff. Fetch once and use results directly. Do not call repeatedly or attempt keys_only/top exploration since these endpoints do not contain arrays."},
-
-  {"when": "outsized_losses", "tool": "filter_losses",
-   "notes": "Required for outsized-loss explanations, thresholds, examples, or distributions. Use losing-trades subset; compute mean/σ and threshold from that subset. If examples are requested, filter to losses exceeding the computed threshold."},
-
-  {"when": "methodology_explanation", "tool": "get_endpoint_data", "category": "auto",
-   "notes": "Any Methodology intent: fetch category-specific stats (means, σ, thresholds, counts) before answering."},
+  {"when": "mistake_detection_explanation", "tool": "get_endpoint_data", "category": "auto",
+   "notes": "Summary endpoints (flat dicts): insights, stop-loss, excessive-risk, revenge, risk-sizing, winrate-payoff. Fetch once and use results directly. Do not call repeatedly or attempt keys_only/top exploration since these endpoints do not contain arrays. Do not fetch for outsized_losses numbers."},
 
   {"when": "tie_breaker_winrate_payoff", "tool": "get_endpoint_data", "category": "winrate-payoff"}
   ],
@@ -59,11 +101,11 @@
     "require_endpoint_numbers_in_output": true
   },
   "filter_trades_usage": {
-    "supported_filters": ["mistakes", "time_of_day", "time_range", "datetime_range", "side", "symbol", "riskPoints_min/max", "pointsLost_min/max", "pnl_min/max", "result", "max_results", "offset", "include_total"],
-    "default_max_results": 10,
-    "pagination_guidance": "For long lists, default to max_results=10 unless user asks for more; tell user if more exist",
+    "supported_filters": ["mistakes", "time_of_day", "time_range", "datetime_range", "side", "symbol", "riskPoints_min/max", "pointsLost_min/max", "pnl_min/max", "result", "max_results", "offset", "include_total", "sort_by", "sort_dir", "fields"],
     "field_projection": "When user asks for specific fields, return only those fields",
-    "id_only_requests": "If asked for 'IDs only' or 'integer only', return exactly that"
+    "id_only_requests": "If asked for 'IDs only' or 'integer only', return exactly that",
+    "pagination_guidance": "Apply List-Size Messaging Policy (see response_formats.md). Respect list_defaults (limit, hard_cap). Always pass max_results; offer pagination if has_more=true.",
+    "count_only_guidance": "For mistake count questions route to filter_trades with hasMistake=true, include_total=true, max_results=0."
   },
   "time_semantics": {
     "entry_time_unit": "ISO 8601",
@@ -91,6 +133,7 @@
       "requirements": {
         "formulas": "Must restate formulas exactly from analytics_explanations.md.",
         "algorithms": "Must quote algorithm steps exactly from analytics_explanations.md MISTAKE DETECTION ALGORITHMS section.",
+        "source_verification": "Parameter defaults must match exact **Default:** values in analytics_explanations.md. Do not use training data or assumptions.",
         "parameter_calibration": "Explain calibration intent and impact; reference the canonical knob name(s).",
         "tool_call": "Before answering, call get_endpoint_data for the target mistake category. For Outsized Loss content, call filter_losses (losers subset). Do not answer if tool fails or returns empty.",
         "forbid_summary_data_for_category": true
@@ -119,23 +162,24 @@
       "inconsistent risk sizing": {"mistake.risk_sizing_inconsistent": true}
     },
     "fields": {
-      "entry time": "entry_time",
-      "timestamp": "entry_time",
-      "risk size": "risk_size_points",
-      "stop distance": "risk_size_points",
-      "points risked": "risk_size_points",
+      "entry time": "entryTime",
+      "timestamp": "entryTime",
+      "risk size": "riskPoints",
+      "stop distance": "riskPoints",
+      "points risked": "riskPoints",
       "symbol": "symbol",
       "instrument": "symbol",
       "side": "side",
       "direction": "side",
-      "p&l": "pnl_points",
-      "profit": "pnl_points",
-      "loss": "pnl_points"
+      "p&l": "pnl",
+      "profit": "pnl",
+      "loss": "pnl"
     }
   },
   "list_defaults": {
     "limit": 10,
-    "sort_field": "entry_time",
+    "hard_cap": 50,
+    "sort_field": "entryTime",
     "sort_direction_for_recent": "desc",
     "sort_direction_for_oldest": "asc"
   }
