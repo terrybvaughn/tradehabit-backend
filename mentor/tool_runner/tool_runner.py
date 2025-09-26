@@ -5,7 +5,7 @@ import os
 import json
 import sys
 from typing import Any, Dict, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -92,13 +92,19 @@ def _parse_iso_dt(s: str) -> datetime | None:
         if s.endswith("Z"):
             # Python's fromisoformat needs offset like +00:00
             s = s[:-1] + "+00:00"
-        return datetime.fromisoformat(s)
+        dt = datetime.fromisoformat(s)
+        # Normalize to UTC-aware
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        else:
+            dt = dt.astimezone(timezone.utc)
+        return dt
     except Exception:
         return None
 
 
 # ---- shared paging / projection helpers ----
-MAX_PAGE_SIZE = 20  # hard cap to protect tokens
+MAX_PAGE_SIZE = 50  # hard cap to protect tokens
 
 def _parse_pagination(payload: Dict[str, Any], default_limit: int = 10):
     include_total = bool(payload.get("include_total", True))
@@ -137,11 +143,15 @@ def _paginate_list(items: list, payload: Dict[str, Any], default_limit: int = 10
     total = len(items)
     page_full = items[offset: offset + limit] if limit > 0 else []
     page = [_project_fields(x, fields) if isinstance(x, dict) else x for x in page_full]
+    next_offset = offset + len(page)
+    has_more = total > next_offset
     return {
         "total": total if include_total else None,
         "offset": offset,
         "returned": len(page),
-        "results": page
+        "results": page,
+        "has_more": has_more,
+        "next_offset": next_offset if has_more else None
     }
 
 
@@ -201,6 +211,11 @@ def get_endpoint_data():
     raw = payload.get("name", "")
     name = canonicalize(raw)
 
+    # Alias mapping for documentation topics
+    # Map outsized-loss related requests to the canonical 'losses' snapshot
+    if name == "outsized-loss":
+        name = "losses"
+
     wl = build_whitelist()  # dynamic discovery
     print(f"Tool call received: raw={raw!r} canonical={name!r}", file=sys.stderr)
 
@@ -215,6 +230,30 @@ def get_endpoint_data():
     data, code = load_json(filename)
     if code != 200:
         return err(code, data.get("message", f"Failed to load {filename}"))
+
+    # Enrich losses snapshot with computed stats (μ and σ) when available
+    try:
+        if name == "losses" and isinstance(data, dict) and isinstance(data.get("losses"), list):
+            pts = [float(r.get("pointsLost")) for r in data.get("losses", []) if isinstance(r, dict) and isinstance(r.get("pointsLost"), (int, float))]
+            if pts:
+                n = len(pts)
+                mu = sum(pts) / n
+                var = sum((x - mu) ** 2 for x in pts) / n  # population σ
+                sigma = var ** 0.5
+                stats = {
+                    "mean_loss": round(mu, 2),
+                    "std_loss": round(sigma, 2),
+                    "unit": "points"
+                }
+                params = data.get("params", {})
+                if not isinstance(params, dict):
+                    params = {}
+                params.setdefault("outsized_loss_multiplier", 2)
+                data["stats"] = stats
+                data["params"] = params
+    except Exception as _e:
+        # Do not fail the endpoint if stats computation has an issue
+        pass
 
     # ---- flat endpoint short-circuit: dict with no list values ----
     # For flat summary endpoints (e.g., stop-loss, revenge, risk-sizing, excessive-risk, winrate-payoff),
@@ -308,6 +347,15 @@ def filter_trades():
     trades = data.get("trades", [])
 
     def match(trade: Dict[str, Any]) -> bool:
+        # hasMistake filter (accept either explicit boolean or inferred from a 'mistakes' array)
+        if "hasMistake" in payload:
+            want = bool(payload["hasMistake"])
+            mistakes = trade.get("mistakes", [])
+            flag = bool(trade.get("hasMistake", False)) or (isinstance(mistakes, list) and len(mistakes) > 0)
+            if want and not flag:
+                return False
+            if not want and flag:
+                return False
         # Mistakes (any-of)
         if "mistakes" in payload and payload["mistakes"]:
             wanted = set(payload["mistakes"]) if isinstance(payload["mistakes"], list) else {payload["mistakes"]}
@@ -338,14 +386,16 @@ def filter_trades():
             if not (start_t <= entry_t <= end_t):
                 return False
 
-        # Datetime range (ISO)
+        # Datetime range (ISO), normalized to UTC-aware for safe comparisons
         if payload.get("datetime_range"):
             dt = _parse_iso_dt(trade.get("entryTime", ""))
             if not dt:
                 return False
             start_dt = _parse_iso_dt(payload["datetime_range"]["start"])
             end_dt = _parse_iso_dt(payload["datetime_range"]["end"])
-            if not (start_dt and end_dt and start_dt <= dt <= end_dt):
+            if not (start_dt and end_dt):
+                return False
+            if not (start_dt <= dt <= end_dt):
                 return False
 
         # Side
@@ -389,6 +439,24 @@ def filter_trades():
         return True
 
     filtered = [t for t in trades if match(t)]
+    # --- optional sorting before pagination ---
+    sort_by = payload.get("sort_by")
+    sort_dir = payload.get("sort_dir", "desc")
+    if sort_by in {"entryTime", "pointsLost", "pnl"}:
+        with_key = [r for r in filtered if r.get(sort_by) is not None]
+        without = [r for r in filtered if r.get(sort_by) is None]
+        reverse = (sort_dir == "desc")
+
+        if sort_by == "entryTime":
+            # sort by datetime
+            def _dt_key(r):
+                dt = _parse_iso_dt(r.get("entryTime", ""))
+                return dt or datetime.min
+            with_key.sort(key=_dt_key, reverse=reverse)
+        else:
+            with_key.sort(key=lambda r: r[sort_by], reverse=reverse)
+
+        filtered = with_key + without
     page = _paginate_list(filtered, payload, default_limit=10)
     return jsonify(page), 200
 
@@ -445,14 +513,16 @@ def filter_losses():
             if not (start_t <= entry_t <= end_t):
                 return False
 
-        # Datetime range (ISO)
+        # Datetime range (ISO), normalized to UTC-aware for safe comparisons
         if payload.get("datetime_range"):
             dt = _parse_iso_dt(rec.get("entryTime", ""))
             if not dt:
                 return False
             start_dt = _parse_iso_dt(payload["datetime_range"]["start"])
             end_dt = _parse_iso_dt(payload["datetime_range"]["end"])
-            if not (start_dt and end_dt and start_dt <= dt <= end_dt):
+            if not (start_dt and end_dt):
+                return False
+            if not (start_dt <= dt <= end_dt):
                 return False
 
         # Side
