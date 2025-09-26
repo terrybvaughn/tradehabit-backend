@@ -7,7 +7,15 @@
     "properties": {
       "name": {
         "type": "string",
-        "description": "Endpoint name (e.g., losses, revenge, excessive-risk / risk-sizing / winrate-payoff / stop-loss). Hyphens/underscores/spaces are equivalent."
+        "enum": [
+          "insights",
+          "revenge",
+          "excessive-risk",
+          "risk-sizing",
+          "winrate-payoff",
+          "stop-loss"
+        ],
+        "description": "Endpoint name. Allowed: insights, revenge, excessive-risk, risk-sizing, winrate-payoff, stop-loss. Hyphens/underscores/spaces are equivalent."
       },
       "keys_only": {
         "type": "boolean",
