@@ -2,7 +2,7 @@
 
 **Metadata:**
 - Purpose: Standardized response formats for different types of user interactions
-- Last Updated: 2025-09-22
+- Last Updated: 2025-09-23
 - Dependencies: core_persona.md
 - Priority: High
 
@@ -31,6 +31,42 @@
 - Monetary values and ratios: default to two decimal places (e.g., "$125.34", "1.27") unless the value is clearly an integer.
 - Points / ticks: show as whole numbers unless fractional points are meaningful for the instrument.
 - When comparing values, keep the same precision across the compared numbers for readability.
+
+## List-Size Messaging Policy
+This policy should only be applied to responses that contains lists or tables.
+
+Use these templates verbatim. Interpolate with integers:
+- `{requested}`: user’s requested count (if any)
+- `{returned}`: number of rows actually shown
+- `{available}`: total rows available (if known)
+- `{hard_cap}`: 50 (global cap)
+- `{default_limit}`: 10 (global default)
+
+**Case A — User asked for N; fewer exist (M ≤ N ≤ {hard_cap}):**  
+> Showing **{returned} of {requested} requested** (all available).
+
+**Case B — No request; using default:**  
+> Showing **{default_limit} (default)**. Say **“next”** to paginate.
+
+**Case C — User asked for N and more exist (N < {available} ≤ {hard_cap}):**  
+> Showing **{requested} of {available} available**. Say **“next”** to see more.
+
+**Case D — User asked for > {hard_cap}:**  
+> You asked for **{requested}**; the maximum I can show at once is **{hard_cap}**.  
+> Showing **{hard_cap} of {available} available**. Say **“next”** to see more.
+
+**Case E — Concrete example (50 requested but only 34 exist):**  
+> Showing **34 of 50 requested** (all available).
+
+**Zero results:**  
+> No matching rows found.
+
+**General rules:**
+1) The counts must match the actual rows rendered.  
+2) Prefer “Say **‘next’** to see more.” (not “let me know”).  
+3) If `{available}` is unknown, omit the “of {available} available” clause.  
+4) Never exceed **{hard_cap}** rows in a single response.  
+5) If a table would exceed ~1,000 visible cells (rows × columns), include only the first page and prompt to paginate.
 
 
 ## Default
