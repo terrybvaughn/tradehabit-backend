@@ -2,7 +2,7 @@
 
 **Metadata:**
 - Purpose: Standardized templates for explaining concepts and providing insights
-- Last Updated: 2025-09-22
+- Last Updated: 2025-09-25
 - Dependencies: core_persona.md, metric_mappings.md
 - Priority: High
 
@@ -27,9 +27,9 @@
 
 ### Methodology Explanation Template
 ```
-**How it's calculated**: [Quote exact formula from `analytics_explanations.md`]
+**How it's calculated**: [Restate exact formula from `analytics_explanations.md`]
 
-**Detection process**: [Quote exact algorithm steps from `analytics_explanations.md` MISTAKE DETECTION ALGORITHMS section]
+**Detection process**: [Restate the process exactly as written in the MISTAKE DETECTION ALGORITHMS section in `analytics_explanations.md`]
 
 **Why track this pattern**: [Statistical reasoning without jargon]
 
@@ -40,9 +40,9 @@
 **What you can adjust**: [Parameter customization options - OMIT this section if no parameters are adjustable (e.g., Stop-Loss methodology)]
 ```
 
-### Self-Check (do not remove)
-- [ ] Formula matches analytics_explanations.md exactly
-- [ ] Detection steps quoted verbatim (if applicable)
+### Self-Check
+- [ ] Formula exactly matches the applicable formula in `analytics_explanations.md`
+- [ ] Mistake detection steps exactly match the applicable process in `analytics_explanations.md` (if applicable)
 - [ ] All numeric values taken from endpoint data
 - [ ] Units included for every number
 - [ ] TradeHabit terminology only
