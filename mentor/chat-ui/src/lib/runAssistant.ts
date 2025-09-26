@@ -36,12 +36,26 @@ async function callToolRunner(name: string, args: any, userText?: string) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({})
     });
-    return await res.json();
+    const text = await res.text();
+    try {
+      const json = JSON.parse(text);
+      if (!res.ok) throw new Error(`${json.error || "tool_error"}: ${json.detail || "unknown error"}`);
+      return json;
+    } catch (e) {
+      if (!res.ok) throw new Error(`tool_http_${res.status}: ${text.slice(0, 200)}`);
+      throw new Error(`tool_response_not_json: ${text.slice(0, 200)}`);
+    }
   }
 
   // get_endpoint_data with safe defaults and fallback to keys_only
   if (name === "get_endpoint_data") {
     const safeArgs: any = { ...(args || {}) };
+
+    // Normalize param: server expects `name` (not topic)
+    if (safeArgs.topic && !safeArgs.name) {
+      safeArgs.name = safeArgs.topic;
+      delete safeArgs.topic;
+    }
 
     if (!("keys_only" in safeArgs) && !safeArgs.top) safeArgs.keys_only = true;
 
@@ -50,24 +64,39 @@ async function callToolRunner(name: string, args: any, userText?: string) {
     }
 
     const req = Number(safeArgs.max_results);
-    safeArgs.max_results = Number.isFinite(req) && req > 0 ? Math.min(req, 10) : 10;
+    safeArgs.max_results = Number.isFinite(req) && req > 0 ? Math.min(req, 50) : 10;
 
     let res = await fetch(`${TOOL_RUNNER_BASE_URL}/get_endpoint_data`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(safeArgs)
     });
-
-    if (!res.ok) {
-      const fallback = { name: safeArgs.name, keys_only: true };
-      res = await fetch(`${TOOL_RUNNER_BASE_URL}/get_endpoint_data`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(fallback)
-      });
+    let text = await res.text();
+    try {
+      let json = JSON.parse(text);
+      if (!res.ok) {
+        // Attempt fallback only if not ok
+        const fallback = { name: safeArgs.name, keys_only: true };
+        const res2 = await fetch(`${TOOL_RUNNER_BASE_URL}/get_endpoint_data`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(fallback)
+        });
+        const text2 = await res2.text();
+        try {
+          const json2 = JSON.parse(text2);
+          if (!res2.ok) throw new Error(`${json2.error || "tool_error"}: ${json2.detail || "unknown error"}`);
+          return json2;
+        } catch (e2) {
+          if (!res2.ok) throw new Error(`tool_http_${res2.status}: ${text2.slice(0, 200)}`);
+          throw new Error(`tool_response_not_json: ${text2.slice(0, 200)}`);
+        }
+      }
+      return json;
+    } catch (e) {
+      if (!res.ok) throw new Error(`tool_http_${res.status}: ${text.slice(0, 200)}`);
+      throw new Error(`tool_response_not_json: ${text.slice(0, 200)}`);
     }
-
-    return await res.json();
   }
 
   // filter_trades
@@ -86,14 +115,22 @@ async function callToolRunner(name: string, args: any, userText?: string) {
     }
 
     const req = Number(safe.max_results);
-    safe.max_results = Number.isFinite(req) && req > 0 ? Math.min(req, 10) : 10;
+    safe.max_results = Number.isFinite(req) && req > 0 ? Math.min(req, 50) : 10;
 
     const res = await fetch(`${TOOL_RUNNER_BASE_URL}/filter_trades`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(safe)
     });
-    return await res.json();
+    const text = await res.text();
+    try {
+      const json = JSON.parse(text);
+      if (!res.ok) throw new Error(`${json.error || "tool_error"}: ${json.detail || "unknown error"}`);
+      return json;
+    } catch (e) {
+      if (!res.ok) throw new Error(`tool_http_${res.status}: ${text.slice(0, 200)}`);
+      throw new Error(`tool_response_not_json: ${text.slice(0, 200)}`);
+    }
   }
 
   // filter_losses
@@ -112,19 +149,41 @@ async function callToolRunner(name: string, args: any, userText?: string) {
     }
 
     const txt = (typeof userText === "string" ? userText : "").toLowerCase();
-    if (!safe.extrema && /(?:worst|biggest|largest|max(?:imum)?)[\s-]*(?:loss)?/.test(txt)) {
+
+    // Gate extrema (single-row) behind singular intent only.
+    // Examples that SHOULD trigger extrema: "the worst loss", "largest loss", "max loss", "single worst loss"
+    // Examples that SHOULD NOT trigger extrema: "worst losses", "101 worst losses", "top N biggest losses"
+    const pluralLosses = /\blosses\b/.test(txt);
+    const singularWorstLoss = /\b(?:the\s+)?(?:worst|biggest|largest|max(?:imum)?)\s+loss\b/.test(txt);
+    const explicitSingle = /\b(?:single|one|1)\b/.test(txt);
+    const requested = Number((safe as any).max_results);
+    const wantsSingle = (Number.isFinite(requested) && requested === 1) || (!Number.isFinite(requested) && (explicitSingle || singularWorstLoss));
+
+    if (!safe.extrema && wantsSingle && !pluralLosses) {
       safe.extrema = { field: "pointsLost", mode: "max" };
+    } else {
+      // For list requests, ensure deterministic ordering when asking for "worst/biggest/largest" plurals
+      if (!safe.sort_by) safe.sort_by = "pointsLost";
+      if (!safe.sort_dir) safe.sort_dir = "desc";
     }
 
     const req = Number(safe.max_results);
-    safe.max_results = Number.isFinite(req) && req > 0 ? Math.min(req, 10) : 10;
+    safe.max_results = Number.isFinite(req) && req > 0 ? Math.min(req, 50) : 10;
 
     const res = await fetch(`${TOOL_RUNNER_BASE_URL}/filter_losses`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(safe)
     });
-    return await res.json();
+    const text = await res.text();
+    try {
+      const json = JSON.parse(text);
+      if (!res.ok) throw new Error(`${json.error || "tool_error"}: ${json.detail || "unknown error"}`);
+      return json;
+    } catch (e) {
+      if (!res.ok) throw new Error(`tool_http_${res.status}: ${text.slice(0, 200)}`);
+      throw new Error(`tool_response_not_json: ${text.slice(0, 200)}`);
+    }
   }
 
   return { error: `Unknown tool: ${name}` };
