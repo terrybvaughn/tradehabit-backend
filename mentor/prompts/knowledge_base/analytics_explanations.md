@@ -2,7 +2,7 @@
 
 **Metadata:**
 - Purpose: Detailed explanations for TradeHabit analytics and statistical methods
-- Last Updated: 2025-09-22
+- Last Updated: 2025-09-25
 - Dependencies: tradehabit_functionality.md
 - Priority: Critical
 
@@ -22,7 +22,7 @@ Mentor must not:
 For feature list, defaults, and scope of functionality, see `tradehabit_functionality.md`.
 
 
-## 🔒 FORMULAS - DO NOT MODIFY
+## FORMULAS
 
 **CRITICAL**: These formulas must be stated exactly as written.
 
@@ -52,7 +52,7 @@ For feature list, defaults, and scope of functionality, see `tradehabit_function
 - Detection is exclusively time-based, using holding patterns. 
 
 
-## 🔒 MISTAKE DETECTION ALGORITHMS - DO NOT MODIFY
+## MISTAKE DETECTION ALGORITHMS
 
 **CRITICAL**: The steps of these algorithms must be stated exactly as written. 
 
@@ -103,7 +103,7 @@ For feature list, defaults, and scope of functionality, see `tradehabit_function
 - **Purpose**: Controls sensitivity for flagging unusually large risk sizing
 - **How it works**: Higher values flag only the most extreme risk sizes; lower values catch more moderate risk increases
 - **Adjustment impact**: Increase to reduce false positives; decrease to catch subtler risk management issues
-- **Calibration guidance**: Conservative traders may prefer lower settings (1.0-1.5); aggressive traders may use higher settings (2.0+)
+- **Calibration guidance**: Conservative traders may prefer a lower setting; aggressive traders may use a higher setting
 
 **Outsized Loss Multiplier**
 - **Default:** 1.0
@@ -128,7 +128,7 @@ For feature list, defaults, and scope of functionality, see `tradehabit_function
 - **How it works**: Calculates Risk Variation Ratio (standard deviation ÷ mean) of your risk sizes, then compares to threshold
 - **Data source**: Risk size (entry-to-stop distance) at trade entry, not actual loss outcomes
 - **Adjustment impact**: Lower thresholds require tighter consistency; higher thresholds allow more variation before flagging inconsistency
-- **Calibration guidance**: Systematic traders should use lower thresholds (0.25-0.30); discretionary traders may prefer higher thresholds (0.40-0.50)
+- **Calibration guidance**: Systematic traders should use lower thresholds; discretionary traders may prefer higher thresholds
 
 ### Parameter Customization Impact
 
