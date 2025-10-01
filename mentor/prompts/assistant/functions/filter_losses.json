@@ -1,6 +1,6 @@
 {
   "name": "filter_losses",
-  "description": "Paginate or fetch extremes from losses.losses (outsized-loss records).",
+  "description": "Paginate or fetch extremes from losses.losses (outsized-loss records). Returns loss statistics for Loss Consistency Chart analysis.",
   "strict": false,
   "parameters": {
     "type": "object",
@@ -109,5 +109,60 @@
     },
     "required": [],
     "additionalProperties": false
+  },
+  "returns": {
+    "type": "object",
+    "properties": {
+      "total": {
+        "type": "integer",
+        "description": "Total number of records matching filters"
+      },
+      "offset": {
+        "type": "integer",
+        "description": "Starting offset of returned results"
+      },
+      "returned": {
+        "type": "integer",
+        "description": "Number of records in this page"
+      },
+      "results": {
+        "type": "array",
+        "description": "Array of loss records"
+      },
+      "loss_statistics": {
+        "type": "object",
+        "description": "Computed loss statistics for Loss Consistency Chart analysis",
+        "properties": {
+          "mean_loss": {
+            "type": "number",
+            "description": "Mean loss amount across all losing trades"
+          },
+          "std_loss": {
+            "type": "number", 
+            "description": "Standard deviation of loss amounts"
+          },
+          "outsized_loss_multiplier": {
+            "type": "number",
+            "description": "Multiplier used for outsized loss threshold (default: 1.0)"
+          },
+          "outsized_loss_threshold": {
+            "type": "number",
+            "description": "Threshold for outsized loss detection (mean + multiplier * std)"
+          },
+          "total_losses": {
+            "type": "integer",
+            "description": "Total number of losing trades analyzed"
+          },
+          "outsized_losses_count": {
+            "type": "integer",
+            "description": "Number of losses exceeding the outsized loss threshold"
+          },
+          "unit": {
+            "type": "string",
+            "description": "Unit of measurement (points)"
+          }
+        }
+      }
+    }
   }
 }
