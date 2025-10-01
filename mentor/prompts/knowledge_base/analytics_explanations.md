@@ -2,7 +2,7 @@
 
 **Metadata:**
 - Purpose: Detailed explanations for TradeHabit analytics and statistical methods
-- Last Updated: 2025-09-25
+- Last Updated: 2025-09-30
 - Dependencies: tradehabit_functionality.md
 - Priority: Critical
 
@@ -29,27 +29,27 @@ For feature list, defaults, and scope of functionality, see `tradehabit_function
 ### Outsized Loss Detection
 **FORMULA**: `Outsized Loss Threshold = Mean Loss + (σ × Standard Deviation of Losses)`
 - σ = **Outsized Loss Multiplier** (default: 1.0)
-- Canonical terms: "Outsized Loss Threshold", "Average Points Lost", "Standard Deviation of Points Lost"
 - Uses **mean**, not median
 - Uses **addition**, not multiplication
+- Canonical terms: "Outsized Loss Threshold", "Average Points Lost", "Standard Deviation of Points Lost"
 
 ### Excessive Risk Detection
-**FORMULA**: `Excessive Risk Threshold = Mean Risk + (σ × Standard Deviation of Risks)`
+**FORMULA**: `Excessive Risk Threshold = Mean Risk Size + (σ × Standard Deviation of Risk)`
 - σ = **Excessive Risk Multiplier** (default: 1.5)
-- Canonical terms: "Excessive Risk Threshold", "Average Risk Points", "Standard Deviation Risk Points"
+- Canonical terms: "Excessive Risk Threshold", "Standard Deviation of Risk Points", "Mean Risk Size"
 
 ### Risk Sizing Consistency
 **FORMULA**: `Risk Variation Ratio = Standard Deviation of Risk Size ÷ Mean Risk Size`
 - **Calculated Value**: "Risk Variation Ratio" (the computed ratio)
 - **Comparison Threshold**: "Risk Sizing Threshold" (default: 0.35)
 - **Evaluation**: Risk Variation Ratio ≤ Risk Sizing Threshold = consistent
-- **Overall Analysis**: Called "Risk Sizing Consistency"
+- Canonical terms: "Risk Variation Ratio", "Risk Sizing Threshold", "Standard Deviation of Risk Size", "Mean Risk Size"
 
 ### Revenge Trading Window
-**FORMULA**: `Revenge Window = Median Holding Time × Revenge Window Multiplier`
-- Uses **median** holding time (this is the exception)
-- Multiplier term: "Revenge Window Multiplier" (default: 1.0)
-- Detection is exclusively time-based, using holding patterns. 
+**FORMULA**: `Revenge Window = Median Hold Time × Revenge Window Multiplier`
+- **Median Hold Time** is the median time a position is held for all trades.
+- **Adjustable Parameter**: "Revenge Window Multiplier" (default: 1.0) is a parameter that can be adjusted by the user.
+- Canonical terms: "Revenge Window", "Median Holding Time", "Revenge Window Multiplier"
 
 
 ## MISTAKE DETECTION ALGORITHMS
@@ -68,30 +68,30 @@ For feature list, defaults, and scope of functionality, see `tradehabit_function
 
 ### Excessive Risk Detection
 ```
-1. Calculate risk amount for each trade with stop-loss
-2. Compute mean and standard deviation of risk amounts
-3. Set threshold = mean + (Excessive Risk Multiplier × standard_deviation)
-4. Flag trades where risk > threshold
+1. Calculate Risk Size (in points) for each trade with stop-loss
+2. Compute Mean Risk Size and Standard Deviation of Risk
+3. Set Excessive Risk Threshold according to the formula
+4. Flag trades where Risk Size > Excessive Risk Threshold
 ```
 
 ### Outsized Loss Detection
 ```
 1. Identify all losing trades
 2. Calculate absolute loss amounts
-3. Compute mean and standard deviation of losses
-4. Set threshold = mean + (Outsized Loss Multiplier × standard_deviation)
-5. Flag losses exceeding threshold
+3. Compute Mean Loss and Standard Deviation of Losses
+4. Set Outsized Loss Threshold according to the formula
+5. Flag losses exceeding Outsized Loss Threshold
 ```
 
 ### Revenge Trading Detection
 ```
-1. Calculate median holding time for all trades
-2. Set revenge window = median_hold_time × Revenge Window Multiplier
-3. For each losing trade, check if next trade occurs within window
-4. Flag subsequent trades as potential revenge trades
+1. Calculate Median Holding Time for all trades
+2. Set Revenge Window according to the formula
+3. For each losing trade, check if the next trade
+4. If the next trade occurs inside the Revenge Window, flag as revenge trade
 ```
-
 **Important**: Revenge Trading Detection **DOES NOT** rely on any other signals (like trade direction, position size or risk size) to determine whether a trade should be flagged.
+
 
 ## Parameter Configuration
 
