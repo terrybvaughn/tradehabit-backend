@@ -4,6 +4,7 @@ from flask_cors import CORS
 import os
 import json
 import sys
+import statistics
 from typing import Any, Dict, Tuple
 from datetime import datetime, timezone
 
@@ -597,6 +598,37 @@ def filter_losses():
 
     # paginate + project
     page = _paginate_list(filtered, payload, default_limit=10)
+    
+    # Add loss statistics for Loss Consistency Chart analysis
+    try:
+        # Calculate base statistics using ALL losing trades, not filtered subset
+        all_points_lost_values = [float(r.get("pointsLost", 0)) for r in records if isinstance(r.get("pointsLost"), (int, float))]
+        if all_points_lost_values and len(all_points_lost_values) > 0:
+            n = len(all_points_lost_values)
+            mean_loss = sum(all_points_lost_values) / n
+            var = sum((x - mean_loss) ** 2 for x in all_points_lost_values) / n  # population variance
+            std_loss = var ** 0.5
+
+            # Default outsized loss multiplier (from analytics_explanations.md)
+            outsized_loss_multiplier = 1.0
+            outsized_loss_threshold = mean_loss + (outsized_loss_multiplier * std_loss)
+
+            # Count losses exceeding threshold (from ALL losses, not just filtered)
+            outsized_losses_count = sum(1 for x in all_points_lost_values if x > outsized_loss_threshold)
+
+            page["loss_statistics"] = {
+                "mean_loss": round(mean_loss, 2),
+                "std_loss": round(std_loss, 2),
+                "outsized_loss_multiplier": outsized_loss_multiplier,
+                "outsized_loss_threshold": round(outsized_loss_threshold, 2),
+                "total_losses": n,
+                "outsized_losses_count": outsized_losses_count,
+                "unit": "points"
+            }
+    except Exception as e:
+        # Don't fail the endpoint if stats computation has an issue
+        pass
+    
     return jsonify(page), 200
 
 
