@@ -6,6 +6,18 @@
   "numeric_provenance_gate": true,
   "when_detectors": [
     {
+      "when": "concept_definition",
+      "match": {
+        "any": ["what is", "meaning of", "define", "what does", "definition of"]
+      },
+      "options": {
+        "regex": [
+          "\\bwhat does\\s+.+\\s+mean\\b",
+          "\\bdefinition of\\b"
+        ]
+      }
+    },
+    {
       "when": "performance_stats",
       "match": {
         "all": [["any", ["summary","summary","summarize","overview","overall","assess","evaluate","analyze","analysis of"]],
@@ -48,14 +60,22 @@
       "when": "losses",
       "match": {
         "all": [["any", ["loss","losses","outsized loss","outsized losses","losing trades","losers","trades that are losers","trades in which I took a loss","unprofitable trades"]],
-                ["any", ["list","display","give me","examples","ranked","top","worst","biggest","largest","maximum","max"]]]
+                ["any", ["list","display","give me","examples","ranked","top","worst","biggest","largest","maximum","max"]]],
+        "not": ["what is","meaning of","define","definition of","what does"]
       }
     },
-    {
+    { 
       "when": "outsized_losses_detection_explanation",
       "match": {
         "all": [["any", ["loss","losses","outsized loss","outsized losses"]],
-                ["any", ["list","display","give me","examples","ranked","top","worst","biggest","largest","maximum","max"]]]
+                ["any", ["list","display","give me","examples","ranked","top","worst","biggest","largest","maximum","max"]]],
+        "not": ["what is","meaning of","define","definition of","what does"]
+      }
+    },
+    {
+      "when": "loss_consistency_chart",
+      "match": {
+        "any": ["loss consistency chart", "loss consistency", "loss distribution", "loss dispersion", "loss clustering", "loss pattern", "loss scatter", "loss spread"]
       }
     },
     {
@@ -72,9 +92,14 @@
     }
   ],
   "deterministic_tool_selection": [
+  {"when": "concept_definition", "tool": "none",
+   "notes": "Pure definitions. Use metric_mappings.md (authoritative) and analytics_explanations.md. Do NOT call tools unless the user explicitly asks for their own numbers or examples."},
+
   {"when": "losses", "tool": "filter_losses", "notes": "Most questions about losses. Lists or ranked losses should come from filter_losses; sort by pointsLost desc; use extrema for singular."},
 
-  {"when": "outsized_losses_detection_explanation", "tool": "filter_losses", "notes": "Required for outsized-loss explanations, thresholds, examples, or distributions. Use losing-trades subset; compute mean, σ and threshold from that subset. If examples are requested, filter to losses exceeding the Outsized Loss Threshold."},
+  {"when": "loss_consistency_chart", "tool": "filter_losses", "notes": "Loss consistency chart analysis requires full loss statistics from filter_losses. Extract loss_statistics.mean_loss, loss_statistics.std_loss, and loss_statistics.outsized_loss_threshold from response. Interpret tight clustering (low std dev relative to mean) vs wide dispersion (high std dev relative to mean) across ALL losing trades, not just flagged outliers."},
+
+  {"when": "outsized_losses_detection_explanation", "tool": "filter_losses", "notes": "Required for outsized-loss explanations, thresholds, examples, or distributions. Calculate mean/std/threshold using ALL losing trades (do not use hasMistake filter for base statistics). If examples requested, then filter to losses exceeding threshold."},
 
   {"when": "count_mistake_trades", "tool": "filter_trades", "notes": "Deterministic count via list path: hasMistake=true, include_total=true, max_results=0. Do NOT call get_endpoint_data with name='mistakes'."},
 
