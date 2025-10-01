@@ -2,7 +2,7 @@
 
 **Metadata:**
 - Purpose: Single source of truth mapping API fields → user-facing labels → help-doc anchors
-- Last Updated: 2025-09-21
+- Last Updated: 2025-09-30
 - Dependencies: docs/api.md, UI labels
 - Priority: Critical
 
@@ -18,9 +18,9 @@ These are the mistake categories that can be applied to individual trades.
 | Internal Tag | Canonical Label | Definition |
 |--------------|-----------------|------------|
 | no stop-loss order | No Stop-Loss Order | Trade executed without a stop-loss order |
-| excessive risk | Excessive Risk | Risk size exceeded the configured risk threshold |
-| outsized loss | Outsized Loss | Loss amount exceeded the configured outsized-loss threshold |
-| revenge trade | Revenge Trade | Trade entered within the configured revenge-trade time window after a loss |
+| excessive risk | Excessive Risk | Risk size (in points) exceeded the Excessive Risk Threshold |
+| outsized loss | Outsized Loss | Loss amount (in points) exceeded the Outsized Loss Threshold |
+| revenge trade | Revenge Trade | Trade entered after a loss inside the Revenge Window |
 
 
 ## Behavioral Patterns
@@ -46,7 +46,7 @@ These are patterns that TradeHabit detects for behavioral analysis. They are not
 | /api/trades trades[].entryQty | Quantity | Entry Quantity | Filled quantity at entry |
 | /api/trades trades[].exitPrice | Price | Exit Price | Executed price at exit |
 | /api/trades trades[].exitQty | Quantity | Exit Quantity | Filled quantity at exit |
-| /api/trades trades[].pnl | Currency | P&L | Profit or loss for a trade (in dollars) |
+| /api/trades trades[].pnl | Points | P&L | Profit or loss for a trade (in points) |
 | /api/trades trades[].riskPoints | Points | Risk Points | Stop distance (in points risked) for a trade |
 | /api/trades trades[].mistakes[] | String list | Mistake Tags | Mistakes attributed to this trade |
 | /api/trades date_range.start | ISO-8601 datetime | Start Date | Earliest trade time in the order data on record |
@@ -54,8 +54,8 @@ These are patterns that TradeHabit detects for behavioral analysis. They are not
 | /api/trades trades[].id<br>/api/losses losses[].tradeId | ID | Trade ID | Unique identifier for a trade |
 | /api/summary win_rate<br>/api/winrate-payoff winRate<br>/api/revenge revenge_win_rate<br>/api/revenge overall_win_rate | Ratio (0–1) | Win Rate | Percent of trades that were profitable |
 | /api/summary payoff_ratio<br>/api/winrate-payoff payoffRatio<br>/api/revenge payoff_ratio_revenge<br>/api/revenge overall_payoff_ratio | Ratio | Payoff Ratio | Average Win divided by Average Loss |
-| /api/summary average_win<br>/api/winrate-payoff averageWin<br>/api/revenge average_win_revenge | Currency | Average Win | Mean average profit of all winning trades |
-| /api/summary average_loss<br>/api/winrate-payoff averageLoss<br>/api/revenge average_loss_revenge | Currency | Average Loss | Mean average loss of all losing trades |
+| /api/summary average_win<br>/api/winrate-payoff averageWin<br>/api/revenge average_win_revenge | Points | Average Win | Mean average profit (in points) of all winning trades |
+| /api/summary average_loss<br>/api/winrate-payoff averageLoss<br>/api/revenge average_loss_revenge | Points | Average Loss | Mean average loss (in points) of all losing trades |
 | /api/summary total_trades<br>/api/stop-loss totalTrades | Count | Total Trades | Total number of trades analyzed |
 | /api/summary win_count | Count | Winning Trades | Number of trades that resulted in a profit |
 | /api/summary loss_count | Count | Losing Trades | Number of trades that resulted in a loss |
@@ -71,16 +71,16 @@ These are patterns that TradeHabit detects for behavioral analysis. They are not
 | /api/losses count<br>/api/losses percentage<br>/api/losses excessLossPoints | Count/Percentage/Points | Outsized Loss Statistics | Count, percentage, and excess points of flagged outsized losses |
 | /api/losses meanPointsLost | Points | Average Points Lost | Mean average points lost for losing trades |
 | /api/losses stdDevPointsLost | Points | Standard Deviation of Points Lost | Standard deviation of points lost for losing trades |
-| /api/risk-sizing meanRiskPoints<br>/api/excessive-risk meanRiskPoints | Points | Average Risk Points | Mean average risk size (in points) for all trades |
-| /api/risk-sizing stdDevRiskPoints<br>/api/excessive-risk stdDevRiskPoints | Points | Standard Deviation Risk Points | Standard deviation of risk size (in points) |
+| /api/risk-sizing meanRiskPoints<br>/api/excessive-risk meanRiskPoints | Points | Mean Risk Size | Mean average risk size (in points) for all trades |
+| /api/risk-sizing stdDevRiskPoints<br>/api/excessive-risk stdDevRiskPoints | Points | Standard Deviation of Risk Size | Standard deviation of risk size (in points) |
 | /api/risk-sizing count | Count | Trades with Risk Data | Number of trades with calculable risk points |
 | /api/risk-sizing minRiskPoints | Points | Min Risk Points | Smallest risk size (in points) among trades |
 | /api/risk-sizing maxRiskPoints | Points | Max Risk Points | Largest risk size (in points) among trades |
 | /api/risk-sizing variationRatio | Ratio | Risk Variation Ratio | Measure of your position sizing consistency |
 | /api/risk-sizing variationThreshold | Ratio | Risk Sizing Threshold | Threshold for determining risk sizing consistency (coefficient of variation cutoff) |
-| /api/revenge revenge_multiplier | Scalar | Revenge Window Multiplier | Multiplier applied to median hold time to define the revenge window (k) |
+| /api/revenge revenge_multiplier | Scalar | Revenge Window Multiplier | Multiplier applied to median hold time to define the revenge window |
 | /api/revenge total_revenge_trades | Count | Revenge Trade Count | Number of trades identified within the revenge window after a loss |
-| /api/revenge net_pnl_revenge<br>/api/revenge net_pnl_per_trade_revenge | Currency | Net P&L (Revenge) | Total and per-trade profit/loss from revenge trades |
+| /api/revenge net_pnl_revenge<br>/api/revenge net_pnl_per_trade_revenge | Points | Net P&L (Revenge) | Total and per-trade profit/loss (in points) from revenge trades |
 | /api/excessive-risk sigmaUsed | Scalar (σ) | Excessive Risk Multiplier | Multiplier used in the Excessive Risk Threshold calculation |
 | /api/excessive-risk totalTradesWithStops | Count | Trades with Stops | Number of trades where a stop-loss order was detected |
 | /api/excessive-risk excessiveRiskThreshold | Points | Excessive Risk Threshold | Cutoff for flagging excessive risk (in points) |
@@ -89,9 +89,9 @@ These are patterns that TradeHabit detects for behavioral analysis. They are not
 | /api/excessive-risk averageRiskAmongExcessive | Points | Average Risk (Excessive) | Mean risk (in points) among trades flagged as taking excessive risk |
 | /api/stop-loss tradesWithStops | Count | Trades with Stops | Number of trades in which a stop-loss order was detected |
 | /api/stop-loss tradesWithoutStops | Count | Trades without Stops | Number of trades that lacked a stop-loss order |
-| /api/stop-loss averageLossWithStop | Currency | Average Loss (With Stop) | Mean loss among trades that used a stop |
-| /api/stop-loss averageLossWithoutStop | Currency | Average Loss (Without Stop) | Mean loss among trades without a stop |
-| /api/stop-loss maxLossWithoutStop | Currency | Max Loss (Without Stop) | Largest loss among trades without a stop |
+| /api/stop-loss averageLossWithStop | Points | Average Loss (With Stop) | Mean loss (in points) among trades that used a stop |
+| /api/stop-loss averageLossWithoutStop | Points | Average Loss (Without Stop) | Mean loss (in points) among trades without a stop |
+| /api/stop-loss maxLossWithoutStop | Points | Max Loss (Without Stop) | Largest loss (in points) among trades without a stop |
 
 
 ## Key Alias Map (JSON → Canonical)
