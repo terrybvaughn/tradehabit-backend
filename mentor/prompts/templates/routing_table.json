@@ -1,10 +1,40 @@
 {
-  "version": "2025-09-25",
+  "version": "2025-10-02",
   "global_tool_policy": "Tool usage is REQUIRED for any response that involves user data, counts, aggregates, or examples. Do not rely on memory or unstated assumptions.",
   "on_pattern_missing": "stop_with_message",
   "on_format_missing": "stop_with_message",
   "numeric_provenance_gate": true,
   "when_detectors": [
+    {
+      "when": "internals_request",
+      "match": {
+        "any": ["json fields", "json keys", "json values", "show me the json", "field names", "schema", "internal fields", "raw json", "api fields", "data structure", "show me the fields", "list the fields", "show the fields", "show the schema", "show me properties", "fields and values", "fields you use", "fields you used", "properties you used", "from that fixture"]
+      },
+      "options": {
+        "regex": [
+          "\\bjson\\s+fields?\\b",
+          "\\bjson\\s+keys?\\b",
+          "\\bjson\\s+values?\\b",
+          "\\bshow\\s+me\\s+the\\s+json\\b",
+          "\\bfield\\s+names?\\b",
+          "\\bschema\\b",
+          "\\binternal\\s+fields?\\b",
+          "\\braw\\s+json\\b",
+          "\\bapi\\s+fields?\\b",
+          "\\bdata\\s+structure\\b",
+          "\\bshow\\s+me\\s+the\\s+fields?\\b",
+          "\\blist\\s+the\\s+fields?\\b",
+          "\\bshow\\s+the\\s+fields?\\b",
+          "\\bshow\\s+the\\s+schema\\b",
+          "\\bshow\\s+me\\s+properties\\b",
+          "\\bfields?\\s+and\\s+values?\\b",
+          "\\bfields?\\s+you\\s+use\\b",
+          "\\bfields?\\s+you\\s+used\\b",
+          "\\bproperties\\s+you\\s+used\\b",
+          "\\bfrom\\s+that\\s+fixture\\b"
+        ]
+      }
+    },
     {
       "when": "concept_definition",
       "match": {
@@ -92,30 +122,32 @@
     }
   ],
   "deterministic_tool_selection": [
-  {"when": "concept_definition", "tool": "none",
-   "notes": "Pure definitions. Use metric_mappings.md (authoritative) and analytics_explanations.md. Do NOT call tools unless the user explicitly asks for their own numbers or examples."},
+    {"when": "internals_request", "tool": "none", "notes": "Always respond with the exact INTERNALS_REFUSAL message from system_instructions.md; never mention debug or any workaround."},
+    
+    {"when": "concept_definition", "tool": "none",
+     "notes": "Pure definitions. Use metric_mappings.md (authoritative) and analytics_explanations.md. Do NOT call tools unless the user explicitly asks for their own numbers or examples."},
 
-  {"when": "losses", "tool": "filter_losses", "notes": "Most questions about losses. Lists or ranked losses should come from filter_losses; sort by pointsLost desc; use extrema for singular."},
+    {"when": "losses", "tool": "filter_losses", "notes": "Most questions about losses. Lists or ranked losses should come from filter_losses; sort by pointsLost desc; use extrema for singular."},
 
-  {"when": "loss_consistency_chart", "tool": "filter_losses", "notes": "Loss consistency chart analysis requires full loss statistics from filter_losses. Extract loss_statistics.mean_loss, loss_statistics.std_loss, and loss_statistics.outsized_loss_threshold from response. Interpret tight clustering (low std dev relative to mean) vs wide dispersion (high std dev relative to mean) across ALL losing trades, not just flagged outliers."},
+    {"when": "loss_consistency_chart", "tool": "filter_losses", "notes": "Loss consistency chart analysis requires full loss statistics from filter_losses. Extract loss_statistics.mean_loss, loss_statistics.std_loss, and loss_statistics.outsized_loss_threshold from response. Interpret tight clustering (low std dev relative to mean) vs wide dispersion (high std dev relative to mean) across ALL losing trades, not just flagged outliers."},
 
-  {"when": "outsized_losses_detection_explanation", "tool": "filter_losses", "notes": "Required for outsized-loss explanations, thresholds, examples, or distributions. Calculate mean/std/threshold using ALL losing trades (do not use hasMistake filter for base statistics). If examples requested, then filter to losses exceeding threshold."},
+    {"when": "outsized_losses_detection_explanation", "tool": "filter_losses", "notes": "Required for outsized-loss explanations, thresholds, examples, or distributions. Calculate mean/std/threshold using ALL losing trades (do not use hasMistake filter for base statistics). If examples requested, then filter to losses exceeding threshold."},
 
-  {"when": "count_mistake_trades", "tool": "filter_trades", "notes": "Deterministic count via list path: hasMistake=true, include_total=true, max_results=0. Do NOT call get_endpoint_data with name='mistakes'."},
+    {"when": "count_mistake_trades", "tool": "filter_trades", "notes": "Deterministic count via list path: hasMistake=true, include_total=true, max_results=0. Do NOT call get_endpoint_data with name='mistakes'."},
 
-  {"when": "date_filter_signal", "tool": "filter_trades", "notes": "If a date/month signal is present in a count question, prefer filter_trades with datetime_range so counts match list results."},
+    {"when": "date_filter_signal", "tool": "filter_trades", "notes": "If a date/month signal is present in a count question, prefer filter_trades with datetime_range so counts match list results."},
 
-  {"when": "session_start", "tool": "get_summary_data", "notes": "Trigger phrase: reset"},
+    {"when": "session_start", "tool": "get_summary_data", "notes": "Trigger phrase: reset"},
 
-  {"when": "performance_stats", "tool": "get_summary_data"},
+    {"when": "performance_stats", "tool": "get_summary_data"},
 
-  {"when": "trade_examples_or_filtered_counts", "tool": "filter_trades",
-   "notes": "User requests lists/examples like 'show X trades', 'list N most recent', with fields (entry time, risk size, etc.). Supports pagination (offset/limit) and sorting (e.g., time desc)."},
+    {"when": "trade_examples_or_filtered_counts", "tool": "filter_trades",
+     "notes": "User requests lists/examples like 'show X trades', 'list N most recent', with fields (entry time, risk size, etc.). Supports pagination (offset/limit) and sorting (e.g., time desc)."},
 
-  {"when": "mistake_detection_explanation", "tool": "get_endpoint_data", "category": "auto",
-   "notes": "Summary endpoints (flat dicts): insights, stop-loss, excessive-risk, revenge, risk-sizing, winrate-payoff. Fetch once and use results directly. Do not call repeatedly or attempt keys_only/top exploration since these endpoints do not contain arrays. Do not fetch for outsized_losses numbers."},
+    {"when": "mistake_detection_explanation", "tool": "get_endpoint_data", "category": "auto",
+     "notes": "Summary endpoints (flat dicts): insights, stop-loss, excessive-risk, revenge, risk-sizing, winrate-payoff. Fetch once and use results directly. Do not call repeatedly or attempt keys_only/top exploration since these endpoints do not contain arrays. Do not fetch for outsized_losses numbers."},
 
-  {"when": "tie_breaker_winrate_payoff", "tool": "get_endpoint_data", "category": "winrate-payoff"}
+    {"when": "tie_breaker_winrate_payoff", "tool": "get_endpoint_data", "category": "winrate-payoff"}
   ],
   "counting_rules": {
     "totals": "get_summary_data",
@@ -148,6 +180,7 @@
   },
   "categories": [
     {"intent": "Session Reset", "triggers": ["reset"], "pattern": "Default", "format": "Default", "requirements": {"tool_call": "Before responding, call get_summary_data to populate summary_data"}},
+    {"intent": "Debug", "triggers": ["debug:"], "pattern": "Default", "format": "Default", "requirements": {"gate": "If user message does not start with 'debug:', respond: 'I cannot share internal system information.'"}},
     {"intent": "Conceptual", "triggers": ["what is", "meaning of", "define"], "pattern": "Conceptual", "format": "Educational"},
     {
       "intent": "Methodology", 
