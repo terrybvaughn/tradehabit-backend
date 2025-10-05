@@ -2,7 +2,15 @@
 
 ## Overview
 
-TradeHabit employs a **simple in-memory state management pattern** suitable for single-session behavioral analysis. The backend maintains stateful data structures during the user's session, while the frontend (React) uses modern state management libraries for UI state.
+This document covers state management for both TradeHabit systems:
+- **Core Analytics Backend** (documented below) - Simple in-memory state for session-based analysis
+- **TradeHabit Mentor** (see [Mentor State Management](#mentor-state-management)) - Separate prototype with external thread storage
+
+---
+
+## Core Analytics Backend
+
+TradeHabit's core backend employs a **simple in-memory state management pattern** suitable for single-session behavioral analysis. The backend maintains stateful data structures during the user's session, while the frontend (React) uses modern state management libraries for UI state.
 
 ## Backend State Management
 
@@ -327,5 +335,58 @@ const { data, error, isLoading } = useQuery(
 2. **Cache Strategically**: Balance performance with data freshness
 3. **Handle Loading States**: Provide feedback during state transitions
 4. **Error Boundaries**: Graceful degradation when state operations fail
+
+---
+
+## Mentor State Management
+
+**Status**: Development prototype with temporary state patterns. Will be redesigned with user accounts and persistence.
+
+### Current State Architecture
+
+#### **Conversation State (External)**
+- **Storage**: OpenAI thread storage (external to application)
+- **Lifecycle**: Threads persist across sessions on OpenAI servers
+- **Access**: Via OpenAI Assistants API using thread IDs
+- **Limitation**: No local thread management or user ownership
+
+#### **Tool Runner State (In-Memory)**
+- **Cache**: In-memory dictionary of loaded JSON fixtures
+- **Lifecycle**: Cache persists until tool runner restart
+- **Pattern**: Similar to core backend - no persistence
+```python
+CACHE: dict[str, Any] = {}  # In-memory fixture cache
+```
+
+#### **Chat UI State (React)**
+- **Local State**: Message history managed with `useState`
+- **Thread Tracking**: Thread ID stored in component state
+- **No Persistence**: Conversation lost on page refresh
+```typescript
+const [messages, setMessages] = useState<Msg[]>([])
+const [threadId, setThreadId] = useState<string | undefined>()
+```
+
+### Key Differences from Core Backend
+
+| Aspect | Core Backend | Mentor |
+|--------|--------------|--------|
+| **Conversation State** | N/A | Stored on OpenAI servers |
+| **Data State** | In-memory global | In-memory cache + JSON fixtures |
+| **Persistence** | None | Threads persist on OpenAI only |
+| **Multi-user** | Single session | No isolation (shared fixtures) |
+
+### Future State Management (Planned)
+
+When user accounts are added:
+- **User-specific data**: Replace shared fixtures with per-user database queries
+- **Thread ownership**: Associate OpenAI threads with user accounts
+- **Conversation history**: Store thread metadata locally for user management
+- **Settings persistence**: Store per-user Mentor preferences
+- **Unified state**: Integrate Mentor state with core backend state model
+
+For complete Mentor architecture details, see [`docs/mentor.md`](./mentor.md).
+
+---
 
 This state management approach provides a simple, effective solution for the application's behavioral analysis needs while maintaining good performance and user experience.

@@ -2,7 +2,7 @@
 
 ## Tech Stack
 
-### Backend
+### Core Backend
 - **Python 3.x** - Core runtime environment
 - **Flask** - Web framework for REST API
 - **Pandas & NumPy** - Data manipulation and statistical analysis
@@ -11,6 +11,12 @@
 - **Python-dateutil** - Advanced datetime handling
 - **Werkzeug** - WSGI utilities and development server
 
+### Mentor (AI Coach)
+- **Backend**: Flask tool runner (Python 3.9+) serving analytics fixtures
+- **Frontend**: Next.js 14.2.5 + React 18.2.0 + TypeScript 5.4.5
+- **AI Provider**: OpenAI Assistants API (GPT-4)
+- **Prompt Corpus**: 13 markdown/JSON files defining persona, knowledge, and templates
+
 ### Frontend (External)
 - **React 19** with TypeScript
 - **Zustand** for state management
@@ -18,8 +24,9 @@
 - **Modern CSS Modules** for styling
 
 ### Deployment
-- **Backend**: Replit with auto-scaling
+- **Core Backend**: Replit with auto-scaling
 - **Frontend**: app.tradehab.it
+- **Mentor**: Development only (separate ports 3000/5000)
 - **WSGI Configuration**: Gunicorn with Procfile
 
 ## High-Level Application Design
@@ -55,36 +62,74 @@ The application follows a **three-tier architecture**:
 
 ## System Architecture Diagram
 
+### Core Analytics System
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Frontend (React)                         │
-│                     app.tradehab.it                            │
+│                     app.tradehab.it                             │
 └─────────────────────┬───────────────────────────────────────────┘
                       │ HTTP/JSON API
                       │
 ┌─────────────────────▼───────────────────────────────────────────┐
 │                    Flask API Layer                              │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
-│  │   app.py        │  │   errors.py     │  │   CORS Config   │ │
-│  │ 14+ endpoints   │  │ Error handling  │  │ Multi-origin    │ │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  │
+│  │   app.py        │  │   errors.py     │  │   CORS Config   │  │
+│  │ 14+ endpoints   │  │ Error handling  │  │ Multi-origin    │  │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘  │
 └─────────────────────┬───────────────────────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────────────────────┐
 │                Business Logic Layer                             │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
-│  │   Analytics/    │  │   Parsing/      │  │   Models/       │ │
-│  │ Mistake Analysis│  │ Data Processing │  │ Trade Objects   │ │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  │
+│  │   Analytics/    │  │   Parsing/      │  │   Models/       │  │
+│  │ Mistake Analysis│  │ Data Processing │  │ Trade Objects   │  │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘  │
 └─────────────────────┬───────────────────────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────────────────────┐
 │                   Data Layer                                    │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
-│  │ In-Memory Store │  │ CSV Processing  │  │ Statistical     │ │
+│  ┌─────────────────┐  ┌──────────────────┐  ┌─────────────────┐ │
+│  │ In-Memory Store │  │ CSV Processing   │  │ Statistical     │ │
 │  │ trade_objs[]    │  │ Pandas DataFrames│  │ Calculations    │ │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│  └─────────────────┘  └──────────────────┘  └─────────────────┘ │
 └─────────────────────────────────────────────────────────────────┘
+```
+
+### TradeHabit Mentor System (Separate)
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                 Mentor Chat UI (Next.js)                        │
+│                    localhost:3000                               │
+│  ┌────────────────┐  ┌────────────────┐  ┌──────────────────┐   │
+│  │  Chat.tsx      │  │  /api/chat     │  │  runAssistant.ts │   │
+│  └────────────────┘  └────────────────┘  └──────────────────┘   │
+└──────────────┬───────────────────────────────┬──────────────────┘
+               │                               │
+               │ OpenAI Assistants API         │ Tool Runner API
+               │                               │
+┌──────────────▼──────────────┐   ┌───────────▼───────────────────┐
+│   OpenAI Platform           │   │   Tool Runner (Flask)         │
+│   ┌──────────────────────┐  │   │      localhost:5000           │
+│   │  Assistant (GPT-4.1) │  │   │  ┌─────────────────────────┐  │
+│   │  - System Prompt     │  │   │  │ 8 Endpoints:            │  │
+│   │  - 4 Function Tools  │  │   │  │ - get_summary_data      │  │
+│   │  - Thread Management │  │   │  │ - get_endpoint_data     │  │
+│   └──────────────────────┘  │   │  │ - filter_trades         │  │
+└─────────────────────────────┘   │  │ - filter_losses         │  │
+                                  │  └─────────────────────────┘  │
+                                  │  ┌─────────────────────────┐  │
+                                  │  │ JSON Fixtures (9 files) │  │
+                                  │  │ mentor/tool_runner/     │  │
+                                  │  │      static/            │  │
+                                  │  └─────────────────────────┘  │
+                                  └───────────────────────────────┘
+
+Prompt Corpus (13 files in mentor/prompts/):
+├── assistant/system_instructions/
+├── persona/ (3 files)
+├── knowledge_base/ (4 files)
+├── templates/ (3 files)
+└── conversation_starters/ (2 files)
 ```
 
 ## Data Flow Architecture
@@ -187,4 +232,115 @@ Request → Analysis → JSON Serialization → CORS Headers → Response
 - **Efficient Processing**: Pandas operations for bulk calculations
 - **Minimal Overhead**: Simple data structures
 
-This architecture provides a robust foundation for behavioral trading analysis while maintaining simplicity and maintainability.
+---
+
+## TradeHabit Mentor Architecture
+
+### Overview
+
+TradeHabit Mentor operates as a **separate prototype system** alongside the core analytics backend. It provides AI-powered coaching through conversational analysis of trading behavior.
+
+### Architectural Approach
+
+#### 1. **Decoupled Design**
+- **Decision**: Separate standalone system during development
+- **Rationale**: Enables rapid iteration without affecting core analytics; validates product-market fit before integration
+- **Trade-offs**: Duplicate data fixtures; no unified authentication; separate deployment
+
+#### 2. **Orchestrated AI Pattern**
+- **Decision**: Use OpenAI Assistants API with function calling
+- **Rationale**: Leverages managed threads, automatic retries, and state persistence
+- **Implementation**: 4 function tools for data access; 13-file prompt corpus for behavior
+
+#### 3. **Static Data Fixtures**
+- **Decision**: Serve analytics from local JSON files
+- **Rationale**: Development simplicity; decouples from live backend during prototyping
+- **Trade-offs**: No real-time data; manual fixture updates required
+
+#### 4. **Comprehensive Prompt Engineering**
+- **Decision**: 13-file prompt corpus with strict routing rules
+- **Rationale**: Ensures consistent, accurate responses; enforces terminology; prevents hallucination
+- **Structure**: Persona → Knowledge Base → Templates → Application Logic
+
+### Mentor Data Flow
+
+```
+1. User Message → Chat UI
+2. Chat UI → OpenAI Assistants API (create message + run)
+3. Assistant → Function Call Request (get_summary_data, filter_trades, etc.)
+4. Chat UI → Tool Runner (fetch data from JSON fixture)
+5. Tool Runner → JSON Response
+6. Chat UI → OpenAI Assistants API (submit tool outputs)
+7. Assistant → Generate Response (using prompt corpus + data)
+8. OpenAI → Chat UI → User
+```
+
+### Key Mentor Components
+
+#### **Tool Runner** (`mentor/tool_runner/tool_runner.py`)
+- Flask service serving 8 REST endpoints
+- In-memory caching of JSON fixtures
+- Pagination, filtering, and sorting support
+- Automatic endpoint discovery from available fixtures
+
+#### **Assistant Orchestrator** (`mentor/chat-ui/src/lib/runAssistant.ts`)
+- Manages OpenAI Assistant runs and threads
+- Executes function calls via Tool Runner
+- Retry logic for rate limiting (429 errors)
+- Error handling and graceful degradation
+
+#### **Prompt Corpus** (`mentor/prompts/`)
+- **System Instructions**: Routing logic, tool policies, response rules
+- **Persona**: Core personality, conversation guidelines, domain expertise
+- **Knowledge Base**: Metric definitions, analytics explanations, TradeHabit functionality
+- **Templates**: Response formats, explanation patterns, conversation starters
+
+### Integration Considerations
+
+#### Current State
+- ⚠️ **Development Prototype**: Not production-ready
+- 🔧 **No Backend Integration**: Operates independently from core API
+- 📁 **Static Fixtures**: Data manually exported to JSON files
+- 🚫 **No Multi-Tenancy**: All users see same fixture data
+
+#### Future Production Architecture
+```
+┌────────────────────────────────────────────────────────────────┐
+│                    Main TradeHabit Backend                     │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  /api/mentor/*  Mentor Endpoints (Unified API)           │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  Mentor Service Layer                                    │  │
+│  │  - Real-time analytics data (from database)              │  │
+│  │  - User authentication & multi-tenancy                   │  │
+│  │  - OpenAI integration with user context                  │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────────────┘
+```
+
+
+### Security Considerations
+
+#### Current Implementation
+- **No Authentication**: Tool runner has CORS enabled for all origins
+- **Environment Secrets**: API keys stored in `.env.local`
+- **Read-Only Data**: Tool runner serves static fixtures only
+- **No User Data**: Fixtures are synthetic test data
+
+#### Production Requirements
+- JWT-based authentication for API access
+- User-specific data isolation (multi-tenancy)
+- Rate limiting per user/session
+- Audit logging for AI interactions
+- Input sanitization for tool runner queries
+
+### Documentation
+
+For complete Mentor technical documentation, see:
+- **[`docs/mentor.md`](./mentor.md)** - Complete technical reference
+- **[`mentor/prompts/prompt_loading_order.md`](../mentor/prompts/prompt_loading_order.md)** - Prompt corpus guide
+
+---
+
+This architecture provides a robust foundation for behavioral trading analysis while maintaining simplicity and maintainability, with TradeHabit Mentor adding AI-powered coaching capabilities.

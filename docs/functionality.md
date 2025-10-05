@@ -1,9 +1,20 @@
 # Functionality Overview
 
-## Core Business Logic
+## System Overview
+
+TradeHabit provides two complementary systems for behavioral trading analysis:
+
+1. **Core Analytics Backend** (documented below) - CSV analysis, mistake detection, goal tracking
+2. **TradeHabit Mentor** (see [`docs/mentor.md`](./mentor.md)) - AI-powered coaching, conversational analytics explanations
+
+This document focuses on the **Core Analytics Backend** functionality. For Mentor's AI coaching capabilities, prompt architecture, and conversational features, see the dedicated [Mentor documentation](./mentor.md).
+
+---
+
+## Core Analytics Backend
 
 ### Primary Purpose
-TradeHabit analyzes trading behavior to identify and quantify common trading mistakes. The application transforms raw NinjaTrader CSV exports into actionable behavioral insights through sophisticated statistical analysis and pattern recognition.
+TradeHabit's core backend analyzes trading behavior to identify and quantify common trading mistakes. The application transforms raw NinjaTrader CSV exports into actionable behavioral insights through sophisticated statistical analysis and pattern recognition.
 
 ### Key Business Functions
 
