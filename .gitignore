@@ -7,9 +7,9 @@ __pycache__/
 .vscode/
 
 # Cursor (ignore most, but track valuable rules)
-.cursor/
-!.cursor/rules/  # Exception: track project rules
-.cursor/rules/.DS_Store
+.cursor/*
+!.cursor/rules/     # Exception: track project rules
+!.cursor/context.md # Exception: track project context
 
 # pyenv
 .python-version
