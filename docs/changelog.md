@@ -23,6 +23,23 @@ Use the format below for each new entry:
 
 
 
+## [2025-10-05] TradeHabit Mentor Documentation
+
+Comprehensive documentation added for TradeHabit Mentor, an AI-powered trading coach prototype. Mentor is a separate system (Next.js Chat UI + Flask Tool Runner + OpenAI Assistants API) that provides conversational analytics explanations, goal-setting assistance, and behavioral coaching. All existing documentation updated to acknowledge Mentor as a complementary system alongside the core analytics backend.
+
+**Added:**
+- `mentor.md` — Complete technical documentation for Mentor (architecture, data flow, function tools, prompt corpus, setup, limitations)
+
+**Updated:**
+- `api.md` — Added Mentor API section noting separate prototype status and future integration plans
+- `architecture.md` — Added Mentor system diagram, architectural approach, design principles, security considerations, and performance characteristics
+- `dependencies.md` — Added comprehensive Mentor dependency analysis (Next.js, React, OpenAI SDK, TypeScript, Flask, function schemas)
+- `functionality.md` — Added system overview distinguishing core backend from Mentor with pointer to mentor.md
+- `product-overview.md` — Updated with Mentor features for non-technical audience, revised "What Sets It Apart" and "Current Stage" sections
+- `security-considerations.md` — Added extensive Mentor security analysis including critical concerns (OpenAI data transmission, no authentication, API key exposure, open CORS), vulnerabilities prioritization, production requirements, and best practices
+- `setup.md` — Added complete Mentor setup guide (prerequisites, local development, OpenAI configuration, testing, troubleshooting, deployment considerations)
+- `state-management.md` — Added minimal Mentor state management section (conversation state on OpenAI, tool runner cache, Chat UI React state, future persistence plans)
+
 ## [2025-07-17] Initial Knowledge Upload
 
 Established initial documentation structure in the `/docs` directory.  

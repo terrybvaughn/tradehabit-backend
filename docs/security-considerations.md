@@ -1,6 +1,16 @@
 # Security Considerations
 
-## Current Security Posture
+## Overview
+
+This document covers security considerations for both TradeHabit systems:
+1. **Core Analytics Backend** - Main Flask API for CSV analysis
+2. **TradeHabit Mentor** - AI coaching system (separate prototype)
+
+---
+
+## Core Analytics Backend Security
+
+### Current Security Posture
 
 ### **Data Handling Practices**
 
@@ -372,18 +382,319 @@ def test_cors_policy():
 - **DDoS Attack**: Implement rate limiting, contact ISP
 - **Vulnerability Discovery**: Patch immediately, notify users
 
+---
+
+## TradeHabit Mentor Security
+
+### Current Security Posture
+
+**Status**: Development prototype with significant security gaps. **Not production-ready.**
+
+### **Critical Security Concerns**
+
+#### **1. Third-Party Data Transmission**
+- **Risk**: User trading data sent to OpenAI API
+- **Impact**: 
+  - Data leaves user's control
+  - Subject to OpenAI's data policies
+  - Potential regulatory compliance issues
+- **Current Mitigation**: Using synthetic test data only
+- **Production Requirement**: User consent, data minimization, encryption
+
+#### **2. No Authentication System**
+- **Chat UI**: No user authentication
+- **Tool Runner**: No API authentication
+- **Risk**: Anyone with URL can access
+- **Impact**: Unauthorized access to trading data and AI interactions
+- **Mitigation Needed**: JWT-based authentication for both services
+
+#### **3. OpenAI API Key Exposure**
+- **Storage**: API key in environment variables
+- **Risk**: If leaked, unauthorized API usage and costs
+- **Impact**: Financial exposure, quota exhaustion
+- **Current Protection**: Environment variable isolation
+- **Production Requirement**: Secure key management (e.g., AWS Secrets Manager)
+
+#### **4. Tool Runner Open CORS**
+```python
+CORS(app, resources={r"/*": {"origins": "*"}})
+```
+- **Risk**: Any origin can call tool runner endpoints
+- **Impact**: Unauthorized data access, CSRF attacks
+- **Current Justification**: Development convenience only
+- **Production Requirement**: Restrict to specific Chat UI origin
+
+#### **5. Thread Persistence on OpenAI**
+- **Storage**: Conversation threads stored on OpenAI servers
+- **Risk**: Long-term data retention outside control
+- **Impact**: Data privacy concerns, compliance issues
+- **Mitigation Needed**: Thread deletion policy, user data controls
+
+### **Data Privacy Implications**
+
+#### **What Data Goes to OpenAI**
+1. **User Questions**: All chat messages
+2. **Trading Data**: Analytics returned from tool runner
+   - Trade counts, mistake statistics
+   - Performance metrics
+   - Individual trade details (when requested)
+3. **Context**: Conversation history in thread
+
+#### **OpenAI Data Handling**
+- **Retention**: Per OpenAI's data retention policy
+- **Usage**: Subject to OpenAI's terms of service
+- **Access**: OpenAI employees may access for abuse monitoring
+- **Training**: API data not used for model training (per OpenAI policy)
+
+#### **Compliance Considerations**
+- **GDPR**: User consent required for third-party processing
+- **CCPA**: User rights to data deletion not fully supported
+- **Financial Data**: Trading data may be considered sensitive financial information
+
+### **Current Security Measures**
+
+#### **Environment Variable Isolation**
+```bash
+# .env.local (not committed to git)
+OPENAI_API_KEY=sk-...
+ASSISTANT_ID=asst_...
+TOOL_RUNNER_BASE_URL=http://localhost:5000
+```
+
+#### **Static Data Fixtures**
+- **Benefit**: No live database exposure
+- **Limitation**: Same data shown to all users (dev only)
+
+#### **Read-Only Tool Runner**
+- **Design**: Tool runner only serves data, no mutations
+- **Benefit**: Limits potential damage from unauthorized access
+
+#### **Rate Limiting (OpenAI)**
+- **Protection**: OpenAI enforces rate limits
+- **Benefit**: Prevents runaway costs
+- **Limitation**: Not customizable to user quotas
+
+### **Mentor-Specific Vulnerabilities**
+
+#### **High Priority**
+
+##### **1. No User Data Isolation**
+- **Risk**: All users see same fixture data (dev prototype)
+- **Impact**: Privacy violation, data leakage
+- **Production Requirement**: Per-user data isolation
+
+##### **2. No Cost Controls**
+- **Risk**: Unlimited OpenAI API usage
+- **Impact**: Runaway costs, quota exhaustion
+- **Mitigation Needed**: Per-user quotas, cost caps
+
+##### **3. No Input Validation**
+- **Risk**: Tool runner accepts any filter parameters
+- **Impact**: Potential for abuse, resource exhaustion
+- **Mitigation Needed**: Parameter validation, sanitization
+
+##### **4. Session Hijacking**
+- **Risk**: Thread IDs not protected
+- **Impact**: Unauthorized access to user conversations
+- **Mitigation Needed**: Secure session management
+
+#### **Medium Priority**
+
+##### **1. No Request Logging**
+- **Risk**: No audit trail for AI interactions
+- **Impact**: Cannot track abuse or debug issues
+- **Mitigation Needed**: Comprehensive logging infrastructure
+
+##### **2. No Error Rate Monitoring**
+- **Risk**: OpenAI API failures go unnoticed
+- **Impact**: Poor user experience, undetected issues
+- **Mitigation Needed**: Monitoring and alerting
+
+##### **3. Prompt Injection Risks**
+- **Risk**: Users could craft malicious prompts
+- **Impact**: Bypass safety guidelines, extract system info
+- **Mitigation**: Input filtering, prompt design safeguards
+
+### **Production Security Requirements**
+
+#### **Authentication & Authorization**
+```typescript
+// Chat UI authentication
+const response = await fetch('/api/chat', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${userToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ message, threadId })
+});
+```
+
+```python
+# Tool runner authentication
+@app.before_request
+def require_auth():
+    token = request.headers.get('Authorization')
+    if not validate_jwt(token):
+        abort(401)
+    request.user_id = extract_user_id(token)
+```
+
+#### **Data Isolation**
+```python
+# Per-user data access
+@app.route("/get_summary_data", methods=["POST"])
+def get_summary_data():
+    user_id = request.user_id
+    data = load_user_data(user_id)  # Not from shared fixture
+    return jsonify(data)
+```
+
+#### **Rate Limiting**
+```typescript
+// Frontend rate limiting
+const rateLimiter = new RateLimiter({
+  maxRequests: 20,
+  windowMs: 60000  // 20 requests per minute
+});
+
+if (!rateLimiter.tryRequest(userId)) {
+  throw new Error('Rate limit exceeded');
+}
+```
+
+#### **API Key Security**
+```python
+# Secure key management
+import boto3
+from botocore.exceptions import ClientError
+
+def get_openai_key():
+    client = boto3.client('secretsmanager')
+    try:
+        response = client.get_secret_value(SecretId='openai-api-key')
+        return response['SecretString']
+    except ClientError as e:
+        logger.error(f"Failed to retrieve API key: {e}")
+        raise
+```
+
+#### **Audit Logging**
+```python
+def log_ai_interaction(user_id, query, response, tool_calls):
+    logger.info({
+        'timestamp': datetime.utcnow().isoformat(),
+        'user_id': user_id,
+        'query_length': len(query),
+        'response_length': len(response),
+        'tool_calls': len(tool_calls),
+        'tokens_used': response.get('usage', {})
+    })
+```
+
+### **Mentor Security Best Practices**
+
+#### **1. User Consent & Transparency**
+- Clearly disclose data sent to OpenAI
+- Obtain explicit consent before AI interactions
+- Provide opt-out mechanisms
+- Display privacy policy and data handling practices
+
+#### **2. Data Minimization**
+- Send only necessary data to OpenAI
+- Avoid sending PII when possible
+- Use aggregated data where appropriate
+- Implement field-level access controls
+
+#### **3. Cost Management**
+- Set per-user monthly token limits
+- Implement tiered access levels
+- Monitor and alert on unusual usage
+- Provide usage dashboards to users
+
+#### **4. Thread Management**
+- Implement thread expiration policies
+- Allow users to delete their threads
+- Periodically purge old threads from OpenAI
+- Store thread metadata locally for user control
+
+#### **5. Monitoring & Alerting**
+- Track OpenAI API response times
+- Monitor error rates by error type
+- Alert on rate limit approaches
+- Track token usage per user
+- Monitor for prompt injection attempts
+
+### **Mentor Testing Requirements**
+
+#### **Security Testing**
+```python
+# Test authentication
+def test_chat_requires_auth():
+    response = client.post('/api/chat', json={'message': 'test'})
+    assert response.status_code == 401
+
+# Test rate limiting
+def test_rate_limiting():
+    for i in range(25):  # Exceed limit
+        response = client.post('/api/chat', 
+                              headers={'Authorization': f'Bearer {token}'},
+                              json={'message': f'test {i}'})
+    assert response.status_code == 429
+
+# Test data isolation
+def test_user_data_isolation():
+    user1_data = get_summary(user1_token)
+    user2_data = get_summary(user2_token)
+    assert user1_data != user2_data
+```
+
+#### **Prompt Injection Testing**
+- Test malicious prompts attempting system disclosure
+- Verify prompt safeguards prevent exploitation
+- Test jailbreak attempts
+- Validate output filtering
+
+---
+
 ## Future Security Enhancements
 
-### **Short-term Improvements**
+### **Core Backend - Short-term Improvements**
 1. **Add Authentication**: JWT-based user authentication
 2. **Implement Rate Limiting**: Prevent abuse and DoS
 3. **Add Input Validation**: Comprehensive request validation
 4. **Security Headers**: Implement security headers
 
-### **Long-term Enhancements**
+### **Core Backend - Long-term Enhancements**
 1. **User Management**: Full user account system
 2. **Audit Logging**: Comprehensive security logging
 3. **API Versioning**: Versioned API with deprecation
 4. **Container Security**: Enhanced container security
 
-This security analysis provides a comprehensive overview of current security measures and recommendations for production deployment of the TradeHabit backend.
+### **Mentor - Short-term Improvements (Critical)**
+1. **Authentication**: Implement JWT authentication for Chat UI and Tool Runner
+2. **CORS Restriction**: Lock down Tool Runner CORS to specific origins
+3. **API Key Security**: Move to secure key management service
+4. **Rate Limiting**: Per-user quotas and cost controls
+5. **Data Isolation**: Remove shared fixtures, implement per-user data access
+
+### **Mentor - Long-term Enhancements**
+1. **User Consent Framework**: Implement disclosure and consent mechanisms
+2. **Thread Management**: User-controlled thread deletion and expiration
+3. **Cost Dashboard**: Usage tracking and billing transparency
+4. **Audit Logging**: Comprehensive AI interaction logging
+5. **Prompt Safety**: Advanced prompt injection prevention
+6. **Compliance**: GDPR/CCPA data handling compliance
+7. **Monitoring**: Real-time security and performance monitoring
+
+### **Integration Considerations**
+When Mentor is integrated with the main backend:
+- **Unified Authentication**: Single JWT system for both services
+- **Shared Rate Limits**: Coordinated rate limiting across systems
+- **Consistent Audit Logging**: Unified logging infrastructure
+- **Single Security Policy**: Coordinated security measures
+- **Centralized Key Management**: Shared secret management service
+
+---
+
+This security analysis provides a comprehensive overview of current security measures and recommendations for production deployment of both the TradeHabit core backend and Mentor AI coaching system.

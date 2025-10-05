@@ -1,6 +1,16 @@
 # Setup and Deployment Guide
 
-## Development Environment Setup
+## Overview
+
+This guide covers setup for both TradeHabit systems:
+1. **Core Analytics Backend** - Main Flask API (below)
+2. **TradeHabit Mentor** - AI coaching system (see [Mentor Setup](#tradehabit-mentor-setup))
+
+---
+
+## Core Analytics Backend Setup
+
+### Development Environment Setup
 
 ### **Prerequisites**
 - **Python 3.10+**: Required for modern type hints and dataclass features
@@ -537,6 +547,409 @@ git push origin v1.0.0
 # 1.0.1 -> 1.1.0 (minor)
 # 1.1.0 -> 2.0.0 (major)
 ```
+
+---
+
+## TradeHabit Mentor Setup
+
+**Status**: Development prototype - separate from main backend
+
+### Prerequisites
+
+- **Node.js 20+**: Required for Next.js frontend
+- **Python 3.9+**: Required for tool runner
+- **OpenAI API Key**: Required for AI functionality
+- **npm**: Node package manager
+
+### Local Development Setup
+
+#### **1. Tool Runner (Backend) Setup**
+
+```bash
+# Navigate to tool runner directory
+cd mentor/tool_runner
+
+# Install Flask and Flask-CORS (if not already installed)
+pip install flask flask-cors
+
+# Start tool runner
+python tool_runner.py
+
+# Should start on http://localhost:5000
+```
+
+**Verify Tool Runner**:
+```bash
+# Test health endpoint
+curl http://localhost:5000/health
+
+# Expected response:
+# {"status": "OK"}
+
+# Test endpoint listing
+curl http://localhost:5000/list_endpoints
+
+# Should return available fixture keys
+```
+
+#### **2. Chat UI (Frontend) Setup**
+
+```bash
+# Navigate to chat UI directory
+cd mentor/chat-ui
+
+# Install dependencies
+npm install
+
+# Create environment file
+cat > .env.local << EOF
+OPENAI_API_KEY=sk-...your-key-here...
+ASSISTANT_ID=asst_...your-assistant-id...
+TOOL_RUNNER_BASE_URL=http://localhost:5000
+EOF
+
+# Start development server
+npm run dev
+
+# Should start on http://localhost:3000
+```
+
+**Verify Chat UI**:
+- Open browser to http://localhost:3000
+- Should see "Mentor Tester" interface
+- Try asking: "What is TradeHabit?"
+
+#### **3. JSON Fixtures Setup**
+
+```bash
+# Ensure fixtures exist in tool_runner/static/
+cd mentor/tool_runner/static
+
+# Required fixtures (9 files):
+ls -la *.json
+
+# Should show:
+# - summary.json
+# - trades.json
+# - losses.json
+# - insights.json
+# - revenge.json
+# - excessive-risk.json
+# - risk-sizing.json
+# - stop-loss.json
+# - winrate-payoff.json
+```
+
+### OpenAI Assistant Configuration
+
+#### **1. Create OpenAI Assistant**
+
+```bash
+# Using OpenAI CLI or Dashboard
+# 1. Go to https://platform.openai.com/assistants
+# 2. Create new Assistant
+# 3. Set model to GPT-4 (or gpt-4-1106-preview)
+# 4. Add system instructions (from mentor/prompts/assistant/system_instructions/)
+# 5. Add function tools (4 functions from mentor/prompts/assistant/functions/)
+```
+
+#### **2. Function Tool Configuration**
+
+Add these 4 function tools to your assistant:
+
+1. **get_summary_data** (from `mentor/prompts/assistant/functions/get_summary_data.json`)
+2. **get_endpoint_data** (from `mentor/prompts/assistant/functions/get_endpoint_data.json`)
+3. **filter_trades** (from `mentor/prompts/assistant/functions/filter_trades.json`)
+4. **filter_losses** (from `mentor/prompts/assistant/functions/filter_losses.json`)
+
+Copy the JSON schema from each file into the OpenAI Assistant function configuration.
+
+#### **3. Get Assistant ID**
+
+```bash
+# From OpenAI Dashboard
+# Copy the Assistant ID (starts with "asst_")
+# Add to .env.local file
+```
+
+### Environment Configuration
+
+#### **Chat UI Environment Variables**
+
+```bash
+# .env.local (in mentor/chat-ui/)
+OPENAI_API_KEY=sk-...                  # OpenAI API key
+ASSISTANT_ID=asst_...                  # OpenAI Assistant ID
+TOOL_RUNNER_BASE_URL=http://localhost:5000  # Tool runner URL
+```
+
+#### **Tool Runner Configuration**
+
+```python
+# mentor/tool_runner/tool_runner.py
+# CORS configuration (development)
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+# For production, restrict origins:
+CORS(app, resources={r"/*": {"origins": ["https://your-chat-ui-url.com"]}})
+```
+
+### Testing the Setup
+
+#### **Complete Flow Test**
+
+```bash
+# Terminal 1: Start tool runner
+cd mentor/tool_runner
+python tool_runner.py
+
+# Terminal 2: Start chat UI
+cd mentor/chat-ui
+npm run dev
+
+# Browser: http://localhost:3000
+# Test questions:
+# - "What is my win rate?"
+# - "How many trades do I have?"
+# - "Explain how you detect revenge trading"
+```
+
+#### **Tool Runner Tests**
+
+```bash
+# Test summary endpoint
+curl -X POST http://localhost:5000/get_summary_data
+
+# Test endpoint data
+curl -X POST http://localhost:5000/get_endpoint_data \
+  -H "Content-Type: application/json" \
+  -d '{"name": "insights", "keys_only": true}'
+
+# Test trade filtering
+curl -X POST http://localhost:5000/filter_trades \
+  -H "Content-Type: application/json" \
+  -d '{"max_results": 5, "include_total": true}'
+```
+
+### Production Deployment Considerations
+
+⚠️ **WARNING**: Mentor is a development prototype. Do not deploy to production without addressing security concerns (see `docs/security-considerations.md`).
+
+#### **Pre-Production Checklist**
+
+- [ ] Implement authentication for Chat UI
+- [ ] Implement authentication for Tool Runner
+- [ ] Restrict Tool Runner CORS to specific origins
+- [ ] Move OpenAI API key to secure secret management
+- [ ] Implement rate limiting and cost controls
+- [ ] Replace JSON fixtures with live database queries
+- [ ] Implement per-user data isolation
+- [ ] Add audit logging for AI interactions
+- [ ] Set up monitoring and alerting
+- [ ] Test prompt injection safeguards
+
+#### **Deployment Architecture Options**
+
+##### **Option 1: Separate Services (Current)**
+```
+Chat UI → Vercel/Netlify (Next.js)
+Tool Runner → Heroku/Railway (Flask)
+OpenAI API → Third-party
+```
+
+##### **Option 2: Unified Backend (Future)**
+```
+Frontend → Main Backend → Mentor Service → OpenAI API
+                       → Database
+```
+
+### Troubleshooting Mentor Setup
+
+#### **Common Issues**
+
+##### **1. OpenAI API Errors**
+```bash
+# Error: Invalid API key
+# Solution: Verify OPENAI_API_KEY in .env.local
+
+# Error: Assistant not found
+# Solution: Verify ASSISTANT_ID matches your OpenAI assistant
+
+# Error: Rate limit exceeded
+# Solution: Check your OpenAI account usage limits
+```
+
+##### **2. Tool Runner Connection Issues**
+```bash
+# Error: Tool runner not responding
+# Solution: Ensure tool runner is running on port 5000
+
+# Error: CORS policy blocked
+# Solution: Check CORS configuration in tool_runner.py
+
+# Test connection:
+curl http://localhost:5000/health
+```
+
+##### **3. Chat UI Build Issues**
+```bash
+# Error: Module not found
+# Solution: Delete node_modules and reinstall
+rm -rf node_modules package-lock.json
+npm install
+
+# Error: Port 3000 already in use
+# Solution: Kill process or use different port
+lsof -i :3000
+kill -9 <PID>
+# Or:
+npm run dev -- -p 3001
+```
+
+##### **4. Missing Fixtures**
+```bash
+# Error: fixture not found
+# Solution: Ensure all 9 JSON files exist in mentor/tool_runner/static/
+
+# List fixtures:
+ls -la mentor/tool_runner/static/*.json
+
+# Verify fixture format:
+cat mentor/tool_runner/static/summary.json | jq
+```
+
+##### **5. Function Tool Errors**
+```bash
+# Error: Unknown function
+# Solution: Verify all 4 function tools are added to OpenAI Assistant
+
+# Check function schemas match:
+cat mentor/prompts/assistant/functions/get_summary_data.json
+# Compare to OpenAI Dashboard function configuration
+```
+
+### Development Workflow
+
+#### **Typical Development Session**
+
+```bash
+# 1. Start tool runner
+cd mentor/tool_runner && python tool_runner.py
+
+# 2. In new terminal, start chat UI
+cd mentor/chat-ui && npm run dev
+
+# 3. Make changes to:
+# - Chat UI: mentor/chat-ui/src/ (auto-reloads)
+# - Tool Runner: mentor/tool_runner/ (restart required)
+# - Prompts: mentor/prompts/ (reload assistant)
+
+# 4. Test changes in browser (http://localhost:3000)
+```
+
+#### **Updating Fixtures**
+
+```bash
+# Update test data
+cd mentor/tool_runner/static
+
+# Edit fixture
+nano trades.json
+
+# Refresh tool runner cache
+curl -X POST http://localhost:5000/refresh_cache
+
+# Or restart tool runner
+```
+
+#### **Updating Prompts**
+
+```bash
+# Edit prompt files
+cd mentor/prompts
+
+# Edit system instructions
+nano assistant/system_instructions/system_instructions.md
+
+# Update assistant in OpenAI Dashboard
+# - Copy new content
+# - Paste into assistant configuration
+# - Save
+
+# Test changes in chat UI
+```
+
+### Performance Tuning
+
+#### **Tool Runner Performance**
+
+```python
+# Increase cache size (in tool_runner.py)
+# Current: In-memory cache with no size limit
+
+# Add cache size limit:
+from cachetools import LRUCache
+CACHE = LRUCache(maxsize=100)  # Limit cache to 100 entries
+```
+
+#### **Chat UI Performance**
+
+```typescript
+// Add request debouncing
+import { debounce } from 'lodash';
+
+const debouncedSend = debounce(send, 300);
+```
+
+#### **OpenAI API Optimization**
+
+```typescript
+// Reduce token usage
+// - Use field projection in filter_trades
+// - Set max_results appropriately
+// - Use keys_only when full data not needed
+
+const filters = {
+  max_results: 10,  // Don't over-fetch
+  fields: ['id', 'entryTime', 'pnl'],  // Project only needed fields
+  include_total: false  // Skip total count if not needed
+};
+```
+
+### Monitoring and Debugging
+
+#### **Tool Runner Logging**
+
+```python
+# Add logging to tool_runner.py
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+@app.before_request
+def log_request():
+    logger.info(f"{request.method} {request.path}")
+```
+
+#### **Chat UI Debugging**
+
+```typescript
+// Enable verbose logging in runAssistant.ts
+console.log('Calling tool runner:', toolCall);
+console.log('Tool response:', result);
+```
+
+#### **OpenAI Assistant Debugging**
+
+```typescript
+// Log OpenAI run details
+console.log('Run status:', run.status);
+console.log('Tool calls:', run.required_action?.submit_tool_outputs?.tool_calls);
+console.log('Usage:', run.usage);
+```
+
+---
 
 ## Performance Optimization
 

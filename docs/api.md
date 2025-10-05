@@ -4,6 +4,8 @@
 
 TradeHabit provides a RESTful API with 14+ endpoints for behavioral trading analysis. All endpoints return JSON responses with consistent error handling and CORS support for multiple frontend origins.
 
+**Note**: This document covers the core analytics API. For TradeHabit Mentor (AI coaching chatbot), see [`docs/mentor.md`](./mentor.md).
+
 ## Base Configuration
 
 ### CORS Origins
@@ -599,6 +601,47 @@ curl "http://localhost:5000/api/losses?symbol=MNQH5&sigma=1.0"
 - **Analysis**: ~50ms for 100 trades
 - **API Response**: ~10ms for cached results
 - **Memory Usage**: Linear with trade count
+
+## TradeHabit Mentor API
+
+TradeHabit Mentor is an AI-powered trading coach that provides conversational analysis and guidance. Unlike the core analytics API documented above, Mentor operates as a separate system with its own endpoints.
+
+### Architecture
+
+Mentor uses a distinct architecture:
+- **Chat UI**: Next.js application (port 3000) with `/api/chat` endpoint
+- **Tool Runner**: Flask service (port 5000) serving analytics data from JSON fixtures
+- **AI Backend**: OpenAI Assistants API for conversation orchestration
+
+### Integration Status
+
+⚠️ **Current State**: Mentor is not yet integrated with the main TradeHabit backend API. It operates as a standalone development prototype.
+
+**Implications for Integration**:
+- Mentor endpoints are separate from `/api/*` routes documented above
+- Tool runner serves data from local JSON fixtures, not live database
+- No unified authentication or multi-tenant support yet
+
+### Documentation
+
+For complete Mentor documentation including:
+- System architecture and data flow
+- Tool runner endpoints (`/get_summary_data`, `/filter_trades`, etc.)
+- Function calling schemas
+- Development setup and configuration
+- Prompt corpus organization
+
+See **[`docs/mentor.md`](./mentor.md)**
+
+### Future Integration
+
+Production integration will include:
+- Unified `/api/mentor/*` endpoints on main backend
+- Real-time analytics data (replacing JSON fixtures)
+- Shared authentication and session management
+- Multi-tenant data isolation
+
+---
 
 ## Integration Examples
 

@@ -1,6 +1,14 @@
 # Dependencies Analysis
 
-## Core Dependencies
+## Overview
+
+TradeHabit has two distinct dependency stacks:
+1. **Core Backend** - Python/Flask analytics API (documented below)
+2. **Mentor** - AI coaching system with separate frontend and tool runner (see [Mentor Dependencies](#mentor-dependencies))
+
+---
+
+## Core Backend Dependencies
 
 ### Production Dependencies
 
@@ -263,4 +271,261 @@ HTTP → Gunicorn → Flask → Application Logic
 - **Installation Speed**: Relatively fast dependency installation
 - **Size Optimization**: Minimal dependency footprint
 
-This dependency analysis provides a comprehensive overview of the libraries and frameworks used in TradeHabit, their purposes, and their relationships within the application architecture.
+---
+
+## Mentor Dependencies
+
+TradeHabit Mentor operates as a separate system with its own dependency stack split between frontend (Chat UI) and backend (Tool Runner).
+
+### Mentor Frontend (Chat UI)
+
+**Location**: `/mentor/chat-ui/`  
+**Runtime**: Node.js 20+  
+**Port**: 3000 (development)
+
+#### **Production Dependencies** (from `package.json`)
+
+##### **Next.js (14.2.5)**
+- **Purpose**: React framework for Chat UI application
+- **Usage**:
+  - App Router for `/api/chat` endpoint
+  - Server-side rendering and API routes
+  - TypeScript integration
+  - Development and production builds
+- **Key Features Used**:
+  - `app/` directory structure
+  - API routes (`app/api/chat/route.ts`)
+  - Server-side request handling
+  - Built-in TypeScript support
+
+##### **React (18.2.0)**
+- **Purpose**: UI component library
+- **Usage**:
+  - Chat interface components (`Chat.tsx`, `MessageBubble.tsx`)
+  - State management with hooks (`useState`)
+  - Client-side rendering
+- **Key Features Used**:
+  - Function components
+  - Hooks API (`useState`, `useEffect`)
+  - Event handling
+
+##### **React-DOM (18.2.0)**
+- **Purpose**: React rendering for web
+- **Usage**: DOM manipulation and rendering
+- **Integration**: Automatic via Next.js
+
+##### **OpenAI SDK (4.52.0)**
+- **Purpose**: OpenAI API client library
+- **Usage**:
+  - Assistants API integration
+  - Thread management
+  - Message creation and retrieval
+  - Run orchestration
+- **Key Operations**:
+  - `openai.beta.threads.create()`
+  - `openai.beta.threads.messages.create()`
+  - `openai.beta.threads.runs.create()`
+  - `openai.beta.threads.runs.submitToolOutputs()`
+- **Critical For**: All AI coaching functionality
+
+#### **Development Dependencies**
+
+##### **TypeScript (5.4.5)**
+- **Purpose**: Type safety and developer experience
+- **Usage**:
+  - Type definitions for all components
+  - Interface definitions for API responses
+  - Type checking during development
+- **Configuration**: `tsconfig.json`
+
+##### **@types/node (20.11.30)**
+- **Purpose**: TypeScript definitions for Node.js
+- **Usage**: Type support for Node.js APIs in API routes
+
+##### **@types/react (18.2.66)**
+- **Purpose**: TypeScript definitions for React
+- **Usage**: Type support for React components and hooks
+
+##### **@types/react-dom (18.2.22)**
+- **Purpose**: TypeScript definitions for React DOM
+- **Usage**: Type support for React rendering APIs
+
+#### **Environment Variables Required**
+```bash
+OPENAI_API_KEY=sk-...           # OpenAI API key
+ASSISTANT_ID=asst_...           # OpenAI Assistant ID  
+TOOL_RUNNER_BASE_URL=http://... # Tool runner endpoint
+```
+
+### Mentor Backend (Tool Runner)
+
+**Location**: `/mentor/tool_runner/`  
+**Runtime**: Python 3.9+  
+**Port**: 5000 (development)
+
+#### **Production Dependencies**
+
+##### **Flask (latest)**
+- **Purpose**: REST API server for analytics data
+- **Usage**:
+  - 8 endpoints serving JSON fixtures
+  - Request/response handling
+  - CORS support
+- **Endpoints**:
+  - `/get_summary_data`
+  - `/get_endpoint_data`
+  - `/filter_trades`
+  - `/filter_losses`
+  - Health check and utilities
+
+##### **Flask-CORS (latest)**
+- **Purpose**: Cross-origin resource sharing
+- **Usage**: Enable Chat UI (port 3000) to call Tool Runner (port 5000)
+- **Configuration**: `CORS(app, resources={r"/*": {"origins": "*"}})`
+- **Note**: Currently allows all origins (development only)
+
+#### **Built-in Python Modules**
+- **json**: JSON fixture loading and parsing
+- **os**: File system operations for fixture discovery
+- **statistics**: Loss statistics calculations (mean, std dev)
+- **datetime**: Timestamp parsing and filtering
+- **typing**: Type hints for function signatures
+
+### Mentor Prompt Corpus
+
+**Location**: `/mentor/prompts/`  
+**Format**: 13 markdown and JSON files  
+**Dependencies**: None (static text files loaded by OpenAI)
+
+#### **Prompt Files** (13 files)
+- `assistant/system_instructions/system_instructions.md` (1)
+- `persona/*.md` (3 files)
+- `knowledge_base/*.md` (4 files)
+- `templates/*.{md,json}` (3 files)
+- `conversation_starters/*.md` (2 files)
+
+#### **Function Schemas** (4 files)
+- `assistant/functions/get_summary_data.json`
+- `assistant/functions/get_endpoint_data.json`
+- `assistant/functions/filter_trades.json`
+- `assistant/functions/filter_losses.json`
+
+**Purpose**: Define OpenAI Assistant function calling interface
+
+### Mentor Dependency Relationships
+
+#### **Frontend Stack**
+```
+Next.js → React → OpenAI SDK → Tool Runner
+```
+
+#### **Backend Stack**
+```
+Flask → JSON Fixtures (9 files totaling ~181KB)
+```
+
+#### **AI Stack**
+```
+Chat UI → OpenAI Assistants API → Prompt Corpus (13 files)
+```
+
+### Mentor Version Management
+
+#### **Critical Versions**
+- **Next.js 14.2.5**: Stable App Router with API routes
+- **React 18.2.0**: Concurrent rendering features
+- **OpenAI SDK 4.52.0**: Assistants API support (beta)
+- **TypeScript 5.4.5**: Modern TypeScript features
+
+#### **Compatibility Notes**
+- **Node.js 20+**: Required for Next.js 14
+- **Python 3.9+**: Required for type hints in tool runner
+- **OpenAI Assistants API**: Beta API, subject to changes
+
+### Mentor Security Implications
+
+#### **External Service Dependencies**
+- **OpenAI API**: Third-party AI provider
+  - API key security critical
+  - Data sent to OpenAI servers
+  - Rate limiting and cost considerations
+  - Beta API stability risks
+
+#### **Authentication**
+- ⚠️ **No authentication currently implemented**
+- Tool Runner: CORS open to all origins (dev only)
+- Chat UI: No user authentication
+- OpenAI API key stored in environment variables
+
+#### **Data Privacy**
+- User data sent to OpenAI API
+- Thread persistence on OpenAI servers
+- No local conversation storage
+- Synthetic test data only (currently)
+
+### Mentor Performance Characteristics
+
+#### **Bundle Sizes**
+- Next.js build: ~200KB gzipped (estimated)
+- OpenAI SDK: ~50KB (when bundled)
+- Total frontend bundle: <500KB
+
+#### **API Latency**
+- Tool Runner (cached): <100ms
+- Tool Runner (first request): ~50-200ms (disk I/O)
+- OpenAI API call: 1-5s (depends on response complexity)
+- End-to-end conversation turn: 2-6s
+
+#### **Data Sizes**
+- JSON Fixtures: 181KB total (9 files)
+  - trades.json: 131KB (largest)
+  - losses.json: 45KB
+  - insights.json: 2.8KB
+  - Others: <1KB each
+
+### Mentor Alternative Considerations
+
+#### **Potential Replacements**
+- **OpenAI SDK → Anthropic/Claude**: Different AI provider
+- **Next.js → Vite + React**: Lighter build tooling
+- **Flask → FastAPI**: Async support for tool runner
+- **OpenAI Assistants → Custom orchestration**: More control, more complexity
+
+#### **Migration Complexity**
+- **OpenAI → Other AI**: High (function calling differences)
+- **Next.js → Vite**: Medium (routing differences)
+- **Flask → FastAPI**: Low (similar APIs)
+- **Assistants → Custom**: Very High (reimplementing thread management)
+
+### Mentor Deployment Considerations
+
+#### **Current State**
+- ⚠️ **Development Only**: Not production-ready
+- **Separate Services**: Chat UI and Tool Runner run independently
+- **No Integration**: Not connected to main backend
+- **Manual Setup**: Requires environment configuration
+
+#### **Production Requirements**
+1. **Unified Backend**: Integrate tool runner into main API
+2. **Authentication**: Add user authentication and API security
+3. **Database**: Replace JSON fixtures with database queries
+4. **Monitoring**: Add logging, tracing, and error tracking
+5. **Rate Limiting**: Protect OpenAI API usage and costs
+6. **CDN**: Optimize Next.js static assets delivery
+
+### Mentor Dependency Management
+
+#### **Current Approach**
+- **Frontend**: npm with `package-lock.json` for reproducible builds
+- **Backend**: Python with no `requirements.txt` (uses core Python only)
+- **Versions**: Exact versions pinned in package.json
+
+#### **Recommendations**
+1. **Add `requirements.txt`**: Document Python dependencies for tool runner
+2. **Security Scanning**: Add `npm audit` to CI/CD
+3. **Dependency Updates**: Monitor OpenAI SDK for API changes
+4. **Development Dependencies**: Separate dev and production dependencies
+
+---
+
+This dependency analysis provides a comprehensive overview of both the core backend and Mentor system dependencies, their purposes, and their relationships within the TradeHabit architecture.
