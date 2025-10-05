@@ -12,6 +12,8 @@ TradeHabit is a **prototype** behavioral analytics platform that helps novice tr
 
 **Current Status**: Prototype - not a commercial software application. Designed for demonstration and research purposes.
 
+**Shared Documentation**: See `docs/shared/` for complete TradeHabit documentation, including architecture, API specs, and feature initiatives.
+
 ## Current Features
 
 * **NinjaTrader CSV Parsing**  
