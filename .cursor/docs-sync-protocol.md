@@ -8,6 +8,8 @@ This protocol ensures that changes to shared documentation in `docs/shared/` are
 - **`tradehabit-backend`**: Contains `docs/shared/` as a git submodule pointing to `tradehabit-docs`
 - **`tradehabit-frontend`**: Contains `docs/shared/` as a git submodule pointing to `tradehabit-docs`
 
+Use `./scripts/update-shared-docs.sh` (from the backend repo root) to automatically pull the latest docs and commit submodule pointer updates in both backend and frontend repos.
+
 ## 🚀 Standard Workflow (Use This!)
 
 ```bash
@@ -21,7 +23,7 @@ git add docs/mentor.md
 git commit -m "Your descriptive message"
 git push
 
-# 3. Update both repos with sync script
+# 3. Update both repos with sync script (run this)
 cd /Users/terry/projects/tradehabit-backend
 ./scripts/update-shared-docs.sh
 ```
@@ -61,7 +63,7 @@ git status
 
 ### Changes not showing up in other repos
 ```bash
-# Run the sync script
+# If you just updated tradehabit-docs, run the sync script to bump submodule pointers
 cd /Users/terry/projects/tradehabit-backend
 ./scripts/update-shared-docs.sh
 ```
