@@ -10,6 +10,7 @@ __pycache__/
 .cursor/*
 !.cursor/rules/     # Exception: track project rules
 !.cursor/context.md # Exception: track project context
+!.cursor/docs-sync-protocol.md # Exception: track docs sync protocol
 
 # pyenv
 .python-version
