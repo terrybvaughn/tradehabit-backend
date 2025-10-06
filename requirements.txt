@@ -5,3 +5,5 @@ gunicorn>=22
 werkzeug
 numpy
 python-dateutil
+pytest>=7
+pytest-cov>=4
