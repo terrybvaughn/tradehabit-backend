@@ -1,0 +1,10 @@
+{
+  "count": 313,
+  "diagnostic": "Your risk sizing is consistent \u2014 your average risk per trade was 12.17 points with relatively low variation (std dev: 4.04). This kind of discipline makes it easier to evaluate performance and manage risk over time. Well done.",
+  "maxRiskPoints": 23.25,
+  "meanRiskPoints": 12.17,
+  "minRiskPoints": 5.0,
+  "stdDevRiskPoints": 4.04,
+  "variationRatio": 0.33,
+  "variationThreshold": 0.35
+}

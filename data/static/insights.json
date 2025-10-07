@@ -1,0 +1,37 @@
+[
+  {
+    "diagnostic": "Over this time period, 86% of your trades were executed without a mistake. Your biggest problem is that you risk too much on some of your trades. If you keep doing this, you risk blowing up your account with a handful of bad trades. See Excessive Risk Sizing for more information.",
+    "priority": 0,
+    "title": "Summary"
+  },
+  {
+    "diagnostic": "1 of your 314 trades (0.3%) were placed without a stop-loss order. On average, these trades lost $0.0, more than twice the $14.32 average loss on trades that used stops. The largest loss among your no-stop trades was $0.0. Skipping stop-losses not only magnifies downside but also increases emotional volatility in your decision-making.",
+    "priority": 1,
+    "title": "Stop-Loss Discipline"
+  },
+  {
+    "diagnostic": "34 of your 313 trades (10.9%) had stop distances that exceeded 1.5\u00d7 your standard deviation. The average risk size among these trades was 19.76 points. These large-risk trades may signal moments of overconfidence or loss of discipline.",
+    "priority": 2,
+    "title": "Excessive Risk Sizing"
+  },
+  {
+    "diagnostic": "You had 31 trades with losses that exceeded 1.0 standard deviation above your average losing trade. These outliers contributed 165.17 points in excess losses, meaning that if they'd been closer to your average, your total drawdown would have been significantly lower. A few large losses can erase weeks of gains. Controlling these outliers is critical for long-term performance.",
+    "priority": 3,
+    "title": "Outsized Losses"
+  },
+  {
+    "diagnostic": "You're winning only 40% of your revenge trades\u2014well below your overall 49% win rate\u2014and even though your average winner is larger ($17.56 vs. $17.59), those extra losses have already set you back $-7.25 in total (about $-0.72 per revenge trade). In other words, you'd need a payoff ratio north of 1.5 just to breakeven at a 40% win rate, yet your revenge payoff is only 1.36\u00d7 (compared with 1.23\u00d7 overall). Bottom line: taking trades in the heat of frustration is costing you real money and eroding your edge\u2014best to pause and stick to your plan rather than chase losses.",
+    "priority": 4,
+    "title": "Revenge Trading"
+  },
+  {
+    "diagnostic": "Your risk sizing is consistent \u2014 your average risk per trade was 12.17 points with relatively low variation (std dev: 4.04). This kind of discipline makes it easier to evaluate performance and manage risk over time. Well done.",
+    "priority": 5,
+    "title": "Risk Sizing Consistency"
+  },
+  {
+    "diagnostic": "Your win rate is 49.0%, and your average win is $17.59, versus an average loss of $14.32. That gives you a payoff ratio of 1.23.\nYou're comfortably above breakeven. Your edge is real. Keep doing what works and focus on consistency.",
+    "priority": 6,
+    "title": "Win Rate vs. Payoff Ratio"
+  }
+]

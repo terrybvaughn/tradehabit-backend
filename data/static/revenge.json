@@ -1,0 +1,13 @@
+{
+  "average_loss_revenge": 12.92,
+  "average_win_revenge": 17.56,
+  "diagnostic": "You're winning only 40% of your revenge trades\u2014well below your overall 49% win rate\u2014and even though your average winner is larger ($17.56 vs. $17.59), those extra losses have already set you back $-7.25 in total (about $-0.72 per revenge trade). In other words, you'd need a payoff ratio north of 1.5 just to breakeven at a 40% win rate, yet your revenge payoff is only 1.36\u00d7 (compared with 1.23\u00d7 overall). Bottom line: taking trades in the heat of frustration is costing you real money and eroding your edge\u2014best to pause and stick to your plan rather than chase losses.",
+  "net_pnl_per_trade_revenge": -0.72,
+  "net_pnl_revenge": -7.25,
+  "overall_payoff_ratio": 1.23,
+  "overall_win_rate": 0.49,
+  "payoff_ratio_revenge": 1.36,
+  "revenge_multiplier": 1.0,
+  "revenge_win_rate": 0.4,
+  "total_revenge_trades": 10
+}

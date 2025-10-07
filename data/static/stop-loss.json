@@ -1,0 +1,9 @@
+{
+  "averageLossWithStop": 14.32,
+  "averageLossWithoutStop": 0.0,
+  "diagnostic": "1 of your 314 trades (0.3%) were placed without a stop-loss order. On average, these trades lost $0.0, more than twice the $14.32 average loss on trades that used stops. The largest loss among your no-stop trades was $0.0. Skipping stop-losses not only magnifies downside but also increases emotional volatility in your decision-making.",
+  "maxLossWithoutStop": 0.0,
+  "totalTrades": 314,
+  "tradesWithStops": 313,
+  "tradesWithoutStops": 1
+}

@@ -21,18 +21,23 @@
     - `POST /api/mentor/filter_losses`
 - Do not modify existing TradeHabit analytics routes under `/api/*`.
 
-## Data Sources (Live-first, Fixture Fallback)
-- Add env flag: `MENTOR_MODE=fixtures|live` (default: `fixtures`)
-  - fixtures: read from existing JSON snapshots (parity with current tool runner)
-  - live: compute from `trade_objs` and analytics services in `app.py`
-    - Summary → reuse `get_summary()` internals (not the route) to produce the same fields as `summary.json`
-    - Trades → reuse in-memory `trade_objs` with `filter_trades` logic and sort/pagination
-    - Losses → compute from `trade_objs` with `loss_statistics` as in tool runner
-    - Excessive risk, risk sizing, stop-loss, revenge, winrate-payoff → reuse analyzers in `analytics/*`
+## Data Sources
 
-Behavior when no live data:
-- In `live` mode: return the same 400 errors as current `/api/*` endpoints when `trade_objs` is empty.
-- In `fixtures` mode: always serve fixture data.
+### Phase 1: Fixture-Only Mode
+- Fixtures location: `data/static/*.json` (copied from `mentor/tool_runner/static/`)
+- All endpoints read from JSON fixtures only
+- No dependency on `trade_objs` or `order_df` global state
+- Enables safe parallel operation with existing `/api/*` endpoints
+
+### Phase 2: Live Mode (Future)
+- Add env flag: `MENTOR_MODE=fixtures|live` (default: `fixtures`)
+- Live mode implementation:
+  - Summary → compose from analytics services (same fields as fixture summary)
+  - Trades → filter/paginate from in-memory `trade_objs`
+  - Losses → compute from `trade_objs` with `loss_statistics`
+  - Excessive risk, risk sizing, stop-loss, revenge, winrate-payoff → use analyzers in `analytics/*`
+- Decision point: share global `trade_objs`/`order_df` or use separate state management
+- Behavior when no live data: return 400 errors matching current `/api/*` endpoints
 
 ## Behavior Parity To Preserve
 - `MAX_PAGE_SIZE = 50` cap
@@ -43,9 +48,18 @@ Behavior when no live data:
 - Alias `outsized-loss` → `losses` and enrich `losses` with μ/σ stats
 
 ## CORS, Preflight, and Observability
-- Mirror tool runner’s permissive CORS on the mentor blueprint (or include ngrok origin) so behavior matches current dev setup.
-- Keep `OPTIONS` handling for preflight.
+- Use the same restrictive CORS configuration already defined in `app.py`:
+  ```python
+  ALLOWED_ORIGINS = [
+      "http://127.0.0.1:5173",
+      "http://localhost:5173",
+      "https://tradehabit-frontend.replit.app",
+      "https://app.tradehab.it",
+  ]
+  ```
+- Keep `OPTIONS` handling for preflight requests.
 - Log key params (`name`, `keys_only`, `top`, `offset`, `max_results`) for debugging.
+- Note: Server-to-server calls (OpenAI Assistant → API) don't require CORS.
 
 ## Endpoint Names and Contracts
 - Keep function schemas in `mentor/prompts/assistant/functions/` unchanged.
@@ -56,9 +70,11 @@ Behavior when no live data:
 - Extract only the common helpers from tool runner into a small, internal module used by the blueprint:
   - `canonicalize`, `build_whitelist` (fixture discovery), `_parse_iso_dt`
   - Pagination helpers: `_parse_pagination`, `_project_fields`, `_paginate_list`
-- Add a thin `MentorDataService` facade:
-  - `get_summary()`, `get_trades()`, `get_losses()`, `get_endpoint(name, ...)`
-  - Live mode reads from analytics and `trade_objs`; fixtures mode reads from `/mentor/tool_runner/static/`
+- Add a thin `MentorDataService` class in `mentor/data_service.py`:
+  - Location: `mentor/data_service.py`
+  - Methods: `get_summary()`, `get_trades()`, `get_losses()`, `get_endpoint(name, ...)`
+  - Phase 1: Reads from `data/static/` fixtures only
+  - Phase 2: Will support live mode reading from analytics and `trade_objs`
 
 ## Phased Migration Plan
 1. Bootstrap blueprint with fixture mode only
