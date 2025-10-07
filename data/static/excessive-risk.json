@@ -1,0 +1,11 @@
+{
+  "averageRiskAmongExcessive": 19.76,
+  "diagnostic": "34 of your 313 trades (10.9%) had stop distances that exceeded 1.5\u00d7 your standard deviation. The average risk size among these trades was 19.76 points. These large-risk trades may signal moments of overconfidence or loss of discipline.",
+  "excessiveRiskCount": 34,
+  "excessiveRiskPercent": 10.9,
+  "excessiveRiskThreshold": 18.23,
+  "meanRiskPoints": 12.17,
+  "sigmaUsed": 1.5,
+  "stdDevRiskPoints": 4.04,
+  "totalTradesWithStops": 313
+}

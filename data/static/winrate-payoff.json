@@ -1,0 +1,7 @@
+{
+  "averageLoss": 14.32,
+  "averageWin": 17.59,
+  "diagnostic": "Your win rate is 49.0%, and your average win is $17.59, versus an average loss of $14.32. That gives you a payoff ratio of 1.23.\nYou're comfortably above breakeven. Your edge is real. Keep doing what works and focus on consistency.",
+  "payoffRatio": 1.23,
+  "winRate": 0.4904
+}

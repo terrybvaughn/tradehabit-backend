@@ -16,6 +16,7 @@ from analytics.risk_sizing_analyzer import get_risk_sizing_insight
 from analytics.stop_loss_analyzer import get_stop_loss_insight
 from analytics.excessive_risk_analyzer import get_excessive_risk_insight
 from analytics.goal_tracker import generate_goal_report, get_clean_streak_stats, evaluate_goal
+from mentor.mentor_blueprint import mentor_bp
 
 import io
 import statistics
@@ -23,6 +24,7 @@ import pandas as pd
 import os
 
 app = Flask(__name__)
+app.register_blueprint(mentor_bp)
 
 # CORS Configuration
 ALLOWED_ORIGINS = [

@@ -1,0 +1,22 @@
+{
+  "average_loss": 14.32,
+  "average_win": 17.59,
+  "clean_trade_rate": 0.86,
+  "diagnostic_text": "Over this time period, 86% of your trades were executed without a mistake. Your biggest problem is that you risk too much on some of your trades. If you keep doing this, you risk blowing up your account with a handful of bad trades. See Excessive Risk Sizing for more information.",
+  "flagged_trades": 44,
+  "loss_count": 160,
+  "mistake_counts": {
+    "excessive risk": 34,
+    "no stop-loss order": 1,
+    "outsized loss": 31,
+    "revenge trade": 10
+  },
+  "payoff_ratio": 1.23,
+  "required_wr_adj": 0.45,
+  "streak_current": 15,
+  "streak_record": 23,
+  "total_mistakes": 76,
+  "total_trades": 314,
+  "win_count": 154,
+  "win_rate": 0.49
+}
