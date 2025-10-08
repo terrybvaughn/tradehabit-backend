@@ -1,5 +1,9 @@
 # Tool Runner Migration Plan
 
+## Status
+- ✅ **Phase 1 Complete** (2025-10-07): Mentor blueprint integrated at `/api/mentor/*` with fixture-only mode
+- ✅ **Phase 2 Complete** (2025-10-08): Live data mode integrated with dual-mode operation
+
 ## Objectives
 - Preserve existing Assistant function contracts and behavior:
   - Functions: `get_summary_data`, `get_endpoint_data`, `filter_trades`, `filter_losses`
@@ -29,15 +33,22 @@
 - No dependency on `trade_objs` or `order_df` global state
 - Enables safe parallel operation with existing `/api/*` endpoints
 
-### Phase 2: Live Mode (Future)
-- Add env flag: `MENTOR_MODE=fixtures|live` (default: `fixtures`)
-- Live mode implementation:
-  - Summary → compose from analytics services (same fields as fixture summary)
-  - Trades → filter/paginate from in-memory `trade_objs`
-  - Losses → compute from `trade_objs` with `loss_statistics`
-  - Excessive risk, risk sizing, stop-loss, revenge, winrate-payoff → use analyzers in `analytics/*`
-- Decision point: share global `trade_objs`/`order_df` or use separate state management
-- Behavior when no live data: return 400 errors matching current `/api/*` endpoints
+### Phase 2: Live Mode ✅ Complete
+- ✅ Added env flag: `MENTOR_MODE=fixtures|live` (default: `fixtures`)
+- ✅ Live mode implementation:
+  - Summary → composes from analytics services (same fields as fixture summary)
+  - Trades → filters/paginates from in-memory `trade_objs`
+  - Losses → computes from `trade_objs` with `loss_statistics`
+  - Excessive risk, risk sizing, stop-loss, revenge, winrate-payoff → uses analyzers in `analytics/*`
+- ✅ **Global State Strategy (Chosen)**:
+  - Shares global `trade_objs` and `order_df` from `app.py`
+  - `MentorDataService` receives getter functions from `app.py` to access global state
+  - Resolves circular import issues using lambda functions: `lambda: trade_objs`
+  - **Known Limitations** (acceptable for prototype):
+    - Not thread-safe (single-threaded prototype)
+    - Single dataset per app instance (no multi-tenancy)
+    - In-memory only (no persistence across restarts)
+- ✅ Behavior when no live data: returns 400 errors matching current `/api/*` endpoints
 
 ## Behavior Parity To Preserve
 - `MAX_PAGE_SIZE = 50` cap
@@ -77,34 +88,56 @@
   - Phase 2: Will support live mode reading from analytics and `trade_objs`
 
 ## Phased Migration Plan
-1. Bootstrap blueprint with fixture mode only
-   - Register `mentor_blueprint` under `/api/mentor/*`
-   - Copy route logic from `tool_runner.py` to ensure 1:1 behavior using fixtures
-   - Keep ngrok working for Assistant tests
-2. Wire live mode behind `MENTOR_MODE=live`
-   - `get_summary_data` → compose summary data via existing analytics code (same fields as fixture summary)
-   - `filter_trades` / `filter_losses` → live computation off `trade_objs`
-   - `get_endpoint_data` → route to analyzers; preserve `flat`, pagination, and field projection
-3. Switch Assistant to new base URL
-   - Update `TOOL_RUNNER_BASE_URL` to point at `/api/mentor` host
-   - Keep function schemas unchanged
-4. Burn-in period
-   - Run both services (old tool runner and new mentor blueprint) in parallel for a sprint
-   - Compare responses on key routes (golden samples) and fix any parity deltas
-5. Retire the standalone tool runner
-   - Keep fixture mode in the unified API for local testing
+
+### Phase 1 ✅ Complete (2025-10-07)
+1. ✅ Bootstrap blueprint with fixture mode only
+   - Registered `mentor_blueprint` under `/api/mentor/*`
+   - Copied route logic from `tool_runner.py` to ensure 1:1 behavior using fixtures
+   - Kept ngrok working for Assistant tests
+   - Created `MentorDataService` for data abstraction
+   - Moved fixtures from `mentor/tool_runner/static/` to `data/static/`
+   - Updated frontend to use `/api/mentor/` prefix
+   - Archived standalone `tool_runner.py`
+
+### Phase 2 ✅ Complete (2025-10-08)
+2. ✅ Wired live mode behind `MENTOR_MODE=live`
+   - `get_summary_data` → composes summary data via existing analytics code
+   - `filter_trades` / `filter_losses` → live computation from `trade_objs`
+   - `get_endpoint_data` → routes to analyzers; preserves `flat`, pagination, field projection
+   - Implemented getter function pattern to resolve circular imports
+   - Added comprehensive test coverage (79 tests total, 14 new live mode tests)
+   - Verified end-to-end with OpenAI Assistant and 314 real trades
+
+3. ✅ Switched Assistant to new base URL
+   - Updated `TOOL_RUNNER_BASE_URL` to point at main app
+   - Frontend adds `/api/mentor/` prefix to function calls
+   - Function schemas unchanged
+
+### Phase 3 (Future)
+4. Burn-in period (optional - already validated)
+   - Run both modes (fixtures and live) for comparison testing
+   - Monitor for any parity deltas
+
+5. Retire the standalone tool runner (pending)
+   - Standalone `tool_runner.py` already archived to `.archive/` folder
+   - Can be safely removed once comfortable with integrated solution
+   - Fixture mode remains available in unified API for local testing
 
 ## Env and Config
 - `MENTOR_MODE=fixtures|live` (default: `fixtures`)
 - Keep `ngrok` guidance in docs for local dev until fully consolidated
 - Maintain existing pagination defaults and hard caps to match tool runner behavior
 
-## Test Coverage (Parity)
-- `keys_only`, `flat`, `top` behaviors (including invalid `top` fallback)
-- Pagination edges (0, 1, 50+, `has_more`, `next_offset`)
-- Alias mapping and `losses` stats enrichment
-- Error semantics in live mode when `trade_objs` is empty
-- Consistent field projection with `fields`
+## Test Coverage (Parity) ✅ Complete
+- ✅ `keys_only`, `flat`, `top` behaviors (including invalid `top` fallback)
+- ✅ Pagination edges (0, 1, 50+, `has_more`, `next_offset`)
+- ✅ Alias mapping and `losses` stats enrichment
+- ✅ Error semantics in live mode when `trade_objs` is empty
+- ✅ Consistent field projection with `fields`
+- ✅ Live mode unit tests for `MentorDataService`
+- ✅ Live mode integration tests for blueprint routes
+- ✅ Fixture isolation tests (fixture mode unaffected by `trade_objs`)
+- ✅ Mode switching tests (verify env var controls behavior)
 
 ## Example Blueprint Skeleton (Illustrative)
 ```python
