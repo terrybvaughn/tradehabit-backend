@@ -1,9 +1,9 @@
 """
-Mentor Blueprint - Fixture-based endpoints for OpenAI Assistant integration.
+Mentor Blueprint - Endpoints for OpenAI Assistant integration.
 
-Phase 1: Fixture-only mode
-- Reads from data/static/*.json
-- No live computation from trade_objs
+Supports two modes (controlled by MENTOR_MODE environment variable):
+- fixtures: Reads from data/static/*.json (default)
+- live: Computes from app.trade_objs and app.order_df
 """
 from flask import Blueprint, request, jsonify
 from mentor.data_service import MentorDataService
@@ -15,8 +15,28 @@ import statistics
 # Create blueprint with /api/mentor prefix
 mentor_bp = Blueprint("mentor", __name__, url_prefix="/api/mentor")
 
-# Initialize data service
-data_service = MentorDataService()
+# Read mode from environment variable (default: fixtures)
+MENTOR_MODE = os.environ.get("MENTOR_MODE", "fixtures")
+
+# Data service will be initialized after app registration (see init_mentor_service)
+data_service = None
+
+
+def init_mentor_service(trade_objs_getter, order_df_getter):
+    """
+    Initialize the data service with references to app's global state.
+    Must be called from app.py after the blueprint is registered.
+    
+    Args:
+        trade_objs_getter: Callable that returns the trade_objs list
+        order_df_getter: Callable that returns the order_df DataFrame
+    """
+    global data_service
+    data_service = MentorDataService(
+        mode=MENTOR_MODE,
+        trade_objs_ref=trade_objs_getter,
+        order_df_ref=order_df_getter
+    )
 
 # Constants
 MAX_PAGE_SIZE = 50

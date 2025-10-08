@@ -2,29 +2,38 @@
 MentorDataService - Provides data access for Mentor blueprint endpoints.
 
 Phase 1: Fixture-only mode - reads from JSON files in data/static/
-Phase 2: Will support live mode using analytics and trade_objs
+Phase 2: Live mode - computes analytics from trade_objs and order_df
 """
 
 import os
 import json
-from typing import Any, Dict, Tuple
+import statistics
+from typing import Any, Dict, Tuple, List, Optional
 
 
 class MentorDataService:
     """
     Data service for Mentor blueprint endpoints.
 
-    Phase 1: Reads fixture data from data/static/ directory
-    Phase 2: Will support live computation from trade_objs and analytics
+    Supports two modes:
+    - fixtures: Reads pre-generated JSON files from data/static/
+    - live: Computes analytics in real-time from app.trade_objs and app.order_df
     """
 
-    def __init__(self, fixtures_path: str = None):
+    def __init__(self, mode: str = "fixtures", fixtures_path: str = None, trade_objs_ref=None, order_df_ref=None):
         """
         Initialize the data service.
 
         Args:
+            mode: "fixtures" (default) or "live"
             fixtures_path: Path to fixture directory. Defaults to data/static/
+            trade_objs_ref: Callable that returns trade_objs list (for live mode)
+            order_df_ref: Callable that returns order_df (for live mode)
         """
+        self.mode = mode
+        self._trade_objs_ref = trade_objs_ref
+        self._order_df_ref = order_df_ref
+        
         if fixtures_path is None:
             # Default to data/static relative to project root
             base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -32,6 +41,28 @@ class MentorDataService:
 
         self.fixtures_path = fixtures_path
         self.cache: Dict[str, Any] = {}
+
+    def _get_trade_objs(self) -> List[Any]:
+        """
+        Access global trade_objs from app.py.
+        
+        Returns:
+            List of Trade objects
+        """
+        if self._trade_objs_ref:
+            return self._trade_objs_ref()
+        return []
+
+    def _get_order_df(self) -> Optional[Any]:
+        """
+        Access global order_df from app.py.
+        
+        Returns:
+            Pandas DataFrame or None
+        """
+        if self._order_df_ref:
+            return self._order_df_ref()
+        return None
 
     def load_json(self, filename: str) -> Tuple[Dict[str, Any], int]:
         """
@@ -68,7 +99,77 @@ class MentorDataService:
         Returns:
             Tuple of (summary_dict, status_code)
         """
+        if self.mode == "live":
+            return self._compute_live_summary()
         return self.load_json("summary.json")
+
+    def _compute_live_summary(self) -> Tuple[Dict[str, Any], int]:
+        """
+        Compute summary from live trade_objs (matches /api/summary logic).
+        
+        Returns:
+            Tuple of (summary_dict, status_code)
+        """
+        trade_objs = self._get_trade_objs()
+        
+        if not trade_objs:
+            return {
+                "status": "ERROR",
+                "message": "No trades have been analyzed yet"
+            }, 400
+        
+        total_trades = len(trade_objs)
+        
+        # 1) Mistake tallies
+        mistake_counts: Dict[str, int] = {}
+        for t in trade_objs:
+            for m in t.mistakes:
+                mistake_counts[m] = mistake_counts.get(m, 0) + 1
+        total_mistakes = sum(mistake_counts.values())
+        flagged_trades = sum(1 for t in trade_objs if t.mistakes)
+        
+        # 2) Success metrics
+        clean_trade_rate = round((total_trades - flagged_trades) / total_trades, 2)
+        
+        # Streaks (import from analytics)
+        from analytics.goal_tracker import get_clean_streak_stats
+        current_streak, best_streak = get_clean_streak_stats(trade_objs)
+        
+        # 3) Payoff & win-rate stats
+        wins = [t.pnl for t in trade_objs if t.pnl and t.pnl > 0]
+        losses = [abs(t.pnl) for t in trade_objs if t.pnl and t.pnl < 0]
+        win_count = len(wins)
+        loss_count = len(losses)
+        
+        win_rate = round(len(wins) / total_trades, 2) if total_trades else 0.0
+        avg_win = round(sum(wins) / len(wins), 2) if wins else 0.0
+        avg_loss = round(sum(losses) / len(losses), 2) if losses else 0.0
+        payoff_ratio = round(avg_win / avg_loss, 2) if avg_loss else None
+        required_wr_raw = 1 / (1 + (payoff_ratio or 0)) if payoff_ratio else None
+        required_wr_adj = round(required_wr_raw * 1.01, 2) if required_wr_raw else None
+        
+        # 4) Headline diagnostic
+        from analytics.mistake_analyzer import get_summary_insight
+        summary_text = get_summary_insight(trade_objs, clean_trade_rate)
+        
+        # 5) Return same structure as /api/summary
+        return {
+            "total_trades": total_trades,
+            "win_count": win_count,
+            "loss_count": loss_count,
+            "total_mistakes": total_mistakes,
+            "flagged_trades": flagged_trades,
+            "clean_trade_rate": clean_trade_rate,
+            "streak_current": current_streak,
+            "streak_record": best_streak,
+            "mistake_counts": mistake_counts,
+            "win_rate": win_rate,
+            "average_win": avg_win,
+            "average_loss": avg_loss,
+            "payoff_ratio": payoff_ratio,
+            "required_wr_adj": required_wr_adj,
+            "diagnostic_text": summary_text,
+        }, 200
 
     def get_trades(self) -> Tuple[Dict[str, Any], int]:
         """
@@ -77,7 +178,44 @@ class MentorDataService:
         Returns:
             Tuple of (trades_dict, status_code)
         """
+        if self.mode == "live":
+            return self._compute_live_trades()
         return self.load_json("trades.json")
+
+    def _compute_live_trades(self) -> Tuple[Dict[str, Any], int]:
+        """
+        Convert trade_objs to fixture-like structure (matches /api/trades logic).
+        
+        Returns:
+            Tuple of (trades_dict, status_code)
+        """
+        trade_objs = self._get_trade_objs()
+        
+        if not trade_objs:
+            return {
+                "status": "ERROR",
+                "message": "No trades have been analyzed yet"
+            }, 400
+        
+        # Convert to dict format (Trade.to_dict() handles camelCase)
+        trades_list = [t.to_dict() for t in trade_objs]
+        
+        # Compute date range
+        if trades_list:
+            entry_times = [t["entryTime"] for t in trades_list if t.get("entryTime")]
+            exit_times = [t["exitTime"] for t in trades_list if t.get("exitTime")]
+            start = min(entry_times) if entry_times else None
+            end = max(exit_times) if exit_times else None
+        else:
+            start = end = None
+        
+        return {
+            "trades": trades_list,
+            "date_range": {
+                "start": start,
+                "end": end
+            }
+        }, 200
 
     def get_losses(self) -> Tuple[Dict[str, Any], int]:
         """
@@ -86,7 +224,76 @@ class MentorDataService:
         Returns:
             Tuple of (losses_dict, status_code)
         """
+        if self.mode == "live":
+            return self._compute_live_losses()
         return self.load_json("losses.json")
+
+    def _compute_live_losses(self, sigma: float = 1.0, symbol: Optional[str] = None) -> Tuple[Dict[str, Any], int]:
+        """
+        Compute losses from live trade_objs (matches /api/losses logic).
+        
+        Args:
+            sigma: Sigma multiplier for outsized loss threshold
+            symbol: Optional symbol filter
+        
+        Returns:
+            Tuple of (losses_dict, status_code)
+        """
+        trade_objs = self._get_trade_objs()
+        
+        if not trade_objs:
+            return {
+                "status": "ERROR",
+                "message": "No trades have been analyzed yet"
+            }, 400
+        
+        # 1) Filter to actual losing trades
+        filtered = [
+            t for t in trade_objs
+            if t.pnl < 0 and (symbol is None or t.symbol == symbol)
+        ]
+        
+        # 2) Compute stats
+        losses = [t.points_lost for t in filtered]
+        mean_pts = statistics.mean(losses) if losses else 0.0
+        std_pts = statistics.pstdev(losses) if len(losses) > 1 else 0.0
+        threshold = mean_pts + sigma * std_pts
+        
+        # 3) Identify outsized losses
+        outsized = [t for t in filtered if t.points_lost > threshold]
+        
+        # 4) Build the series
+        loss_list = []
+        for idx, t in enumerate(filtered, start=1):
+            loss_list.append({
+                "lossIndex": idx,
+                "tradeId": t.id,
+                "pointsLost": t.points_lost,
+                "hasMistake": t.points_lost > threshold,
+                "side": t.side,
+                "exitQty": t.exit_qty,
+                "symbol": t.symbol,
+                "entryTime": t.entry_time.isoformat() if t.entry_time else None,
+                "exitOrderId": t.exit_order_id,
+            })
+        
+        # 5) Diagnostic
+        from analytics.outsized_loss_analyzer import get_outsized_loss_insight
+        diagnostic = get_outsized_loss_insight(trade_objs, sigma)
+        
+        # 6) Return same structure as /api/losses
+        return {
+            "losses": loss_list,
+            "meanPointsLost": round(mean_pts, 2),
+            "stdDevPointsLost": round(std_pts, 2),
+            "thresholdPointsLost": round(threshold, 2),
+            "sigmaUsed": sigma,
+            "symbolFiltered": symbol,
+            "diagnostic": diagnostic.get('diagnostic', ''),
+            "count": diagnostic.get('count', 0),
+            "percentage": diagnostic.get('percentage', 0),
+            "excessLossPoints": diagnostic.get('excessLossPoints', 0)
+        }, 200
 
     def get_endpoint(self, endpoint_name: str) -> Tuple[Dict[str, Any], int]:
         """
@@ -98,8 +305,168 @@ class MentorDataService:
         Returns:
             Tuple of (data_dict, status_code)
         """
+        if self.mode == "live":
+            return self._compute_live_endpoint(endpoint_name)
         filename = f"{endpoint_name}.json"
         return self.load_json(filename)
+
+    def _compute_live_endpoint(self, endpoint_name: str) -> Tuple[Dict[str, Any], int]:
+        """
+        Compute analytics endpoint data from live trade_objs.
+        
+        Args:
+            endpoint_name: Name of endpoint (revenge, excessive-risk, etc.)
+        
+        Returns:
+            Tuple of (data_dict, status_code)
+        """
+        trade_objs = self._get_trade_objs()
+        order_df = self._get_order_df()
+        
+        if not trade_objs:
+            return {
+                "status": "ERROR",
+                "message": "No trades have been analyzed yet"
+            }, 400
+        
+        # Map endpoint names to their computation functions
+        try:
+            if endpoint_name == "revenge":
+                return self._compute_revenge_endpoint(trade_objs)
+            elif endpoint_name == "excessive-risk":
+                return self._compute_excessive_risk_endpoint(trade_objs)
+            elif endpoint_name == "risk-sizing":
+                return self._compute_risk_sizing_endpoint(trade_objs)
+            elif endpoint_name == "stop-loss":
+                return self._compute_stop_loss_endpoint(trade_objs)
+            elif endpoint_name == "winrate-payoff":
+                return self._compute_winrate_payoff_endpoint(trade_objs)
+            elif endpoint_name == "insights":
+                if order_df is None:
+                    return {
+                        "status": "ERROR",
+                        "message": "Order data is missing or has not been processed yet"
+                    }, 400
+                return self._compute_insights_endpoint(trade_objs, order_df)
+            else:
+                return {
+                    "status": "ERROR",
+                    "message": f"Unknown endpoint: {endpoint_name}"
+                }, 400
+        except Exception as e:
+            return {
+                "status": "ERROR",
+                "message": f"Error computing {endpoint_name}: {str(e)}"
+            }, 500
+
+    def _compute_revenge_endpoint(self, trade_objs: List[Any], k: float = 1.0) -> Tuple[Dict[str, Any], int]:
+        """Compute revenge trading analysis."""
+        from copy import deepcopy
+        from analytics.revenge_analyzer import analyze_trades_for_revenge, _analyze_revenge_trading
+        
+        trades = deepcopy(trade_objs)
+        analyze_trades_for_revenge(trades, k)
+        analysis = _analyze_revenge_trading(trades)
+        
+        return {
+            "revenge_multiplier": k,
+            "total_revenge_trades": analysis["count"],
+            "revenge_win_rate": analysis["win_rate_rev"],
+            "average_win_revenge": analysis["avg_win_rev"],
+            "average_loss_revenge": analysis["avg_loss_rev"],
+            "payoff_ratio_revenge": analysis["payoff_ratio_rev"],
+            "net_pnl_revenge": analysis["net_pnl_rev"],
+            "net_pnl_per_trade_revenge": analysis["net_pnl_per_trade"],
+            "overall_win_rate": analysis["global_win_rate"],
+            "overall_payoff_ratio": analysis["global_payoff_ratio"],
+            "diagnostic": analysis["diagnostic"]
+        }, 200
+
+    def _compute_excessive_risk_endpoint(self, trade_objs: List[Any], sigma: float = 1.5) -> Tuple[Dict[str, Any], int]:
+        """Compute excessive risk analysis."""
+        from analytics.excessive_risk_analyzer import get_excessive_risk_insight
+        
+        insight = get_excessive_risk_insight(trade_objs, sigma)
+        stats = insight.get("stats", {})
+        
+        return {
+            "totalTradesWithStops": stats.get("totalTradesWithStops", 0),
+            "meanRiskPoints": stats.get("meanRiskPoints", 0.0),
+            "stdDevRiskPoints": stats.get("stdDevRiskPoints", 0.0),
+            "excessiveRiskThreshold": stats.get("excessiveRiskThreshold", 0.0),
+            "excessiveRiskCount": stats.get("excessiveRiskCount", 0),
+            "excessiveRiskPercent": stats.get("excessiveRiskPercent", 0.0),
+            "averageRiskAmongExcessive": stats.get("averageRiskAmongExcessive", 0.0),
+            "sigmaUsed": sigma,
+            "diagnostic": insight.get("diagnostic", "")
+        }, 200
+
+    def _compute_risk_sizing_endpoint(self, trade_objs: List[Any], vr: float = 0.35) -> Tuple[Dict[str, Any], int]:
+        """Compute risk sizing consistency analysis."""
+        from analytics.risk_sizing_analyzer import get_risk_sizing_insight
+        
+        insight = get_risk_sizing_insight(trade_objs, vr)
+        
+        return {
+            "count": insight["stats"]["tradesWithRiskData"],
+            "minRiskPoints": insight["stats"]["minRisk"],
+            "maxRiskPoints": insight["stats"]["maxRisk"],
+            "meanRiskPoints": insight["stats"]["meanRisk"],
+            "stdDevRiskPoints": insight["stats"]["standardDeviation"],
+            "variationRatio": insight["stats"]["variationRatio"],
+            "variationThreshold": vr,
+            "diagnostic": insight["diagnostic"]
+        }, 200
+
+    def _compute_stop_loss_endpoint(self, trade_objs: List[Any]) -> Tuple[Dict[str, Any], int]:
+        """Compute stop loss behavior analysis."""
+        from analytics.stop_loss_analyzer import get_stop_loss_insight
+        
+        insight = get_stop_loss_insight(trade_objs)
+        
+        return {
+            "totalTrades": insight["stats"]["totalTrades"],
+            "tradesWithStops": insight["stats"]["totalTrades"] - insight["stats"]["tradesWithoutStop"],
+            "tradesWithoutStops": insight["stats"]["tradesWithoutStop"],
+            "averageLossWithStop": insight["stats"]["averageLossWithStop"],
+            "averageLossWithoutStop": insight["stats"]["averageLossWithoutStop"],
+            "maxLossWithoutStop": insight["stats"]["maxLossWithoutStop"],
+            "diagnostic": insight["diagnostic"]
+        }, 200
+
+    def _compute_winrate_payoff_endpoint(self, trade_objs: List[Any]) -> Tuple[Dict[str, Any], int]:
+        """Compute win rate and payoff ratio analysis."""
+        from analytics.winrate_payoff_analyzer import generate_winrate_payoff_insight
+        
+        wins = [t.pnl for t in trade_objs if t.pnl > 0]
+        losses = [abs(t.pnl) for t in trade_objs if t.pnl < 0]
+        
+        if not wins or not losses:
+            return {
+                "message": "Not enough win/loss data to compute win rate and payoff ratio."
+            }, 200
+        
+        win_rate = len(wins) / len(trade_objs)
+        avg_win = sum(wins) / len(wins)
+        avg_loss = sum(losses) / len(losses)
+        payoff_ratio = avg_win / avg_loss
+        
+        diagnostic = generate_winrate_payoff_insight(win_rate, avg_win, avg_loss)
+        
+        return {
+            "winRate": round(win_rate, 4),
+            "averageWin": round(avg_win, 2),
+            "averageLoss": round(avg_loss, 2),
+            "payoffRatio": round(payoff_ratio, 2),
+            "diagnostic": diagnostic
+        }, 200
+
+    def _compute_insights_endpoint(self, trade_objs: List[Any], order_df: Any) -> Tuple[Dict[str, Any], int]:
+        """Compute full insights report."""
+        from analytics.insights import build_insights
+        
+        insights = build_insights(trade_objs, order_df)
+        return insights, 200
 
     def list_available_endpoints(self) -> list:
         """
