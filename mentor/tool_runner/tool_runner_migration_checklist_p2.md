@@ -220,15 +220,38 @@ data_service = MentorDataService(mode=MENTOR_MODE)
 
 ## Step 5 – Documentation updates
 
-[ ] Update `mentor/tool_runner/tool_runner_migration_plan.md`:
-   - Mark Phase 2 complete
-   - Document chosen global state strategy
-[ ] Update `docs/shared/docs/mentor.md`:
-   - Add live mode documentation
-   - Document `MENTOR_MODE` environment variable
-   - Update "Data Sources" section
-   - Add troubleshooting for live mode issues
-[ ] Update `README.md` or main docs if needed
+[✅] Update `mentor/tool_runner/tool_runner_migration_plan.md`:
+   - Marked Phase 1 and Phase 2 complete with dates
+   - Documented global state strategy (getter functions pattern)
+   - Documented known limitations (thread-safety, single dataset, in-memory only)
+   - Updated phased migration plan with completion checkmarks
+   - Marked test coverage complete
+[✅] Update `docs/shared/docs/mentor.md`:
+   - Added comprehensive live mode documentation
+   - Documented `MENTOR_MODE` environment variable with examples
+   - Added new "Data Modes" section explaining fixtures vs. live
+   - Updated architecture diagram showing MentorDataService bifurcation
+   - Updated component details for dual-mode operation
+   - Added live mode troubleshooting ("No trades analyzed", mode switching, etc.)
+   - Updated known limitations with live mode constraints
+   - Updated Future Considerations marking Phase 2 complete
+[✅] Update `docs/shared/docs/api.md`:
+   - Updated Integration Status to "Phase 2 Complete" with dual-mode operation
+   - Added "Data Modes" section (fixtures vs. live with configuration examples)
+   - Replaced "Phase 2 Roadmap" with "Future Enhancements"
+   - Documented mode switching and restart requirements
+[✅] Update `docs/shared/docs/dependencies.md`:
+   - Added pytest and pytest-cov to development dependencies section
+   - Updated Mentor Backend from "Tool Runner" to "Integrated Blueprint"
+   - Documented MentorDataService dual-mode support
+   - Updated dependency relationships showing fixture/live bifurcation
+   - Marked Phase 1 and Phase 2 complete in production requirements
+   - Updated deployment considerations and recommendations
+[✅] Update `docs/shared/docs/changelog.md`:
+   - Added [2025-10-08] entry for Phase 2 Live Data Integration
+   - Documented all updated files (mentor.md, api.md, dependencies.md)
+   - Listed technical changes (MentorDataService extension, circular import resolution, test coverage)
+   - Documented known limitations
 
 ---
 
