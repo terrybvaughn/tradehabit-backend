@@ -219,19 +219,28 @@ def get_endpoint_data():
     if name == "outsized-loss":
         name = "losses"
     
-    wl = build_whitelist()  # dynamic discovery
-    
-    filename = wl.get(name) or wl.get(raw.lower())
-    if not filename:
-        return err(
-            400,
-            f"Unknown or disallowed endpoint name: {raw!r} (canonical: {name!r})",
-            details=[{"allowed": sorted(set(wl.keys()))}]
-        )
-    
-    data, code = data_service.load_json(filename)
-    if code != 200:
-        return err(code, data.get("message", f"Failed to load {filename}"))
+    # In live mode, use the data service's get_endpoint method
+    # In fixture mode, validate against whitelist first
+    if data_service.mode == "live":
+        # For flat endpoints like revenge, excessive-risk, etc.
+        data, code = data_service.get_endpoint(name)
+        if code != 200:
+            return err(code, data.get("message", f"Failed to compute {name}"))
+    else:
+        # Fixture mode: validate against whitelist
+        wl = build_whitelist()  # dynamic discovery
+        
+        filename = wl.get(name) or wl.get(raw.lower())
+        if not filename:
+            return err(
+                400,
+                f"Unknown or disallowed endpoint name: {raw!r} (canonical: {name!r})",
+                details=[{"allowed": sorted(set(wl.keys()))}]
+            )
+        
+        data, code = data_service.load_json(filename)
+        if code != 200:
+            return err(code, data.get("message", f"Failed to load {filename}"))
     
     # Enrich losses snapshot with computed stats (μ and σ) when available
     try:
