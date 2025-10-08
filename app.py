@@ -16,7 +16,7 @@ from analytics.risk_sizing_analyzer import get_risk_sizing_insight
 from analytics.stop_loss_analyzer import get_stop_loss_insight
 from analytics.excessive_risk_analyzer import get_excessive_risk_insight
 from analytics.goal_tracker import generate_goal_report, get_clean_streak_stats, evaluate_goal
-from mentor.mentor_blueprint import mentor_bp
+from mentor.mentor_blueprint import mentor_bp, init_mentor_service
 
 import io
 import statistics
@@ -44,6 +44,20 @@ init_error_handlers(app)
 
 trade_objs = []
 order_df = None  # Add global order_df variable
+
+# Initialize mentor data service with getters that access our globals
+# This must happen AFTER trade_objs and order_df are defined
+# The lambdas will look up the current module's globals at runtime
+def get_trade_objs():
+    return globals()['trade_objs']
+
+def get_order_df():
+    return globals()['order_df']
+
+init_mentor_service(
+    trade_objs_getter=get_trade_objs,
+    order_df_getter=get_order_df
+)
 
 # ---------------------------------------------------------------------------
 # Global, in-memory settings for user-tunable analysis thresholds. Front-end can
