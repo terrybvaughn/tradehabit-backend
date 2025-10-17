@@ -348,6 +348,8 @@ class MentorDataService:
                         "message": "Order data is missing or has not been processed yet"
                     }, 400
                 return self._compute_insights_endpoint(trade_objs, order_df)
+            elif endpoint_name == "trades":
+                return self._compute_live_trades()
             else:
                 return {
                     "status": "ERROR",
