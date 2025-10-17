@@ -5,7 +5,7 @@ Supports two modes (controlled by MENTOR_MODE environment variable):
 - fixtures: Reads from data/static/*.json (default)
 - live: Computes from app.trade_objs and app.order_df
 """
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from mentor.data_service import MentorDataService
 from datetime import datetime, timezone
 from typing import Any, Dict
@@ -37,6 +37,11 @@ def init_mentor_service(trade_objs_getter, order_df_getter):
         trade_objs_ref=trade_objs_getter,
         order_df_ref=order_df_getter
     )
+    
+    # Also set the data service in the orchestrator module
+    from mentor.openai_orchestrator import data_service as orchestrator_data_service
+    import mentor.openai_orchestrator
+    mentor.openai_orchestrator.data_service = data_service
 
 # Constants
 MAX_PAGE_SIZE = 50
@@ -667,3 +672,29 @@ def filter_losses():
         pass
     
     return jsonify(page), 200
+
+
+@mentor_bp.route("/chat", methods=["POST", "OPTIONS"])
+def chat():
+    if request.method == "OPTIONS":
+        return ("", 204)
+
+    # Lazy import to avoid circular imports during module initialization
+    try:
+        from mentor.openai_orchestrator import run_assistant_turn
+    except Exception:
+        return jsonify({"threadId": "", "text": "", "error": "Orchestrator not initialized"}), 500
+
+    payload = request.get_json(silent=True) or {}
+    message = payload.get("message")
+    thread_id = payload.get("threadId")
+
+    if not message or not isinstance(message, str):
+        return jsonify({"threadId": thread_id or "", "text": "", "error": "Missing 'message'"}), 400
+
+    try:
+        result = run_assistant_turn(thread_id=thread_id, user_text=message)
+        return jsonify(result), 200
+    except Exception as e:
+        current_app.logger.exception("Chat endpoint error")
+        return jsonify({"threadId": thread_id or "", "text": "", "error": str(e)}), 500
