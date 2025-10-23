@@ -379,24 +379,31 @@ class MentorDataService:
     def _compute_revenge_endpoint(self, trade_objs: List[Any], k: float = 1.0) -> Tuple[Dict[str, Any], int]:
         """Compute revenge trading analysis."""
         from copy import deepcopy
-        from analytics.revenge_analyzer import analyze_trades_for_revenge, _analyze_revenge_trading
+        from analytics.revenge_analyzer import analyze_trades_for_revenge, calculate_revenge_stats
+        from insights.revenge_insight import generate_revenge_insight
         
+        # Tag revenge trades
         trades = deepcopy(trade_objs)
         analyze_trades_for_revenge(trades, k)
-        analysis = _analyze_revenge_trading(trades)
+        
+        # Calculate statistics
+        stats = calculate_revenge_stats(trades)
+        
+        # Generate insight narrative
+        insight = generate_revenge_insight(stats)
         
         return {
             "revenge_multiplier": k,
-            "total_revenge_trades": analysis["count"],
-            "revenge_win_rate": analysis["win_rate_rev"],
-            "average_win_revenge": analysis["avg_win_rev"],
-            "average_loss_revenge": analysis["avg_loss_rev"],
-            "payoff_ratio_revenge": analysis["payoff_ratio_rev"],
-            "net_pnl_revenge": analysis["net_pnl_rev"],
-            "net_pnl_per_trade_revenge": analysis["net_pnl_per_trade"],
-            "overall_win_rate": analysis["global_win_rate"],
-            "overall_payoff_ratio": analysis["global_payoff_ratio"],
-            "diagnostic": analysis["diagnostic"]
+            "total_revenge_trades": stats["revenge_count"],
+            "revenge_win_rate": stats["win_rate_revenge"],
+            "average_win_revenge": stats["avg_win_revenge"],
+            "average_loss_revenge": stats["avg_loss_revenge"],
+            "payoff_ratio_revenge": stats["payoff_ratio_revenge"],
+            "net_pnl_revenge": stats["net_pnl_revenge"],
+            "net_pnl_per_trade_revenge": stats["net_pnl_per_revenge"],
+            "overall_win_rate": stats["win_rate_overall"],
+            "overall_payoff_ratio": stats["payoff_ratio_overall"],
+            "diagnostic": insight["diagnostic"]
         }, 200
 
     def _compute_excessive_risk_endpoint(self, trade_objs: List[Any], sigma: float = 1.5) -> Tuple[Dict[str, Any], int]:
