@@ -289,9 +289,12 @@ class MentorDataService:
                 "exitOrderId": t.exit_order_id,
             })
         
-        # 5) Diagnostic
-        from analytics.outsized_loss_analyzer import get_outsized_loss_insight
-        diagnostic = get_outsized_loss_insight(trade_objs, sigma)
+        # 5) Diagnostic - Calculate full stats and generate insight
+        from analytics.outsized_loss_analyzer import calculate_outsized_loss_stats
+        from insights.outsized_loss_insight import generate_outsized_loss_insight
+        
+        stats = calculate_outsized_loss_stats(trade_objs, sigma)
+        insight = generate_outsized_loss_insight(stats)
         
         # 6) Return same structure as /api/losses
         return {
@@ -301,10 +304,10 @@ class MentorDataService:
             "thresholdPointsLost": round(threshold, 2),
             "sigmaUsed": sigma,
             "symbolFiltered": symbol,
-            "diagnostic": diagnostic.get('diagnostic', ''),
-            "count": diagnostic.get('count', 0),
-            "percentage": diagnostic.get('percentage', 0),
-            "excessLossPoints": diagnostic.get('excessLossPoints', 0)
+            "diagnostic": insight.get('diagnostic', ''),
+            "count": stats.get('outsized_loss_count', 0),
+            "percentage": stats.get('outsized_percent', 0.0),
+            "excessLossPoints": stats.get('excess_loss_points', 0.0)
         }, 200
 
     def get_endpoint(self, endpoint_name: str) -> Tuple[Dict[str, Any], int]:
