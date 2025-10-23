@@ -1,7 +1,96 @@
 import pandas as pd
-from typing import List
+from typing import List, Dict, Any
 import statistics
 from models.trade import Trade
+
+
+def calculate_risk_sizing_consistency_stats(trades: List[Trade], vr: float = 0.35) -> Dict[str, Any]:
+    """
+    Calculate statistics needed for Risk Sizing Consistency insight.
+    Pure statistics calculation - no narrative generation.
+
+    This is a PATTERN analysis, not a mistake detector. It evaluates consistency
+    of risk sizing across trades with stop-loss orders.
+
+    Args:
+        trades: List of Trade objects (must have risk_points attribute populated)
+        vr: Variability ratio threshold (default 0.35 = 35%)
+            This matches the existing codebase default and API threshold.
+
+    Returns:
+        Dictionary containing:
+        - total_trades: int - Total number of trades
+        - trades_with_risk_data: int - Number of trades with risk_points
+        - mean_risk: float - Average risk per trade (points)
+        - std_dev_risk: float - Standard deviation of risk (points)
+        - min_risk: float - Minimum risk (points)
+        - max_risk: float - Maximum risk (points)
+        - risk_variation_ratio: float - Coefficient of variation (std/mean)
+        - variation_threshold: float - Threshold used for flagging
+        - is_consistent: bool - True if variation_ratio < threshold
+        - consistency_level: str - "insufficient_data", "consistent", or "inconsistent"
+    """
+    total_trades = len(trades)
+
+    if total_trades == 0:
+        return {
+            "total_trades": 0,
+            "trades_with_risk_data": 0,
+            "mean_risk": 0.0,
+            "std_dev_risk": 0.0,
+            "min_risk": 0.0,
+            "max_risk": 0.0,
+            "risk_variation_ratio": 0.0,
+            "variation_threshold": vr,
+            "is_consistent": False,
+            "consistency_level": "insufficient_data"
+        }
+
+    # Extract risk values (skip None)
+    risk_vals = [t.risk_points for t in trades if hasattr(t, 'risk_points') and t.risk_points is not None]
+    trades_with_risk_data = len(risk_vals)
+
+    # Need at least 2 data points for meaningful analysis
+    if trades_with_risk_data < 2:
+        return {
+            "total_trades": total_trades,
+            "trades_with_risk_data": trades_with_risk_data,
+            "mean_risk": 0.0,
+            "std_dev_risk": 0.0,
+            "min_risk": 0.0,
+            "max_risk": 0.0,
+            "risk_variation_ratio": 0.0,
+            "variation_threshold": vr,
+            "is_consistent": False,
+            "consistency_level": "insufficient_data"
+        }
+
+    # Calculate statistics
+    mean_risk = statistics.mean(risk_vals)
+    std_dev_risk = statistics.pstdev(risk_vals)
+    min_risk = min(risk_vals)
+    max_risk = max(risk_vals)
+
+    # Coefficient of variation (CV) = std_dev / mean
+    risk_variation_ratio = std_dev_risk / mean_risk if mean_risk > 0 else 0.0
+
+    # Determine consistency
+    is_consistent = risk_variation_ratio < vr
+    consistency_level = "consistent" if is_consistent else "inconsistent"
+
+    return {
+        "total_trades": total_trades,
+        "trades_with_risk_data": trades_with_risk_data,
+        "mean_risk": round(mean_risk, 2),
+        "std_dev_risk": round(std_dev_risk, 2),
+        "min_risk": round(min_risk, 2),
+        "max_risk": round(max_risk, 2),
+        "risk_variation_ratio": round(risk_variation_ratio, 2),
+        "variation_threshold": vr,
+        "is_consistent": is_consistent,
+        "consistency_level": consistency_level
+    }
+
 
 def analyze_trades_for_risk_sizing_consistency(
     trades: List[Trade], orders: pd.DataFrame
@@ -60,109 +149,3 @@ def analyze_trades_for_risk_sizing_consistency(
 
     return trades
 
-def _analyze_risk_sizing(trades: List[Trade], variation_threshold: float = 0.35) -> dict:
-    """
-    Core risk-sizing analysis.
-
-    Parameters
-    ----------
-    trades : list[Trade]
-        List of Trade objects that already have the ``risk_points`` attribute populated.
-    variation_threshold : float, default 0.35
-        The cutoff at which the coefficient of variation (SD / mean) is flagged as
-        inconsistent sizing. Exposed as a parameter so callers or API consumers can
-        loosen or tighten the definition of "consistent".
-    """
-
-    risk_vals = [t.risk_points for t in trades if t.risk_points is not None]
-    count = len(risk_vals)
-
-    if count < 2:
-        return {
-            "diagnostic": "Not enough data to evaluate risk sizing consistency.",
-            "mean_risk": None,
-            "std_dev_risk": None,
-            "risk_variation_ratio": None,
-            "variation_flag": False,
-            "min_risk": None,
-            "max_risk": None,
-            "trades_with_risk": 0,
-            "total_trades": len(trades),
-            "variation_threshold": variation_threshold,
-        }
-
-    mean_risk = statistics.mean(risk_vals)
-    std_dev_risk = statistics.pstdev(risk_vals)
-    variation_ratio = std_dev_risk / mean_risk if mean_risk else 0
-    variation_flag = variation_ratio >= variation_threshold
-    min_risk = round(min(risk_vals), 2)
-    max_risk = round(max(risk_vals), 2)
-
-    if variation_flag:
-        diagnostic = (
-            f"You risked as little as {min_risk} points and as much as {max_risk} points per trade. "
-            f"Your average risk size was {round(mean_risk, 2)} points, with a standard deviation of {round(std_dev_risk, 2)} points. "
-            "Wide variation in stop placement may signal inconsistency in risk management."
-        )
-    else:
-        diagnostic = (
-            f"Your risk sizing is consistent — your average risk per trade was {round(mean_risk, 2)} points "
-            f"with relatively low variation (std dev: {round(std_dev_risk, 2)}). This kind of discipline makes it easier to "
-            "evaluate performance and manage risk over time. Well done."
-        )
-
-    return {
-        "diagnostic": diagnostic,
-        "mean_risk": round(mean_risk, 2),
-        "std_dev_risk": round(std_dev_risk, 2),
-        "risk_variation_ratio": round(variation_ratio, 2),
-        "variation_flag": variation_flag,
-        "min_risk": min_risk,
-        "max_risk": max_risk,
-        "trades_with_risk": len(risk_vals),
-        "total_trades": len(trades),
-        "variation_threshold": variation_threshold,
-    }
-
-def summarize_risk_sizing_behavior(trades: List[Trade], variation_threshold: float = 0.35) -> dict:
-    """
-    Returns a compact summary of risk-sizing consistency.
-
-    Parameters
-    ----------
-    variation_threshold : float, default 0.35
-        Same as for :pyfunc:`_analyze_risk_sizing`.
-    """
-    analysis = _analyze_risk_sizing(trades, variation_threshold)
-    # Return only the fields needed for the original interface
-    return {
-        "diagnostic": analysis["diagnostic"],
-        "mean_risk": analysis["mean_risk"],
-        "std_dev_risk": analysis["std_dev_risk"],
-        "risk_variation_ratio": analysis["risk_variation_ratio"],
-        "variation_flag": analysis["variation_flag"],
-        "min_risk": analysis["min_risk"],
-        "max_risk": analysis["max_risk"]
-    }
-
-def get_risk_sizing_insight(trades: List[Trade], variation_threshold: float = 0.35) -> dict:
-    """
-    Adapter for unified insight format expected by insights.py.
-
-    Provides the full statistics dictionary as ``stats``.
-    """
-    analysis = _analyze_risk_sizing(trades, variation_threshold)
-    return {
-        "title": "Risk Sizing Consistency",
-        "diagnostic": analysis["diagnostic"],
-        "stats": {
-            "meanRisk": analysis["mean_risk"],
-            "standardDeviation": analysis["std_dev_risk"],
-            "variationRatio": analysis["risk_variation_ratio"],
-            "minRisk": analysis["min_risk"],
-            "maxRisk": analysis["max_risk"],
-            "tradesWithRiskData": analysis["trades_with_risk"],
-            "totalTrades": analysis["total_trades"],
-            "variationThreshold": analysis["variation_threshold"],
-        }
-    }
