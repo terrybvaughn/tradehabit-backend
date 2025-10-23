@@ -149,8 +149,20 @@ class MentorDataService:
         required_wr_adj = round(required_wr_raw * 1.01, 2) if required_wr_raw else None
         
         # 4) Headline diagnostic
-        from analytics.mistake_analyzer import get_summary_insight
-        summary_text = get_summary_insight(trade_objs, clean_trade_rate)
+        from insights.summary_insight import generate_summary_insight
+        
+        # Build stats dict for summary insight
+        summary_stats = {
+            "total_trades": total_trades,
+            "mistake_counts": mistake_counts,
+            "trades_with_mistakes": flagged_trades,
+            "clean_trades": total_trades - flagged_trades,
+            "required_wr": required_wr_adj,
+            "win_rate": win_rate,
+            "risk_sizing_stats": {"is_consistent": True}  # Not calculated in live mode yet
+        }
+        summary_insight = generate_summary_insight(summary_stats)
+        summary_text = summary_insight.get("diagnostic", "")
         
         # 5) Return same structure as /api/summary
         return {

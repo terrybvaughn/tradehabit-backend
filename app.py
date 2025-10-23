@@ -7,14 +7,19 @@ from errors import init_error_handlers, error_response
 from models.trade import Trade
 from parsing.order_loader import load_orders
 from analytics.trade_counter import count_trades
-from analytics.mistake_analyzer import analyze_all_mistakes, get_summary_insight
-from analytics.stop_loss_analyzer import summarize_stop_loss_behavior
-from analytics.winrate_payoff_analyzer import generate_winrate_payoff_insight
-from analytics.insights import build_insights
-from analytics.outsized_loss_analyzer import get_outsized_loss_insight
-from analytics.risk_sizing_analyzer import get_risk_sizing_insight
-from analytics.stop_loss_analyzer import get_stop_loss_insight
-from analytics.excessive_risk_analyzer import get_excessive_risk_insight
+from analytics.mistake_analyzer import analyze_all_mistakes, calculate_summary_stats
+from insights.summary_insight import generate_summary_insight
+from analytics.breakeven_analyzer import calculate_breakeven_stats
+from insights.breakeven_insight import generate_breakeven_insight
+from insights.insights_report import generate_insights_report
+from analytics.outsized_loss_analyzer import calculate_outsized_loss_stats
+from insights.outsized_loss_insight import generate_outsized_loss_insight
+from analytics.risk_sizing_analyzer import calculate_risk_sizing_consistency_stats
+from insights.risk_sizing_insight import generate_risk_sizing_insight
+from analytics.stop_loss_analyzer import calculate_stop_loss_stats
+from insights.stop_loss_insight import generate_stop_loss_insight
+from analytics.excessive_risk_analyzer import calculate_excessive_risk_stats
+from insights.excessive_risk_insight import generate_excessive_risk_insight
 from analytics.goal_tracker import generate_goal_report, get_clean_streak_stats, evaluate_goal
 from mentor.mentor_blueprint import mentor_bp, init_mentor_service
 
@@ -244,7 +249,18 @@ def get_summary():
         risk_var_flag = (std_risk / mean_risk) >= THRESHOLDS["vr"]
 
     # ---------- 6) headline diagnostic (shared with insights) ----------
-    summary_text = get_summary_insight(trade_objs, clean_trade_rate)
+    # Build stats dict for summary insight
+    summary_stats = {
+        "total_trades": total_trades,
+        "mistake_counts": mistake_counts,
+        "trades_with_mistakes": flagged_trades,
+        "clean_trades": total_trades - flagged_trades,
+        "required_wr": required_wr_adj,
+        "win_rate": win_rate,
+        "risk_sizing_stats": {"is_consistent": not risk_var_flag}
+    }
+    summary_insight = generate_summary_insight(summary_stats)
+    summary_text = summary_insight.get("diagnostic", "")
 
     # ---------- 7) response
     return jsonify({
@@ -306,17 +322,14 @@ def get_losses():
         if t.pnl < 0 and (symbol is None or t.symbol == symbol)
     ]
 
-    # 2) Compute stats
-    losses = [t.points_lost for t in filtered]
-    mean_pts = statistics.mean(losses) if losses else 0.0
-    std_pts = statistics.pstdev(losses) if len(losses) > 1 else 0.0
-    threshold = mean_pts + sigma * std_pts
+    # 2) Calculate stats once
+    stats = calculate_outsized_loss_stats(filtered, sigma)
 
-    # 3) Identify outsized losses
-    outsized = [t for t in filtered if t.points_lost > threshold]
-    excess_loss = sum(t.points_lost - mean_pts for t in outsized)
+    # 3) Generate insight from stats
+    insight = generate_outsized_loss_insight(stats)
 
-    # 4) Build the series
+    # 4) Build the series for response
+    threshold = stats["threshold"]
     loss_list = []
     for idx, t in enumerate(filtered, start=1):
         loss_list.append({
@@ -332,21 +345,18 @@ def get_losses():
             "exitOrderId": t.exit_order_id,
         })
 
-    # 5) Plain-English diagnostic
-    diagnostic = get_outsized_loss_insight(trade_objs, sigma)
-
-    # 6) Return
+    # 5) Return with all available stats
     return jsonify({
     "losses": loss_list,
-    "meanPointsLost": round(mean_pts, 2),
-    "stdDevPointsLost": round(std_pts, 2),
-    "thresholdPointsLost": round(threshold, 2),
+    "meanPointsLost": stats["mean_loss_points"],
+    "stdDevPointsLost": stats["std_dev_loss_points"],
+    "thresholdPointsLost": stats["threshold"],
     "sigmaUsed": sigma,
     "symbolFiltered": symbol,
-    "diagnostic": diagnostic.get('diagnostic', ''),  # Extract just the diagnostic text
-    "count": diagnostic.get('count', 0),            # Add count of outsized losses
-    "percentage": diagnostic.get('percentage', 0),   # Add percentage
-    "excessLossPoints": diagnostic.get('excessLossPoints', 0)  # Add excess loss points
+    "diagnostic": insight["diagnostic"],
+    "count": stats["outsized_count"],
+    "percentage": stats["outsized_percentage"],
+    "excessLossPoints": stats["excess_loss_points"]
 })
 
 
@@ -359,28 +369,32 @@ def get_revenge_stats():
     # 1) Read multiplier (default 1.0× median hold)
     k = float(request.args.get("k", THRESHOLDS["k"]))
 
-    # 2) Clone and tag
+    # 2) Clone and tag trades for revenge pattern
     from copy import deepcopy
     trades = deepcopy(trade_objs)
-    from analytics.revenge_analyzer import analyze_trades_for_revenge, _analyze_revenge_trading
+    from analytics.revenge_analyzer import analyze_trades_for_revenge, calculate_revenge_stats
+    from insights.revenge_insight import generate_revenge_insight
     analyze_trades_for_revenge(trades, k)
 
-    # 3) Get analysis
-    analysis = _analyze_revenge_trading(trades)
+    # 3) Calculate stats once
+    stats = calculate_revenge_stats(trades)
 
-    # 4) Return
+    # 4) Generate insight from stats
+    insight = generate_revenge_insight(stats)
+
+    # 5) Return
     return jsonify({
         "revenge_multiplier":         k,
-        "total_revenge_trades":       analysis["count"],
-        "revenge_win_rate":           analysis["win_rate_rev"],
-        "average_win_revenge":        analysis["avg_win_rev"],
-        "average_loss_revenge":       analysis["avg_loss_rev"],
-        "payoff_ratio_revenge":       analysis["payoff_ratio_rev"],
-        "net_pnl_revenge":            analysis["net_pnl_rev"],
-        "net_pnl_per_trade_revenge":  analysis["net_pnl_per_trade"],
-        "overall_win_rate":           analysis["global_win_rate"],
-        "overall_payoff_ratio":       analysis["global_payoff_ratio"],
-        "diagnostic":                 analysis["diagnostic"]
+        "total_revenge_trades":       stats["revenge_count"],
+        "revenge_win_rate":           stats["revenge_win_rate"],
+        "average_win_revenge":        stats["revenge_avg_win"],
+        "average_loss_revenge":       stats["revenge_avg_loss"],
+        "payoff_ratio_revenge":       stats["revenge_payoff_ratio"],
+        "net_pnl_revenge":            stats["revenge_net_pnl"],
+        "net_pnl_per_trade_revenge":  stats["revenge_net_pnl_per_trade"],
+        "overall_win_rate":           stats["overall_win_rate"],
+        "overall_payoff_ratio":       stats["overall_payoff_ratio"],
+        "diagnostic":                 insight["diagnostic"]
     })
 
 @app.get("/api/risk-sizing")
@@ -392,17 +406,20 @@ def get_risk_sizing():
     # Query parameter (?vr=0.35) – coefficient of variation threshold
     vr = float(request.args.get("vr", THRESHOLDS["vr"]))
 
-    # Get insight from analyzer with custom threshold
-    insight = get_risk_sizing_insight(trade_objs, vr)
-    
+    # Calculate stats once
+    stats = calculate_risk_sizing_consistency_stats(trade_objs, vr)
+
+    # Generate insight from stats
+    insight = generate_risk_sizing_insight(stats)
+
     # Return with all available stats
     return jsonify({
-        "count": insight["stats"]["tradesWithRiskData"],
-        "minRiskPoints": insight["stats"]["minRisk"],
-        "maxRiskPoints": insight["stats"]["maxRisk"],
-        "meanRiskPoints": insight["stats"]["meanRisk"],
-        "stdDevRiskPoints": insight["stats"]["standardDeviation"],
-        "variationRatio": insight["stats"]["variationRatio"],
+        "count": stats["trades_with_risk_data"],
+        "minRiskPoints": stats["min_risk"],
+        "maxRiskPoints": stats["max_risk"],
+        "meanRiskPoints": stats["mean_risk"],
+        "stdDevRiskPoints": stats["std_dev_risk"],
+        "variationRatio": stats["risk_variation_ratio"],
         "variationThreshold": vr,
         "diagnostic": insight["diagnostic"]
     })
@@ -416,18 +433,21 @@ def get_excessive_risk_summary():
     # Get sigma multiplier from query (?sigma=...)
     sigma = float(request.args.get("sigma", THRESHOLDS["sigma_risk"]))
 
-    # Get insight from analyzer
-    insight = get_excessive_risk_insight(trade_objs, sigma)
-    
+    # Calculate stats once
+    stats = calculate_excessive_risk_stats(trade_objs, sigma)
+
+    # Generate insight from stats
+    insight = generate_excessive_risk_insight(stats)
+
     # Return with all available stats
     return jsonify({
-        "totalTradesWithStops": insight["stats"]["totalTradesWithStops"],
-        "meanRiskPoints": insight["stats"]["meanRiskPoints"],
-        "stdDevRiskPoints": insight["stats"]["stdDevRiskPoints"],
-        "excessiveRiskThreshold": insight["stats"]["excessiveRiskThreshold"],
-        "excessiveRiskCount": insight["stats"]["excessiveRiskCount"],
-        "excessiveRiskPercent": insight["stats"]["excessiveRiskPercent"],
-        "averageRiskAmongExcessive": insight["stats"]["averageRiskAmongExcessive"],
+        "totalTradesWithStops": stats["total_trades_with_stops"],
+        "meanRiskPoints": stats["mean_risk_points"],
+        "stdDevRiskPoints": stats["std_dev_risk_points"],
+        "excessiveRiskThreshold": stats["excessive_risk_threshold"],
+        "excessiveRiskCount": stats["excessive_risk_count"],
+        "excessiveRiskPercent": stats["excessive_risk_percent"],
+        "averageRiskAmongExcessive": stats["avg_risk_among_excessive"],
         "sigmaUsed": sigma,
         "diagnostic": insight["diagnostic"]
     })
@@ -438,17 +458,20 @@ def get_stop_loss_summary():
     if not trade_objs:
         abort(400, "No trades have been analyzed yet")
 
-    # Get insight from analyzer
-    insight = get_stop_loss_insight(trade_objs)
-    
+    # Calculate stats once
+    stats = calculate_stop_loss_stats(trade_objs)
+
+    # Generate insight from stats
+    insight = generate_stop_loss_insight(stats)
+
     # Return with all available stats
     return jsonify({
-        "totalTrades": insight["stats"]["totalTrades"],
-        "tradesWithStops": insight["stats"]["totalTrades"] - insight["stats"]["tradesWithoutStop"],
-        "tradesWithoutStops": insight["stats"]["tradesWithoutStop"],
-        "averageLossWithStop": insight["stats"]["averageLossWithStop"],
-        "averageLossWithoutStop": insight["stats"]["averageLossWithoutStop"],
-        "maxLossWithoutStop": insight["stats"]["maxLossWithoutStop"],
+        "totalTrades": stats["total_trades"],
+        "tradesWithStops": stats["trades_with_stops"],
+        "tradesWithoutStops": stats["trades_without_stops"],
+        "averageLossWithStop": stats["avg_loss_with_stops"],
+        "averageLossWithoutStop": stats["avg_loss_without_stops"],
+        "maxLossWithoutStop": stats["max_loss_without_stops"],
         "diagnostic": insight["diagnostic"]
     })
 
@@ -458,27 +481,24 @@ def get_winrate_payoff_summary():
     if not trade_objs:
         abort(400, "No trades have been analyzed yet")
 
-    wins   = [t.pnl for t in trade_objs if t.pnl > 0]
-    losses = [abs(t.pnl) for t in trade_objs if t.pnl < 0]
+    # Calculate stats once
+    stats = calculate_breakeven_stats(trade_objs)
 
-    if not wins or not losses:
+    # Check if we have sufficient data
+    if stats["total_trades"] == 0 or stats["winning_trades"] == 0 or stats["losing_trades"] == 0:
         return jsonify({
             "message": "Not enough win/loss data to compute win rate and payoff ratio."
         })
 
-    win_rate     = len(wins) / len(trade_objs)
-    avg_win      = sum(wins) / len(wins)
-    avg_loss     = sum(losses) / len(losses)
-    payoff_ratio = avg_win / avg_loss
-
-    diagnostic = generate_winrate_payoff_insight(win_rate, avg_win, avg_loss)
+    # Generate insight from stats
+    insight = generate_breakeven_insight(stats)
 
     return jsonify({
-        "winRate": round(win_rate, 4),
-        "averageWin": round(avg_win, 2),
-        "averageLoss": round(avg_loss, 2),
-        "payoffRatio": round(payoff_ratio, 2),
-        "diagnostic": diagnostic
+        "winRate": round(stats["win_rate"], 4),
+        "averageWin": round(stats["avg_win"], 2),
+        "averageLoss": round(stats["avg_loss"], 2),
+        "payoffRatio": round(stats["payoff_ratio"], 2),
+        "diagnostic": insight["diagnostic"]
     })
 
 @app.get("/api/insights")
@@ -496,8 +516,22 @@ def get_insights():
     if 'order_df' not in globals() or order_df is None:
         abort(400, "Order data is missing or has not been processed yet")
 
-    insights = build_insights(trade_objs, order_df)
-    return jsonify(insights)
+    # Get user-adjustable parameters (same as other endpoints)
+    vr = float(request.args.get("vr", THRESHOLDS["vr"]))
+
+    insights = generate_insights_report(trade_objs, order_df, vr=vr)
+
+    # Convert new insights format to old API format for backward compatibility
+    # New format has {title, diagnostic}, old format needs {title, diagnostic, priority}
+    insights_with_priority = []
+    for idx, insight in enumerate(insights):
+        insights_with_priority.append({
+            "title": insight["title"],
+            "diagnostic": insight["diagnostic"],
+            "priority": idx  # Summary is 0, rest are 1, 2, 3...
+        })
+
+    return jsonify(insights_with_priority)
 
 @app.get("/api/goals")
 def get_goals():
