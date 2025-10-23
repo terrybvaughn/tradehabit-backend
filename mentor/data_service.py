@@ -149,8 +149,20 @@ class MentorDataService:
         required_wr_adj = round(required_wr_raw * 1.01, 2) if required_wr_raw else None
         
         # 4) Headline diagnostic
-        from analytics.mistake_analyzer import get_summary_insight
-        summary_text = get_summary_insight(trade_objs, clean_trade_rate)
+        from insights.summary_insight import generate_summary_insight
+        
+        # Build stats dict for summary insight
+        summary_stats = {
+            "total_trades": total_trades,
+            "mistake_counts": mistake_counts,
+            "trades_with_mistakes": flagged_trades,
+            "clean_trades": total_trades - flagged_trades,
+            "required_wr": required_wr_adj,
+            "win_rate": win_rate,
+            "risk_sizing_stats": {"is_consistent": True}  # Not calculated in live mode yet
+        }
+        summary_insight = generate_summary_insight(summary_stats)
+        summary_text = summary_insight.get("diagnostic", "")
         
         # 5) Return same structure as /api/summary
         return {
@@ -277,9 +289,12 @@ class MentorDataService:
                 "exitOrderId": t.exit_order_id,
             })
         
-        # 5) Diagnostic
-        from analytics.outsized_loss_analyzer import get_outsized_loss_insight
-        diagnostic = get_outsized_loss_insight(trade_objs, sigma)
+        # 5) Diagnostic - Calculate full stats and generate insight
+        from analytics.outsized_loss_analyzer import calculate_outsized_loss_stats
+        from insights.outsized_loss_insight import generate_outsized_loss_insight
+        
+        stats = calculate_outsized_loss_stats(trade_objs, sigma)
+        insight = generate_outsized_loss_insight(stats)
         
         # 6) Return same structure as /api/losses
         return {
@@ -289,10 +304,10 @@ class MentorDataService:
             "thresholdPointsLost": round(threshold, 2),
             "sigmaUsed": sigma,
             "symbolFiltered": symbol,
-            "diagnostic": diagnostic.get('diagnostic', ''),
-            "count": diagnostic.get('count', 0),
-            "percentage": diagnostic.get('percentage', 0),
-            "excessLossPoints": diagnostic.get('excessLossPoints', 0)
+            "diagnostic": insight.get('diagnostic', ''),
+            "count": stats.get('outsized_loss_count', 0),
+            "percentage": stats.get('outsized_percent', 0.0),
+            "excessLossPoints": stats.get('excess_loss_points', 0.0)
         }, 200
 
     def get_endpoint(self, endpoint_name: str) -> Tuple[Dict[str, Any], int]:
@@ -364,111 +379,138 @@ class MentorDataService:
     def _compute_revenge_endpoint(self, trade_objs: List[Any], k: float = 1.0) -> Tuple[Dict[str, Any], int]:
         """Compute revenge trading analysis."""
         from copy import deepcopy
-        from analytics.revenge_analyzer import analyze_trades_for_revenge, _analyze_revenge_trading
+        from analytics.revenge_analyzer import analyze_trades_for_revenge, calculate_revenge_stats
+        from insights.revenge_insight import generate_revenge_insight
         
+        # Tag revenge trades
         trades = deepcopy(trade_objs)
         analyze_trades_for_revenge(trades, k)
-        analysis = _analyze_revenge_trading(trades)
+        
+        # Calculate statistics
+        stats = calculate_revenge_stats(trades)
+        
+        # Generate insight narrative
+        insight = generate_revenge_insight(stats)
         
         return {
             "revenge_multiplier": k,
-            "total_revenge_trades": analysis["count"],
-            "revenge_win_rate": analysis["win_rate_rev"],
-            "average_win_revenge": analysis["avg_win_rev"],
-            "average_loss_revenge": analysis["avg_loss_rev"],
-            "payoff_ratio_revenge": analysis["payoff_ratio_rev"],
-            "net_pnl_revenge": analysis["net_pnl_rev"],
-            "net_pnl_per_trade_revenge": analysis["net_pnl_per_trade"],
-            "overall_win_rate": analysis["global_win_rate"],
-            "overall_payoff_ratio": analysis["global_payoff_ratio"],
-            "diagnostic": analysis["diagnostic"]
+            "total_revenge_trades": stats["revenge_count"],
+            "revenge_win_rate": stats["win_rate_revenge"],
+            "average_win_revenge": stats["avg_win_revenge"],
+            "average_loss_revenge": stats["avg_loss_revenge"],
+            "payoff_ratio_revenge": stats["payoff_ratio_revenge"],
+            "net_pnl_revenge": stats["net_pnl_revenge"],
+            "net_pnl_per_trade_revenge": stats["net_pnl_per_revenge"],
+            "overall_win_rate": stats["win_rate_overall"],
+            "overall_payoff_ratio": stats["payoff_ratio_overall"],
+            "diagnostic": insight["diagnostic"]
         }, 200
 
     def _compute_excessive_risk_endpoint(self, trade_objs: List[Any], sigma: float = 1.5) -> Tuple[Dict[str, Any], int]:
         """Compute excessive risk analysis."""
-        from analytics.excessive_risk_analyzer import get_excessive_risk_insight
+        from analytics.excessive_risk_analyzer import calculate_excessive_risk_stats
+        from insights.excessive_risk_insight import generate_excessive_risk_insight
         
-        insight = get_excessive_risk_insight(trade_objs, sigma)
-        stats = insight.get("stats", {})
+        # Calculate statistics
+        stats = calculate_excessive_risk_stats(trade_objs, sigma)
+        
+        # Generate insight narrative
+        insight = generate_excessive_risk_insight(stats)
         
         return {
-            "totalTradesWithStops": stats.get("totalTradesWithStops", 0),
-            "meanRiskPoints": stats.get("meanRiskPoints", 0.0),
-            "stdDevRiskPoints": stats.get("stdDevRiskPoints", 0.0),
-            "excessiveRiskThreshold": stats.get("excessiveRiskThreshold", 0.0),
-            "excessiveRiskCount": stats.get("excessiveRiskCount", 0),
-            "excessiveRiskPercent": stats.get("excessiveRiskPercent", 0.0),
-            "averageRiskAmongExcessive": stats.get("averageRiskAmongExcessive", 0.0),
+            "totalTradesWithStops": stats.get("total_trades_with_risk", 0),
+            "meanRiskPoints": stats.get("mean_risk", 0.0),
+            "stdDevRiskPoints": stats.get("std_dev_risk", 0.0),
+            "excessiveRiskThreshold": stats.get("threshold", 0.0),
+            "excessiveRiskCount": stats.get("excessive_risk_count", 0),
+            "excessiveRiskPercent": stats.get("excessive_percent", 0.0),
+            "averageRiskAmongExcessive": stats.get("avg_excessive_risk", 0.0),
             "sigmaUsed": sigma,
             "diagnostic": insight.get("diagnostic", "")
         }, 200
 
     def _compute_risk_sizing_endpoint(self, trade_objs: List[Any], vr: float = 0.35) -> Tuple[Dict[str, Any], int]:
         """Compute risk sizing consistency analysis."""
-        from analytics.risk_sizing_analyzer import get_risk_sizing_insight
+        from analytics.risk_sizing_analyzer import calculate_risk_sizing_consistency_stats
+        from insights.risk_sizing_insight import generate_risk_sizing_insight
         
-        insight = get_risk_sizing_insight(trade_objs, vr)
+        # Calculate stats once
+        stats = calculate_risk_sizing_consistency_stats(trade_objs, vr)
+        
+        # Generate insight from stats
+        insight = generate_risk_sizing_insight(stats)
         
         return {
-            "count": insight["stats"]["tradesWithRiskData"],
-            "minRiskPoints": insight["stats"]["minRisk"],
-            "maxRiskPoints": insight["stats"]["maxRisk"],
-            "meanRiskPoints": insight["stats"]["meanRisk"],
-            "stdDevRiskPoints": insight["stats"]["standardDeviation"],
-            "variationRatio": insight["stats"]["variationRatio"],
+            "count": stats["trades_with_risk_data"],
+            "minRiskPoints": stats["min_risk"],
+            "maxRiskPoints": stats["max_risk"],
+            "meanRiskPoints": stats["mean_risk"],
+            "stdDevRiskPoints": stats["std_dev_risk"],
+            "variationRatio": stats["risk_variation_ratio"],
             "variationThreshold": vr,
             "diagnostic": insight["diagnostic"]
         }, 200
 
     def _compute_stop_loss_endpoint(self, trade_objs: List[Any]) -> Tuple[Dict[str, Any], int]:
         """Compute stop loss behavior analysis."""
-        from analytics.stop_loss_analyzer import get_stop_loss_insight
+        from analytics.stop_loss_analyzer import calculate_stop_loss_stats
+        from insights.stop_loss_insight import generate_stop_loss_insight
         
-        insight = get_stop_loss_insight(trade_objs)
+        # Calculate statistics
+        stats = calculate_stop_loss_stats(trade_objs)
+        
+        # Generate insight narrative
+        insight = generate_stop_loss_insight(stats)
         
         return {
-            "totalTrades": insight["stats"]["totalTrades"],
-            "tradesWithStops": insight["stats"]["totalTrades"] - insight["stats"]["tradesWithoutStop"],
-            "tradesWithoutStops": insight["stats"]["tradesWithoutStop"],
-            "averageLossWithStop": insight["stats"]["averageLossWithStop"],
-            "averageLossWithoutStop": insight["stats"]["averageLossWithoutStop"],
-            "maxLossWithoutStop": insight["stats"]["maxLossWithoutStop"],
+            "totalTrades": stats["total_trades"],
+            "tradesWithStops": stats["trades_with_stops"],
+            "tradesWithoutStops": stats["trades_without_stops"],
+            "averageLossWithStop": stats["avg_loss_with_stops"],
+            "averageLossWithoutStop": stats["avg_loss_without_stops"],
+            "maxLossWithoutStop": stats["max_loss_without_stops"],
             "diagnostic": insight["diagnostic"]
         }, 200
 
     def _compute_winrate_payoff_endpoint(self, trade_objs: List[Any]) -> Tuple[Dict[str, Any], int]:
         """Compute win rate and payoff ratio analysis."""
-        from analytics.winrate_payoff_analyzer import generate_winrate_payoff_insight
+        from analytics.breakeven_analyzer import calculate_breakeven_stats
+        from insights.breakeven_insight import generate_breakeven_insight
         
-        wins = [t.pnl for t in trade_objs if t.pnl > 0]
-        losses = [abs(t.pnl) for t in trade_objs if t.pnl < 0]
+        # Calculate stats using the refactored function
+        stats = calculate_breakeven_stats(trade_objs)
         
-        if not wins or not losses:
-            return {
-                "message": "Not enough win/loss data to compute win rate and payoff ratio."
-            }, 200
-        
-        win_rate = len(wins) / len(trade_objs)
-        avg_win = sum(wins) / len(wins)
-        avg_loss = sum(losses) / len(losses)
-        payoff_ratio = avg_win / avg_loss
-        
-        diagnostic = generate_winrate_payoff_insight(win_rate, avg_win, avg_loss)
+        # Generate insight from stats
+        insight = generate_breakeven_insight(stats)
         
         return {
-            "winRate": round(win_rate, 4),
-            "averageWin": round(avg_win, 2),
-            "averageLoss": round(avg_loss, 2),
-            "payoffRatio": round(payoff_ratio, 2),
-            "diagnostic": diagnostic
+            "winRate": stats["win_rate"],
+            "averageWin": stats["avg_win"],
+            "averageLoss": stats["avg_loss"],
+            "payoffRatio": stats["payoff_ratio"],
+            "expectancy": stats["expectancy"],
+            "breakevenWinRate": stats["breakeven_win_rate"],
+            "delta": stats["delta"],
+            "performanceCategory": stats["performance_category"],
+            "diagnostic": insight["diagnostic"]
         }, 200
 
     def _compute_insights_endpoint(self, trade_objs: List[Any], order_df: Any) -> Tuple[Dict[str, Any], int]:
         """Compute full insights report."""
-        from analytics.insights import build_insights
-        
-        insights = build_insights(trade_objs, order_df)
-        return insights, 200
+        from insights.insights_report import generate_insights_report
+
+        insights = generate_insights_report(trade_objs, order_df)
+
+        # Convert new insights format to old API format for backward compatibility
+        insights_with_priority = []
+        for idx, insight in enumerate(insights):
+            insights_with_priority.append({
+                "title": insight["title"],
+                "diagnostic": insight["diagnostic"],
+                "priority": idx
+            })
+
+        return insights_with_priority, 200
 
     def list_available_endpoints(self) -> list:
         """

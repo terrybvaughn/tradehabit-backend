@@ -144,6 +144,7 @@ def sample_order_df():
     """
     Create a sample order DataFrame for live mode testing.
     Matches the structure expected by analytics functions.
+    Includes all required columns for stop_loss_analyzer.
     """
     data = {
         "ts": [
@@ -174,6 +175,8 @@ def sample_order_df():
         "symbol": ["MNQH4"] * 10,
         "qty": [1] * 10,
         "price": [21500.0, 21520.0, 21540.0, 21560.0, 21480.0, 21510.0, 21500.0, 21450.0, 21470.0, 21480.0],
+        "Type": ["Market", "Limit", "Market", "Limit", "Market", "Limit", "Market", "Limit", "Market", "Limit"],
+        "Status": ["Filled"] * 10,
     }
     return pd.DataFrame(data)
 
@@ -206,3 +209,169 @@ def populate_global_state(sample_trade_objs, sample_order_df):
     app.trade_objs.clear()
     app.trade_objs.extend(original_trade_objs)
     app.order_df = original_order_df
+
+
+# ============================================================================
+# Fixtures for Insights Refactor Testing (Increment 1+)
+# ============================================================================
+
+@pytest.fixture
+def clean_trades():
+    """
+    Create trades with no mistakes for testing.
+    All trades are clean (empty mistakes list).
+    """
+    trades = [
+        Trade(
+            id="clean-1",
+            symbol="MNQH4",
+            side="Buy",
+            entry_time=datetime(2024, 1, 2, 9, 30, 0),
+            entry_price=21500.0,
+            entry_qty=1,
+            exit_time=datetime(2024, 1, 2, 9, 35, 0),
+            exit_price=21520.0,
+            exit_qty=1,
+            exit_order_id=2001,
+            pnl=20.0,
+            mistakes=[]
+        ),
+        Trade(
+            id="clean-2",
+            symbol="MNQH4",
+            side="Sell",
+            entry_time=datetime(2024, 1, 2, 10, 0, 0),
+            entry_price=21540.0,
+            entry_qty=1,
+            exit_time=datetime(2024, 1, 2, 10, 5, 0),
+            exit_price=21530.0,
+            exit_qty=1,
+            exit_order_id=2002,
+            pnl=10.0,
+            mistakes=[]
+        ),
+        Trade(
+            id="clean-3",
+            symbol="MNQH4",
+            side="Buy",
+            entry_time=datetime(2024, 1, 2, 11, 0, 0),
+            entry_price=21480.0,
+            entry_qty=1,
+            exit_time=datetime(2024, 1, 2, 11, 15, 0),
+            exit_price=21495.0,
+            exit_qty=1,
+            exit_order_id=2003,
+            pnl=15.0,
+            mistakes=[]
+        ),
+    ]
+    return trades
+
+
+@pytest.fixture
+def trades_with_multiple_mistake_types():
+    """
+    Create trades with various mistake types for testing mistake counting.
+    Tests space-separated string keys like "no stop-loss order".
+    """
+    trades = [
+        # Trade with no stop-loss
+        Trade(
+            id="mistake-1",
+            symbol="MNQH4",
+            side="Buy",
+            entry_time=datetime(2024, 1, 2, 9, 30, 0),
+            entry_price=21500.0,
+            entry_qty=1,
+            exit_time=datetime(2024, 1, 2, 9, 35, 0),
+            exit_price=21480.0,
+            exit_qty=1,
+            exit_order_id=3001,
+            pnl=-20.0,
+            mistakes=["no stop-loss order"]
+        ),
+        # Trade with excessive risk
+        Trade(
+            id="mistake-2",
+            symbol="MNQH4",
+            side="Sell",
+            entry_time=datetime(2024, 1, 2, 10, 0, 0),
+            entry_price=21540.0,
+            entry_qty=1,
+            exit_time=datetime(2024, 1, 2, 10, 10, 0),
+            exit_price=21520.0,
+            exit_qty=1,
+            exit_order_id=3002,
+            pnl=20.0,
+            mistakes=["excessive risk"]
+        ),
+        # Trade with outsized loss
+        Trade(
+            id="mistake-3",
+            symbol="MNQH4",
+            side="Buy",
+            entry_time=datetime(2024, 1, 2, 11, 0, 0),
+            entry_price=21500.0,
+            entry_qty=1,
+            exit_time=datetime(2024, 1, 2, 11, 30, 0),
+            exit_price=21430.0,
+            exit_qty=1,
+            exit_order_id=3003,
+            pnl=-70.0,
+            mistakes=["outsized loss"]
+        ),
+        # Trade with revenge trade
+        Trade(
+            id="mistake-4",
+            symbol="MNQH4",
+            side="Buy",
+            entry_time=datetime(2024, 1, 2, 12, 0, 0),
+            entry_price=21470.0,
+            entry_qty=1,
+            exit_time=datetime(2024, 1, 2, 12, 5, 0),
+            exit_price=21455.0,
+            exit_qty=1,
+            exit_order_id=3004,
+            pnl=-15.0,
+            mistakes=["revenge trade"]
+        ),
+        # Trade with multiple mistakes
+        Trade(
+            id="mistake-5",
+            symbol="MNQH4",
+            side="Sell",
+            entry_time=datetime(2024, 1, 2, 13, 0, 0),
+            entry_price=21520.0,
+            entry_qty=1,
+            exit_time=datetime(2024, 1, 2, 13, 20, 0),
+            exit_price=21570.0,
+            exit_qty=1,
+            exit_order_id=3005,
+            pnl=-50.0,
+            mistakes=["no stop-loss order", "outsized loss"]
+        ),
+        # Clean trade
+        Trade(
+            id="mistake-6",
+            symbol="MNQH4",
+            side="Buy",
+            entry_time=datetime(2024, 1, 2, 14, 0, 0),
+            entry_price=21490.0,
+            entry_qty=1,
+            exit_time=datetime(2024, 1, 2, 14, 10, 0),
+            exit_price=21510.0,
+            exit_qty=1,
+            exit_order_id=3006,
+            pnl=20.0,
+            mistakes=[]
+        ),
+    ]
+    return trades
+
+
+@pytest.fixture
+def empty_trades():
+    """
+    Empty trades list for edge case testing.
+    """
+    return []
