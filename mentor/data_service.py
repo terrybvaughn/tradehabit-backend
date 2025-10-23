@@ -386,36 +386,45 @@ class MentorDataService:
 
     def _compute_excessive_risk_endpoint(self, trade_objs: List[Any], sigma: float = 1.5) -> Tuple[Dict[str, Any], int]:
         """Compute excessive risk analysis."""
-        from analytics.excessive_risk_analyzer import get_excessive_risk_insight
+        from analytics.excessive_risk_analyzer import calculate_excessive_risk_stats
+        from insights.excessive_risk_insight import generate_excessive_risk_insight
         
-        insight = get_excessive_risk_insight(trade_objs, sigma)
-        stats = insight.get("stats", {})
+        # Calculate statistics
+        stats = calculate_excessive_risk_stats(trade_objs, sigma)
+        
+        # Generate insight narrative
+        insight = generate_excessive_risk_insight(stats)
         
         return {
-            "totalTradesWithStops": stats.get("totalTradesWithStops", 0),
-            "meanRiskPoints": stats.get("meanRiskPoints", 0.0),
-            "stdDevRiskPoints": stats.get("stdDevRiskPoints", 0.0),
-            "excessiveRiskThreshold": stats.get("excessiveRiskThreshold", 0.0),
-            "excessiveRiskCount": stats.get("excessiveRiskCount", 0),
-            "excessiveRiskPercent": stats.get("excessiveRiskPercent", 0.0),
-            "averageRiskAmongExcessive": stats.get("averageRiskAmongExcessive", 0.0),
+            "totalTradesWithStops": stats.get("total_trades_with_risk", 0),
+            "meanRiskPoints": stats.get("mean_risk", 0.0),
+            "stdDevRiskPoints": stats.get("std_dev_risk", 0.0),
+            "excessiveRiskThreshold": stats.get("threshold", 0.0),
+            "excessiveRiskCount": stats.get("excessive_risk_count", 0),
+            "excessiveRiskPercent": stats.get("excessive_percent", 0.0),
+            "averageRiskAmongExcessive": stats.get("avg_excessive_risk", 0.0),
             "sigmaUsed": sigma,
             "diagnostic": insight.get("diagnostic", "")
         }, 200
 
     def _compute_risk_sizing_endpoint(self, trade_objs: List[Any], vr: float = 0.35) -> Tuple[Dict[str, Any], int]:
         """Compute risk sizing consistency analysis."""
-        from analytics.risk_sizing_analyzer import get_risk_sizing_insight
+        from analytics.risk_sizing_analyzer import calculate_risk_sizing_consistency_stats
+        from insights.risk_sizing_insight import generate_risk_sizing_insight
         
-        insight = get_risk_sizing_insight(trade_objs, vr)
+        # Calculate stats once
+        stats = calculate_risk_sizing_consistency_stats(trade_objs, vr)
+        
+        # Generate insight from stats
+        insight = generate_risk_sizing_insight(stats)
         
         return {
-            "count": insight["stats"]["tradesWithRiskData"],
-            "minRiskPoints": insight["stats"]["minRisk"],
-            "maxRiskPoints": insight["stats"]["maxRisk"],
-            "meanRiskPoints": insight["stats"]["meanRisk"],
-            "stdDevRiskPoints": insight["stats"]["standardDeviation"],
-            "variationRatio": insight["stats"]["variationRatio"],
+            "count": stats["trades_with_risk_data"],
+            "minRiskPoints": stats["min_risk"],
+            "maxRiskPoints": stats["max_risk"],
+            "meanRiskPoints": stats["mean_risk"],
+            "stdDevRiskPoints": stats["std_dev_risk"],
+            "variationRatio": stats["risk_variation_ratio"],
             "variationThreshold": vr,
             "diagnostic": insight["diagnostic"]
         }, 200
@@ -438,37 +447,43 @@ class MentorDataService:
 
     def _compute_winrate_payoff_endpoint(self, trade_objs: List[Any]) -> Tuple[Dict[str, Any], int]:
         """Compute win rate and payoff ratio analysis."""
-        from analytics.winrate_payoff_analyzer import generate_winrate_payoff_insight
+        from analytics.breakeven_analyzer import calculate_breakeven_stats
+        from insights.breakeven_insight import generate_breakeven_insight
         
-        wins = [t.pnl for t in trade_objs if t.pnl > 0]
-        losses = [abs(t.pnl) for t in trade_objs if t.pnl < 0]
+        # Calculate stats using the refactored function
+        stats = calculate_breakeven_stats(trade_objs)
         
-        if not wins or not losses:
-            return {
-                "message": "Not enough win/loss data to compute win rate and payoff ratio."
-            }, 200
-        
-        win_rate = len(wins) / len(trade_objs)
-        avg_win = sum(wins) / len(wins)
-        avg_loss = sum(losses) / len(losses)
-        payoff_ratio = avg_win / avg_loss
-        
-        diagnostic = generate_winrate_payoff_insight(win_rate, avg_win, avg_loss)
+        # Generate insight from stats
+        insight = generate_breakeven_insight(stats)
         
         return {
-            "winRate": round(win_rate, 4),
-            "averageWin": round(avg_win, 2),
-            "averageLoss": round(avg_loss, 2),
-            "payoffRatio": round(payoff_ratio, 2),
-            "diagnostic": diagnostic
+            "winRate": stats["win_rate"],
+            "averageWin": stats["avg_win"],
+            "averageLoss": stats["avg_loss"],
+            "payoffRatio": stats["payoff_ratio"],
+            "expectancy": stats["expectancy"],
+            "breakevenWinRate": stats["breakeven_win_rate"],
+            "delta": stats["delta"],
+            "performanceCategory": stats["performance_category"],
+            "diagnostic": insight["diagnostic"]
         }, 200
 
     def _compute_insights_endpoint(self, trade_objs: List[Any], order_df: Any) -> Tuple[Dict[str, Any], int]:
         """Compute full insights report."""
-        from analytics.insights import build_insights
-        
-        insights = build_insights(trade_objs, order_df)
-        return insights, 200
+        from insights.insights_report import generate_insights_report
+
+        insights = generate_insights_report(trade_objs, order_df)
+
+        # Convert new insights format to old API format for backward compatibility
+        insights_with_priority = []
+        for idx, insight in enumerate(insights):
+            insights_with_priority.append({
+                "title": insight["title"],
+                "diagnostic": insight["diagnostic"],
+                "priority": idx
+            })
+
+        return insights_with_priority, 200
 
     def list_available_endpoints(self) -> list:
         """
