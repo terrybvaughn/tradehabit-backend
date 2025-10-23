@@ -453,17 +453,22 @@ class MentorDataService:
 
     def _compute_stop_loss_endpoint(self, trade_objs: List[Any]) -> Tuple[Dict[str, Any], int]:
         """Compute stop loss behavior analysis."""
-        from analytics.stop_loss_analyzer import get_stop_loss_insight
+        from analytics.stop_loss_analyzer import calculate_stop_loss_stats
+        from insights.stop_loss_insight import generate_stop_loss_insight
         
-        insight = get_stop_loss_insight(trade_objs)
+        # Calculate statistics
+        stats = calculate_stop_loss_stats(trade_objs)
+        
+        # Generate insight narrative
+        insight = generate_stop_loss_insight(stats)
         
         return {
-            "totalTrades": insight["stats"]["totalTrades"],
-            "tradesWithStops": insight["stats"]["totalTrades"] - insight["stats"]["tradesWithoutStop"],
-            "tradesWithoutStops": insight["stats"]["tradesWithoutStop"],
-            "averageLossWithStop": insight["stats"]["averageLossWithStop"],
-            "averageLossWithoutStop": insight["stats"]["averageLossWithoutStop"],
-            "maxLossWithoutStop": insight["stats"]["maxLossWithoutStop"],
+            "totalTrades": stats["total_trades"],
+            "tradesWithStops": stats["trades_with_stops"],
+            "tradesWithoutStops": stats["trades_without_stops"],
+            "averageLossWithStop": stats["avg_loss_with_stops"],
+            "averageLossWithoutStop": stats["avg_loss_without_stops"],
+            "maxLossWithoutStop": stats["max_loss_without_stops"],
             "diagnostic": insight["diagnostic"]
         }, 200
 

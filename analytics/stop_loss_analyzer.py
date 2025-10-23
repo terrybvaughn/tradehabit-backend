@@ -154,71 +154,56 @@ def analyze_trades_for_no_stop_mistake(
     # logging.debug("Stop-loss analysis complete.")
     return trades
 
-def summarize_stop_loss_behavior(trades: List[Trade]) -> dict:
+def calculate_stop_loss_stats(trades: List[Trade]) -> dict:
     """
-    Generate summary statistics and diagnostic insight comparing trades with vs. without stop-losses.
+    Calculate statistics needed for Stop-Loss Discipline insight.
+    Pure statistics calculation - no narrative generation.
+
+    Args:
+        trades: List of Trade objects (must already be analyzed for no-stop mistakes)
+
+    Returns:
+        Dictionary containing:
+        - total_trades: int
+        - trades_with_stops: int
+        - trades_without_stops: int
+        - percent_without_stops: float
+        - avg_loss_with_stops: float
+        - avg_loss_without_stops: float
+        - max_loss_without_stops: float
+        - performance_diff: float (percentage difference)
     """
-    with_stops = [t for t in trades if t.has_stop_order]
-    without_stops = [t for t in trades if not t.has_stop_order]
+    # Separate trades by stop-loss presence
+    without_stops = [t for t in trades if "no stop-loss order" in t.mistakes]
+    with_stops = [t for t in trades if "no stop-loss order" not in t.mistakes]
 
     total_trades = len(trades)
     count_with_stops = len(with_stops)
     count_without_stops = len(without_stops)
 
-    losses_with_stops = [abs(t.pnl) for t in with_stops if t.pnl < 0]
-    losses_without_stops = [abs(t.pnl) for t in without_stops if t.pnl < 0]
+    # Calculate loss statistics
+    losses_with_stops = [abs(t.pnl) for t in with_stops if t.pnl is not None and t.pnl < 0]
+    losses_without_stops = [abs(t.pnl) for t in without_stops if t.pnl is not None and t.pnl < 0]
 
-    avg_loss_with = round(statistics.mean(losses_with_stops), 2) if losses_with_stops else 0.0
-    avg_loss_without = round(statistics.mean(losses_without_stops), 2) if losses_without_stops else 0.0
-    max_loss_without = round(max(losses_without_stops), 2) if losses_without_stops else 0.0
+    avg_loss_with = statistics.mean(losses_with_stops) if losses_with_stops else 0.0
+    avg_loss_without = statistics.mean(losses_without_stops) if losses_without_stops else 0.0
+    max_loss_without = max(losses_without_stops) if losses_without_stops else 0.0
 
-    return {
-        "totalTrades": total_trades,
-        "tradesWithStops": count_with_stops,
-        "tradesWithoutStops": count_without_stops,
-        "averageLossWithStop": avg_loss_with,
-        "averageLossWithoutStop": avg_loss_without,
-        "maxLossWithoutStop": max_loss_without
-    }
-
-def get_stop_loss_insight(trades: list[Trade]) -> dict:
-    """
-    Returns an insight dict for stop-loss usage with detailed statistics.
-    """
-    # Get summary statistics
-    result = summarize_stop_loss_behavior(trades)
-    
-    count_without = result["tradesWithoutStops"]
-    total = result["totalTrades"]
-    avg_with = result["averageLossWithStop"]
-    avg_without = result["averageLossWithoutStop"]
-    max_without = result["maxLossWithoutStop"]
-    pct = round(100 * count_without / total, 1) if total else 0
-
-    # Enhanced diagnostic from app.py
-    if count_without > 0:
-        diagnostic = (
-            f"{count_without} of your {total} trades "
-            f"({pct}%) were placed without a stop-loss order. "
-            f"On average, these trades lost ${avg_without}, more than twice the ${avg_with} average loss "
-            f"on trades that used stops. The largest loss among your no-stop trades was ${max_without}. "
-            "Skipping stop-losses not only magnifies downside but also increases emotional volatility in your decision-making."
-        )
+    # Calculate performance difference
+    # Positive % = trades without stops lost MORE (worse performance)
+    # Negative % = trades without stops lost LESS (better performance, but still risky)
+    if avg_loss_with > 0:
+        performance_diff = ((avg_loss_without - avg_loss_with) / avg_loss_with) * 100
     else:
-        diagnostic = (
-            f"All {total} of your trades used stop-loss orders. This shows consistent risk discipline, "
-            "which can help limit downside and reduce stress during volatile periods."
-        )
+        performance_diff = 0.0
 
     return {
-        "title": "Stop-Loss Usage",
-        "diagnostic": diagnostic,
-        "stats": {
-            "tradesWithoutStop": count_without,
-            "totalTrades": total,
-            "percentWithoutStop": pct,
-            "averageLossWithStop": avg_with,
-            "averageLossWithoutStop": avg_without,
-            "maxLossWithoutStop": max_without
-        }
+        "total_trades": total_trades,
+        "trades_with_stops": count_with_stops,
+        "trades_without_stops": count_without_stops,
+        "percent_without_stops": round(100 * count_without_stops / total_trades, 1) if total_trades else 0.0,
+        "avg_loss_with_stops": round(avg_loss_with, 2),
+        "avg_loss_without_stops": round(avg_loss_without, 2),
+        "max_loss_without_stops": round(max_loss_without, 2),
+        "performance_diff": round(performance_diff, 1)
     }
