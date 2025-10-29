@@ -8,28 +8,32 @@ This protocol ensures that changes to shared documentation in `docs/shared/` are
 - **`tradehabit-backend`**: Contains `docs/shared/` as a git submodule pointing to `tradehabit-docs`
 - **`tradehabit-frontend`**: Contains `docs/shared/` as a git submodule pointing to `tradehabit-docs`
 
-Use `./scripts/update-shared-docs.sh` (from the root of this repo) to automatically pull the latest docs in the source repo and commit submodule pointer updates in both backend and frontend repos.
+Use `./scripts/update-shared-docs.sh` (from the root of either backend or frontend repo) to automatically sync submodule pointers after pushing changes to the source docs repo.
 
 ## 🚀 Standard Workflow (Use This!)
 
 ```bash
-# 1. Make your changes in frontend repo
-cd /Users/terry/projects/tradehabit-frontend
-# Edit docs/shared/docs/mentor.md (or other files)
+# Choose ONE repo to work from (backend OR frontend)
+cd /Users/terry/projects/tradehabit-backend  # or tradehabit-frontend
+
+# 1. Make your changes to documentation
+# Edit docs/shared/docs/*.md (any files you want to update)
 
 # 2. Commit to source repo (from within the submodule)
 cd docs/shared
-git add docs/mentor.md
-git commit -m "Your descriptive message"
+git add docs/*.md  # or specific files
+git commit -m "docs: your descriptive message"
 git push
+cd ..
 
-# 3. Update all repos with sync script (run this)
-cd /Users/terry/projects/tradehabit-frontend
+# 3. Run the sync script to update all repos
+# (can run from either backend or frontend repo)
 ./scripts/update-shared-docs.sh
-# The script will:
-# - Update the source docs repo (tradehabit-docs)
-# - Update submodule pointers in backend and frontend repos
-# - Commit and push the pointer updates
+
+# The script will automatically:
+# - Pull latest from source repo (tradehabit-docs)
+# - Update submodule pointers in BOTH backend AND frontend repos
+# - Commit and push the pointer updates to both repos
 ```
 
 ## ⚠️ Common Issues to Avoid
@@ -68,7 +72,8 @@ git status
 ### Changes not showing up in other repos
 ```bash
 # If you just updated tradehabit-docs, run the sync script to bump submodule pointers
-cd /Users/terry/projects/tradehabit-frontend
+# Can run from either repo
+cd /Users/terry/projects/tradehabit-backend  # or tradehabit-frontend
 ./scripts/update-shared-docs.sh
 ```
 
@@ -106,11 +111,14 @@ git -C docs/shared log --oneline -3
 ## 💡 Key Points
 
 - `docs/shared/` = git submodule pointing to `tradehabit-docs`
-- Always commit to source repo first, then sync
-- Use the sync script: `./scripts/update-shared-docs.sh`
-- If script fails, fix detached HEAD in backend first
-- Always verify changes appear in all repos after sync
+- **Always commit and push to source repo first** (`docs/shared` within your repo)
+- **Then run the sync script**: `./scripts/update-shared-docs.sh` (can run from either backend or frontend)
+- **The script automates**: pulling latest docs and updating submodule pointers in both repos
+- **If script fails**: Check for detached HEAD state and uncommitted changes
+- **Always verify**: Changes appear in all repos after sync
 
 ---
 
-**For Agent Reference**: When updating shared documentation, follow the Standard Workflow above and use the Quick Fixes if errors occur.
+**For Agent Reference**: When updating shared documentation, follow the Standard Workflow above and use the Quick Fixes if errors occur. 
+
+**Note**: The sync script automates updating submodule pointers in both repos after you push changes to the source repo. If you update the pointers manually (as was done initially), the script will detect there are no changes and skip the commit, which is fine - the repos will still be synchronized.
