@@ -32,6 +32,7 @@ def test_analyze_happy_path_then_summary(client, tiny_valid_csv_bytes):
     # Basic shape checks
     for key in [
         'total_trades','win_count','loss_count','total_mistakes','flagged_trades',
-        'clean_trade_rate','mistake_counts','win_rate','average_win','average_loss'
+        'clean_trade_rate','mistake_counts','win_rate','average_win','average_loss',
+        'payoff_ratio','expectancy','required_wr_adj'
     ]:
         assert key in summary

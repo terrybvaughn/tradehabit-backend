@@ -23,7 +23,9 @@ def calculate_breakeven_stats(trades: List[Trade]) -> Dict[str, Any]:
         - avg_loss: float - Average losing trade (absolute value)
         - payoff_ratio: float - avg_win / avg_loss
         - expectancy: float - Expected profit per trade
-        - breakeven_win_rate: float - Win rate needed to break even
+        - breakeven_win_rate: float - Win rate needed to break even (with 1% cushion)
+        - required_wr_raw: float - Win rate needed to break even (without cushion)
+        - required_wr_adj: float - Win rate needed with 1% margin (raw * 1.01)
         - delta: float - Actual win rate - breakeven win rate
         - performance_category: str - "comfortably_above", "just_above", "around", "below"
     """
@@ -40,6 +42,8 @@ def calculate_breakeven_stats(trades: List[Trade]) -> Dict[str, Any]:
             "payoff_ratio": 0.0,
             "expectancy": 0.0,
             "breakeven_win_rate": 0.0,
+            "required_wr_raw": None,
+            "required_wr_adj": None,
             "delta": 0.0,
             "performance_category": "insufficient_data"
         }
@@ -65,14 +69,20 @@ def calculate_breakeven_stats(trades: List[Trade]) -> Dict[str, Any]:
     # Formula: expectancy = (win_rate * avg_win) - ((1 - win_rate) * avg_loss)
     expectancy = (win_rate * avg_win) - ((1 - win_rate) * avg_loss)
 
-    # Calculate breakeven win rate
+    # Calculate breakeven win rate and required win rates
     # Formula: breakeven_wr = avg_loss / (avg_win + avg_loss) + 0.01
     if avg_loss == 0:
         breakeven_win_rate = 0.0
+        required_wr_raw = None
+        required_wr_adj = None
         delta = 0.0
         performance_category = "insufficient_data"
     else:
         breakeven_win_rate = (avg_loss / (avg_win + avg_loss)) + 0.01
+        # required_wr_raw is the win rate needed to break even (without 1% cushion)
+        required_wr_raw = breakeven_win_rate - 0.01
+        # required_wr_adj adds a 1% cushion on top of raw requirement
+        required_wr_adj = round(required_wr_raw * 1.01, 2)
         delta = win_rate - breakeven_win_rate
 
         # Categorize performance based on delta
@@ -95,6 +105,8 @@ def calculate_breakeven_stats(trades: List[Trade]) -> Dict[str, Any]:
         "payoff_ratio": round(payoff_ratio, 2),
         "expectancy": round(expectancy, 2),
         "breakeven_win_rate": round(breakeven_win_rate, 4),
+        "required_wr_raw": round(required_wr_raw, 4) if required_wr_raw is not None else None,
+        "required_wr_adj": required_wr_adj,
         "delta": round(delta, 4),
         "performance_category": performance_category
     }

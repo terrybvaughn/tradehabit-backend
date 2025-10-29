@@ -52,7 +52,7 @@ def test_calculate_excessive_risk_stats_empty_trades():
     stats = calculate_excessive_risk_stats([])
 
     assert stats["total_trades"] == 0
-    assert stats["total_trades_with_risk"] == 0
+    assert stats["total_trades_with_stops"] == 0
     assert stats["excessive_risk_count"] == 0
     assert stats["risk_sizes"] == []
     assert stats["mean_risk"] == 0.0
@@ -70,7 +70,7 @@ def test_calculate_excessive_risk_stats_no_risk_data(clean_trades):
     stats = calculate_excessive_risk_stats(clean_trades)
 
     assert stats["total_trades"] == 3
-    assert stats["total_trades_with_risk"] == 0
+    assert stats["total_trades_with_stops"] == 0
     assert stats["excessive_risk_count"] == 0
 
 
@@ -109,7 +109,7 @@ def test_calculate_excessive_risk_stats_no_violations():
 
     stats = calculate_excessive_risk_stats(trades, sigma=1.5)
 
-    assert stats["total_trades_with_risk"] == 3
+    assert stats["total_trades_with_stops"] == 3
     # With tight distribution, no trades should exceed mean + 1.5*std_dev
     assert stats["excessive_risk_count"] == 0
     assert stats["excessive_percent"] == 0.0
@@ -152,7 +152,7 @@ def test_calculate_excessive_risk_stats_some_violations():
 
     stats = calculate_excessive_risk_stats(trades, sigma=1.5)
 
-    assert stats["total_trades_with_risk"] == 6
+    assert stats["total_trades_with_stops"] == 6
     assert stats["excessive_risk_count"] >= 1  # At least the 500 point trade
     assert stats["excessive_percent"] > 0
     assert stats["avg_excessive_risk"] > stats["mean_risk"]
@@ -205,7 +205,7 @@ def test_calculate_excessive_risk_stats_field_names():
     # Verify all expected fields exist
     required_fields = [
         "total_trades",
-        "total_trades_with_risk",
+        "total_trades_with_stops",
         "excessive_risk_count",
         "risk_sizes",
         "mean_risk",

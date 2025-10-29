@@ -8,24 +8,28 @@ This protocol ensures that changes to shared documentation in `docs/shared/` are
 - **`tradehabit-backend`**: Contains `docs/shared/` as a git submodule pointing to `tradehabit-docs`
 - **`tradehabit-frontend`**: Contains `docs/shared/` as a git submodule pointing to `tradehabit-docs`
 
-Use `./scripts/update-shared-docs.sh` (from the backend repo root) to automatically pull the latest docs and commit submodule pointer updates in both backend and frontend repos.
+Use `./scripts/update-shared-docs.sh` (from the root of this repo) to automatically pull the latest docs in the source repo and commit submodule pointer updates in both backend and frontend repos.
 
 ## 🚀 Standard Workflow (Use This!)
 
 ```bash
-# 1. Make your changes in backend repo
-cd /Users/terry/projects/tradehabit-backend
+# 1. Make your changes in frontend repo
+cd /Users/terry/projects/tradehabit-frontend
 # Edit docs/shared/docs/mentor.md (or other files)
 
-# 2. Commit to source repo
+# 2. Commit to source repo (from within the submodule)
 cd docs/shared
 git add docs/mentor.md
 git commit -m "Your descriptive message"
 git push
 
-# 3. Update both repos with sync script (run this)
-cd /Users/terry/projects/tradehabit-backend
+# 3. Update all repos with sync script (run this)
+cd /Users/terry/projects/tradehabit-frontend
 ./scripts/update-shared-docs.sh
+# The script will:
+# - Update the source docs repo (tradehabit-docs)
+# - Update submodule pointers in backend and frontend repos
+# - Commit and push the pointer updates
 ```
 
 ## ⚠️ Common Issues to Avoid
@@ -56,7 +60,7 @@ git -C docs/shared pull
 
 ### "Uncommitted changes in docs/shared"
 ```bash
-cd /Users/terry/projects/tradehabit-backend/docs/shared
+cd /Users/terry/projects/tradehabit-frontend/docs/shared
 git status
 # Either commit or stash the changes
 ```
@@ -64,7 +68,7 @@ git status
 ### Changes not showing up in other repos
 ```bash
 # If you just updated tradehabit-docs, run the sync script to bump submodule pointers
-cd /Users/terry/projects/tradehabit-backend
+cd /Users/terry/projects/tradehabit-frontend
 ./scripts/update-shared-docs.sh
 ```
 
@@ -72,14 +76,14 @@ cd /Users/terry/projects/tradehabit-backend
 
 If the automated sync script fails, follow these steps:
 
-1. **Fix frontend detached HEAD**:
+1. **Fix backend detached HEAD**:
    ```bash
    cd /Users/terry/projects/tradehabit-frontend
    git -C docs/shared checkout main
    git -C docs/shared pull
    ```
 
-2. **Update frontend submodule pointer**:
+2. **Update backend submodule pointer**:
    ```bash
    git add docs/shared
    git commit -m "chore(docs): bump shared docs pointer"
@@ -104,7 +108,7 @@ git -C docs/shared log --oneline -3
 - `docs/shared/` = git submodule pointing to `tradehabit-docs`
 - Always commit to source repo first, then sync
 - Use the sync script: `./scripts/update-shared-docs.sh`
-- If script fails, fix detached HEAD in frontend first
+- If script fails, fix detached HEAD in backend first
 - Always verify changes appear in all repos after sync
 
 ---

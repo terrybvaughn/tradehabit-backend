@@ -10,7 +10,7 @@ def test_generate_excessive_risk_insight_no_risk_data():
     """Verify 'no risk data' narrative when no trades have risk_points"""
     stats = {
         "total_trades": 10,
-        "total_trades_with_risk": 0,
+        "total_trades_with_stops": 0,
         "excessive_risk_count": 0,
         "risk_sizes": [],
         "mean_risk": 0.0,
@@ -34,7 +34,7 @@ def test_generate_excessive_risk_insight_no_violations():
     """Verify 'controlled' narrative when no excessive risk trades"""
     stats = {
         "total_trades": 10,
-        "total_trades_with_risk": 10,
+        "total_trades_with_stops": 10,
         "excessive_risk_count": 0,
         "risk_sizes": [50.0] * 10,
         "mean_risk": 50.0,
@@ -59,7 +59,7 @@ def test_generate_excessive_risk_insight_tight_distribution():
     """Verify 'disciplined with lapses' narrative when MAD-CV < 20%"""
     stats = {
         "total_trades": 10,
-        "total_trades_with_risk": 10,
+        "total_trades_with_stops": 10,
         "excessive_risk_count": 2,
         "risk_sizes": [50.0, 51.0, 52.0, 53.0, 54.0, 55.0, 56.0, 57.0, 100.0, 110.0],
         "mean_risk": 63.8,
@@ -86,7 +86,7 @@ def test_generate_excessive_risk_insight_loose_distribution():
     """Verify 'disproportionate risk' narrative when MAD-CV >= 20%"""
     stats = {
         "total_trades": 10,
-        "total_trades_with_risk": 10,
+        "total_trades_with_stops": 10,
         "excessive_risk_count": 3,
         "risk_sizes": [30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 150.0, 200.0],
         "mean_risk": 87.0,
@@ -113,7 +113,7 @@ def test_generate_excessive_risk_insight_zero_trades():
     """Verify handling of empty stats"""
     stats = {
         "total_trades": 0,
-        "total_trades_with_risk": 0,
+        "total_trades_with_stops": 0,
         "excessive_risk_count": 0,
         "risk_sizes": [],
         "mean_risk": 0.0,
@@ -137,7 +137,7 @@ def test_generate_excessive_risk_insight_units():
     """Verify 'points' used, not '$'"""
     stats = {
         "total_trades": 10,
-        "total_trades_with_risk": 10,
+        "total_trades_with_stops": 10,
         "excessive_risk_count": 2,
         "risk_sizes": [50.0] * 8 + [100.0, 110.0],
         "mean_risk": 62.0,
@@ -162,7 +162,7 @@ def test_generate_excessive_risk_insight_structure():
     """Verify return dict matches API spec"""
     stats = {
         "total_trades": 5,
-        "total_trades_with_risk": 5,
+        "total_trades_with_stops": 5,
         "excessive_risk_count": 1,
         "risk_sizes": [50.0, 52.0, 54.0, 56.0, 100.0],
         "mean_risk": 62.4,

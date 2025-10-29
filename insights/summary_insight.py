@@ -91,7 +91,7 @@ def generate_summary_insight(stats: Dict[str, Any]) -> Dict[str, Any]:
         },
         "excessive risk": {
             "problem": "risking too much on some of your trades.",
-            "detail": "If you keep doing this, you risk blowing up your account with a handful of bad trades. Refer to the Excessive Risk Sizing section below for more information."
+            "detail": "If you keep doing this, you risk blowing up your account with a handful of bad trades. Refer to the Risk Sizing Analysis section below for more information."
         },
         "outsized loss": {
             "problem": "letting small losses grow too large.",
@@ -99,7 +99,7 @@ def generate_summary_insight(stats: Dict[str, Any]) -> Dict[str, Any]:
         },
         "revenge trade": {
             "problem": "revenge trading after taking a loss.",
-            "detail": "Emotional trading erodes your edge and creates inconsistent decision-making patterns. Refer to the Revenge Trading section below for more information."
+            "detail": "Jumping back into a trade right after a loss often means you're letting emotions drive your decisions. Refer to the Revenge Trading section below for more information."
         }
     }
 

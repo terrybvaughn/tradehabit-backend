@@ -217,17 +217,17 @@ def get_summary():
     current_streak, best_streak = get_clean_streak_stats(trade_objs)
 
     # ---------- 3) payoff & win-rate stats ----------
-    wins   = [t.pnl for t in trade_objs if t.pnl and t.pnl > 0]
-    losses = [abs(t.pnl) for t in trade_objs if t.pnl and t.pnl < 0]
-    win_count = len(wins)
-    loss_count = len(losses)
-
-    win_rate        = round(len(wins) / total_trades, 2) if total_trades else 0.0
-    avg_win         = round(sum(wins)   / len(wins), 2) if wins   else 0.0
-    avg_loss        = round(sum(losses) / len(losses), 2) if losses else 0.0
-    payoff_ratio    = round(avg_win / avg_loss, 2) if avg_loss else None
-    required_wr_raw = 1 / (1 + (payoff_ratio or 0)) if payoff_ratio else None
-    required_wr_adj = round(required_wr_raw * 1.01, 2) if required_wr_raw else None  # +1 % cushion
+    # Get all breakeven stats from the analyzer
+    breakeven_stats = calculate_breakeven_stats(trade_objs)
+    
+    win_rate         = round(breakeven_stats["win_rate"], 2)
+    avg_win          = breakeven_stats["avg_win"]
+    avg_loss         = breakeven_stats["avg_loss"]
+    payoff_ratio     = breakeven_stats["payoff_ratio"]
+    expectancy       = breakeven_stats["expectancy"]
+    required_wr_adj  = breakeven_stats["required_wr_adj"]
+    win_count        = breakeven_stats["winning_trades"]
+    loss_count       = breakeven_stats["losing_trades"]
 
     # ---------- 4) helper counters ----------
     pct = lambda n: round(100 * n / total_trades, 1) if total_trades else 0.0
@@ -277,6 +277,7 @@ def get_summary():
         "average_win":        avg_win,
         "average_loss":       avg_loss,
         "payoff_ratio":       payoff_ratio,
+        "expectancy":         expectancy,
         "required_wr_adj":    required_wr_adj,
         "diagnostic_text":    summary_text,
     })
@@ -348,14 +349,14 @@ def get_losses():
     # 5) Return with all available stats
     return jsonify({
     "losses": loss_list,
-    "meanPointsLost": stats["mean_loss_points"],
-    "stdDevPointsLost": stats["std_dev_loss_points"],
+    "meanPointsLost": stats["mean_loss"],
+    "stdDevPointsLost": stats["std_loss"],
     "thresholdPointsLost": stats["threshold"],
     "sigmaUsed": sigma,
     "symbolFiltered": symbol,
     "diagnostic": insight["diagnostic"],
-    "count": stats["outsized_count"],
-    "percentage": stats["outsized_percentage"],
+    "count": stats["outsized_loss_count"],
+    "percentage": stats["outsized_percent"],
     "excessLossPoints": stats["excess_loss_points"]
 })
 
@@ -442,12 +443,12 @@ def get_excessive_risk_summary():
     # Return with all available stats
     return jsonify({
         "totalTradesWithStops": stats["total_trades_with_stops"],
-        "meanRiskPoints": stats["mean_risk_points"],
-        "stdDevRiskPoints": stats["std_dev_risk_points"],
-        "excessiveRiskThreshold": stats["excessive_risk_threshold"],
+        "meanRiskPoints": stats["mean_risk"],
+        "stdDevRiskPoints": stats["std_dev_risk"],
+        "excessiveRiskThreshold": stats["threshold"],
         "excessiveRiskCount": stats["excessive_risk_count"],
-        "excessiveRiskPercent": stats["excessive_risk_percent"],
-        "averageRiskAmongExcessive": stats["avg_risk_among_excessive"],
+        "excessiveRiskPercent": stats["excessive_percent"],
+        "averageRiskAmongExcessive": stats["avg_excessive_risk"],
         "sigmaUsed": sigma,
         "diagnostic": insight["diagnostic"]
     })
@@ -518,8 +519,18 @@ def get_insights():
 
     # Get user-adjustable parameters (same as other endpoints)
     vr = float(request.args.get("vr", THRESHOLDS["vr"]))
+    sigma_loss = float(request.args.get("sigma_loss", THRESHOLDS["sigma_loss"]))
+    sigma_risk = float(request.args.get("sigma_risk", THRESHOLDS["sigma_risk"]))
+    k = float(request.args.get("k", THRESHOLDS["k"]))
 
-    insights = generate_insights_report(trade_objs, order_df, vr=vr)
+    insights = generate_insights_report(
+        trade_objs,
+        order_df,
+        vr=vr,
+        sigma_loss=sigma_loss,
+        sigma_risk=sigma_risk,
+        k=k
+    )
 
     # Convert new insights format to old API format for backward compatibility
     # New format has {title, diagnostic}, old format needs {title, diagnostic, priority}

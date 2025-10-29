@@ -53,8 +53,13 @@ def calculate_outsized_loss_stats(trades: List[Trade], sigma_multiplier: float =
             "sigma_used": sigma_multiplier
         }
 
-    # Calculate statistics using abs(pnl) for losses
-    all_losses = [abs(t.pnl) for t in losing_trades]
+    # Calculate statistics using points_lost (per-contract points) when available,
+    # otherwise fall back to abs(pnl) to support legacy data / tests that don’t set points_lost.
+    def _loss_value(trade):
+        return trade.points_lost if getattr(trade, "points_lost", None) is not None else abs(trade.pnl)
+
+    all_losses = [_loss_value(t) for t in losing_trades]
+
     mean_loss = statistics.mean(all_losses)
     median_loss = statistics.median(all_losses)
     std_loss = statistics.pstdev(all_losses) if len(all_losses) > 1 else 0.0
@@ -64,8 +69,8 @@ def calculate_outsized_loss_stats(trades: List[Trade], sigma_multiplier: float =
     mad = statistics.median([abs(x - median_loss) for x in all_losses]) if all_losses else 0.0
     mad_cv = mad / median_loss if median_loss > 0 else 0.0
 
-    # Identify outsized loss trades
-    outsized_trades = [t for t in losing_trades if abs(t.pnl) > threshold]
+    # Identify outsized loss trades using the same metric as above
+    outsized_trades = [t for t in losing_trades if _loss_value(t) > threshold]
     outsized_loss_count = len(outsized_trades)
     outsized_percent = round(100 * outsized_loss_count / total_losing_trades, 1) if total_losing_trades else 0.0
     avg_outsized_loss = statistics.mean([abs(t.pnl) for t in outsized_trades]) if outsized_trades else 0.0

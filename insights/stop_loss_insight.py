@@ -26,8 +26,8 @@ def generate_stop_loss_insight(stats: Dict[str, Any]) -> Dict[str, Any]:
         return {
             "title": "Stop-Loss Discipline",
             "diagnostic": (
-                f"All {stats['total_trades']} of your closed trades had stop-loss orders. "
-                "This shows consistent risk discipline, which helps limit downside and reduce stress during volatile periods."
+                f"All {stats['total_trades']} of your trades had stop-loss orders. "
+                "This shows consistent risk discipline, which helps limit downside and reduce stress during volatile periods. Keep up the great work!"
             )
         }
 

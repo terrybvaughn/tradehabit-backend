@@ -4,6 +4,14 @@ set -euo pipefail
 # Update shared docs in both repos
 echo "Updating shared docs..."
 
+# Update the source docs repo first
+echo "Updating source docs repo..."
+cd /Users/terry/projects/tradehabit-docs
+if ! git diff --quiet; then
+  echo "❌ Uncommitted changes in docs repo. Commit or stash before updating."; exit 1
+fi
+git pull origin main || { echo "❌ Failed to pull docs repo"; exit 1; }
+
 # Update backend repo
 echo "Updating backend repo..."
 cd /Users/terry/projects/tradehabit-backend
@@ -24,4 +32,4 @@ git -C docs/shared pull --ff-only || { echo "❌ Failed to pull docs repo"; exit
 git add docs/shared
 git commit -m "chore(docs): bump shared docs pointer" || echo "No changes to commit."
 
-echo "✅ Shared docs updated in both repos!"
+echo "✅ Shared docs updated in docs, backend, and frontend repos!"

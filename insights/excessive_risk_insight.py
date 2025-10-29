@@ -17,7 +17,7 @@ def generate_excessive_risk_insight(stats: Dict[str, Any]) -> Dict[str, Any]:
         Dictionary with title and diagnostic narrative
     """
     # Case 1: No trades with risk data
-    if stats["total_trades_with_risk"] == 0:
+    if stats["total_trades_with_stops"] == 0:
         return {
             "title": "Excessive Risk Sizing",
             "diagnostic": "No trades with stop-loss data available to assess excessive risk."
@@ -45,7 +45,7 @@ def generate_excessive_risk_insight(stats: Dict[str, Any]) -> Dict[str, Any]:
         return {
             "title": "Excessive Risk Sizing",
             "diagnostic": (
-                f"{stats['excessive_risk_count']} of your {stats['total_trades_with_risk']} trades "
+                f"{stats['excessive_risk_count']} of your {stats['total_trades_with_stops']} trades "
                 f"({stats['excessive_percent']:.1f}%) exceeded the Excessive Risk Threshold, "
                 f"averaging {stats['avg_excessive_risk']:.1f} points compared to your typical {stats['mean_risk']:.1f} points "
                 f"({excessive_distance:.1f} points more risk). "
@@ -59,7 +59,7 @@ def generate_excessive_risk_insight(stats: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "title": "Excessive Risk Sizing",
         "diagnostic": (
-            f"{stats['excessive_risk_count']} of your {stats['total_trades_with_risk']} trades "
+            f"{stats['excessive_risk_count']} of your {stats['total_trades_with_stops']} trades "
             f"({stats['excessive_percent']:.1f}%) had stop distances that exceeded the Excessive Risk Threshold. "
             f"The average risk size among these trades was {stats['avg_excessive_risk']:.2f} points, "
             f"which is {risk_increase_pct:.0f}% higher than your typical risk size of {stats['mean_risk']:.2f} points. "

@@ -1,9 +1,10 @@
 """
 Mentor Blueprint - Endpoints for OpenAI Assistant integration.
 
-Supports two modes (controlled by MENTOR_MODE environment variable):
+Supports three modes (controlled by MENTOR_MODE environment variable):
 - fixtures: Reads from data/static/*.json (default)
 - live: Computes from app.trade_objs and app.order_df
+- disabled: Returns mock response without calling OpenAI (for testing)
 """
 from flask import Blueprint, request, jsonify, current_app
 from mentor.data_service import MentorDataService
@@ -678,6 +679,16 @@ def filter_losses():
 def chat():
     if request.method == "OPTIONS":
         return ("", 204)
+
+    # Check if Mentor is disabled
+    if MENTOR_MODE == "disabled":
+        payload = request.get_json(silent=True) or {}
+        thread_id = payload.get("threadId")
+        return jsonify({
+            "threadId": thread_id or "",
+            "text": "Mentor is disabled for testing. Set MENTOR_MODE=live or MENTOR_MODE=fixtures to enable.",
+            "error": None
+        }), 200
 
     # Lazy import to avoid circular imports during module initialization
     try:

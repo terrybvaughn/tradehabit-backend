@@ -33,7 +33,10 @@ def test_calculate_breakeven_stats_returns_dict(sample_trades):
     assert "avg_win" in result
     assert "avg_loss" in result
     assert "payoff_ratio" in result
+    assert "expectancy" in result
     assert "breakeven_win_rate" in result
+    assert "required_wr_raw" in result
+    assert "required_wr_adj" in result
     assert "delta" in result
     assert "performance_category" in result
 
@@ -49,7 +52,10 @@ def test_calculate_breakeven_stats_no_trades():
     assert result["avg_win"] == 0.0
     assert result["avg_loss"] == 0.0
     assert result["payoff_ratio"] == 0.0
+    assert result["expectancy"] == 0.0
     assert result["breakeven_win_rate"] == 0.0
+    assert result["required_wr_raw"] is None
+    assert result["required_wr_adj"] is None
     assert result["delta"] == 0.0
     assert result["performance_category"] == "insufficient_data"
 
@@ -113,6 +119,14 @@ def test_calculate_breakeven_stats_breakeven_calculation(sample_trades):
     # breakeven_wr = 17.5 / (30 + 17.5) + 0.01 = 17.5/47.5 + 0.01 = 0.368 + 0.01 = 0.378
     expected_breakeven = (17.5 / (30 + 17.5)) + 0.01
     assert abs(result["breakeven_win_rate"] - expected_breakeven) < 0.001
+    
+    # required_wr_raw = breakeven_win_rate - 0.01 = 0.378 - 0.01 = 0.368
+    expected_required_wr_raw = expected_breakeven - 0.01
+    assert abs(result["required_wr_raw"] - expected_required_wr_raw) < 0.001
+    
+    # required_wr_adj = required_wr_raw * 1.01 = 0.368 * 1.01 = 0.3717 (rounded to 2 decimals = 0.37)
+    expected_required_wr_adj = round(expected_required_wr_raw * 1.01, 2)
+    assert result["required_wr_adj"] == expected_required_wr_adj
     
     # delta = win_rate - breakeven_win_rate = 0.6 - 0.378 = 0.222
     expected_delta = 0.6 - expected_breakeven

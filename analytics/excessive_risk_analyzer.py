@@ -15,7 +15,7 @@ def calculate_excessive_risk_stats(trades: List[Trade], sigma: float = 1.5) -> D
     Returns:
         Dictionary containing:
         - total_trades: int (total number of trades)
-        - total_trades_with_risk: int (trades with valid risk_points)
+        - total_trades_with_stops: int (trades with valid risk_points)
         - excessive_risk_count: int (trades exceeding threshold)
         - risk_sizes: List[float] (all non-None risk_points values)
         - mean_risk: float
@@ -32,12 +32,12 @@ def calculate_excessive_risk_stats(trades: List[Trade], sigma: float = 1.5) -> D
 
     # Filter trades with valid risk_points
     risk_sizes = [t.risk_points for t in trades if t.risk_points is not None]
-    total_trades_with_risk = len(risk_sizes)
+    total_trades_with_stops = len(risk_sizes)
 
     if not risk_sizes:
         return {
             "total_trades": total_trades,
-            "total_trades_with_risk": 0,
+            "total_trades_with_stops": 0,
             "excessive_risk_count": 0,
             "risk_sizes": [],
             "mean_risk": 0.0,
@@ -64,12 +64,12 @@ def calculate_excessive_risk_stats(trades: List[Trade], sigma: float = 1.5) -> D
     # Identify excessive risk trades
     excessive_trades = [t for t in trades if t.risk_points is not None and t.risk_points > threshold]
     excessive_risk_count = len(excessive_trades)
-    excessive_percent = round(100 * excessive_risk_count / total_trades_with_risk, 1) if total_trades_with_risk else 0.0
+    excessive_percent = round(100 * excessive_risk_count / total_trades_with_stops, 1) if total_trades_with_stops else 0.0
     avg_excessive_risk = statistics.mean([t.risk_points for t in excessive_trades]) if excessive_trades else 0.0
 
     return {
         "total_trades": total_trades,
-        "total_trades_with_risk": total_trades_with_risk,
+        "total_trades_with_stops": total_trades_with_stops,
         "excessive_risk_count": excessive_risk_count,
         "risk_sizes": risk_sizes,
         "mean_risk": round(mean_risk, 2),
