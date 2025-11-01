@@ -1,4 +1,4 @@
-"""Unit tests for MentorDataService in live mode."""
+"""Unit tests for MentorDataService in api mode."""
 
 import pytest
 import app as flask_app
@@ -7,9 +7,9 @@ from mentor.data_service import MentorDataService
 
 @pytest.fixture
 def live_data_service(populate_global_state):
-    """Create a MentorDataService in live mode with proper references."""
+    """Create a MentorDataService in api mode with proper references."""
     return MentorDataService(
-        mode="live",
+        mode="api",
         trade_objs_ref=lambda: flask_app.trade_objs,
         order_df_ref=lambda: flask_app.order_df
     )
@@ -25,9 +25,9 @@ def test_live_mode_initialization():
     service_fixtures = MentorDataService(mode="fixtures")
     assert service_fixtures.mode == "fixtures"
     
-    # Live mode
-    service_live = MentorDataService(mode="live")
-    assert service_live.mode == "live"
+    # Api mode
+    service_api = MentorDataService(mode="api")
+    assert service_api.mode == "api"
 
 
 def test_mode_defaults_to_fixtures():
@@ -168,7 +168,7 @@ def test_live_mode_error_when_no_data():
         # Clear trade_objs
         app.trade_objs.clear()
         
-        service = MentorDataService(mode="live")
+        service = MentorDataService(mode="api")
         
         # Test get_summary with no data
         data, status = service.get_summary()

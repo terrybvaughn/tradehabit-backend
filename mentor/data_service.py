@@ -17,7 +17,7 @@ class MentorDataService:
 
     Supports two modes:
     - fixtures: Reads pre-generated JSON files from data/static/
-    - live: Computes analytics in real-time from app.trade_objs and app.order_df
+    - api: Computes analytics in real-time from app.trade_objs and app.order_df
     """
 
     def __init__(self, mode: str = "fixtures", fixtures_path: str = None, trade_objs_ref=None, order_df_ref=None):
@@ -25,10 +25,10 @@ class MentorDataService:
         Initialize the data service.
 
         Args:
-            mode: "fixtures" (default) or "live"
+            mode: "fixtures" (default) or "api"
             fixtures_path: Path to fixture directory. Defaults to data/static/
-            trade_objs_ref: Callable that returns trade_objs list (for live mode)
-            order_df_ref: Callable that returns order_df (for live mode)
+            trade_objs_ref: Callable that returns trade_objs list (for api mode)
+            order_df_ref: Callable that returns order_df (for api mode)
         """
         self.mode = mode
         self._trade_objs_ref = trade_objs_ref
@@ -99,13 +99,13 @@ class MentorDataService:
         Returns:
             Tuple of (summary_dict, status_code)
         """
-        if self.mode == "live":
-            return self._compute_live_summary()
+        if self.mode == "api":
+            return self._compute_api_summary()
         return self.load_json("summary.json")
 
-    def _compute_live_summary(self) -> Tuple[Dict[str, Any], int]:
+    def _compute_api_summary(self) -> Tuple[Dict[str, Any], int]:
         """
-        Compute summary from live trade_objs (matches /api/summary logic).
+        Compute summary from api trade_objs (matches /api/summary logic).
         
         Returns:
             Tuple of (summary_dict, status_code)
@@ -190,13 +190,13 @@ class MentorDataService:
         Returns:
             Tuple of (trades_dict, status_code)
         """
-        if self.mode == "live":
-            return self._compute_live_trades()
+        if self.mode == "api":
+            return self._compute_api_trades()
         return self.load_json("trades.json")
 
-    def _compute_live_trades(self) -> Tuple[Dict[str, Any], int]:
+    def _compute_api_trades(self) -> Tuple[Dict[str, Any], int]:
         """
-        Convert trade_objs to fixture-like structure (matches /api/trades logic).
+        Convert trade_objs to fixture-like structure via API (matches /api/trades logic).
         
         Returns:
             Tuple of (trades_dict, status_code)
@@ -236,13 +236,13 @@ class MentorDataService:
         Returns:
             Tuple of (losses_dict, status_code)
         """
-        if self.mode == "live":
-            return self._compute_live_losses()
+        if self.mode == "api":
+            return self._compute_api_losses()
         return self.load_json("losses.json")
 
-    def _compute_live_losses(self, sigma: float = 1.0, symbol: Optional[str] = None) -> Tuple[Dict[str, Any], int]:
+    def _compute_api_losses(self, sigma: float = 1.0, symbol: Optional[str] = None) -> Tuple[Dict[str, Any], int]:
         """
-        Compute losses from live trade_objs (matches /api/losses logic).
+        Compute losses from api trade_objs (matches /api/losses logic).
         
         Args:
             sigma: Sigma multiplier for outsized loss threshold
@@ -320,14 +320,14 @@ class MentorDataService:
         Returns:
             Tuple of (data_dict, status_code)
         """
-        if self.mode == "live":
-            return self._compute_live_endpoint(endpoint_name)
+        if self.mode == "api":
+            return self._compute_api_endpoint(endpoint_name)
         filename = f"{endpoint_name}.json"
         return self.load_json(filename)
 
-    def _compute_live_endpoint(self, endpoint_name: str) -> Tuple[Dict[str, Any], int]:
+    def _compute_api_endpoint(self, endpoint_name: str) -> Tuple[Dict[str, Any], int]:
         """
-        Compute analytics endpoint data from live trade_objs.
+        Compute analytics endpoint data from api trade_objs.
         
         Args:
             endpoint_name: Name of endpoint (revenge, excessive-risk, etc.)
@@ -364,7 +364,7 @@ class MentorDataService:
                     }, 400
                 return self._compute_insights_endpoint(trade_objs, order_df)
             elif endpoint_name == "trades":
-                return self._compute_live_trades()
+                return self._compute_api_trades()
             else:
                 return {
                     "status": "ERROR",

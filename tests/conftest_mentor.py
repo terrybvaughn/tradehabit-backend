@@ -240,16 +240,16 @@ def populate_global_state(sample_trade_objs, sample_order_df):
 @pytest.fixture
 def live_mode_env(monkeypatch):
     """
-    Fixture that temporarily sets MENTOR_MODE=live.
+    Fixture that temporarily sets MENTOR_DATA_SOURCE=api.
     NOTE: This only affects NEW imports of mentor_blueprint.
     For existing imports, you may need to reload the module or restart the app.
     
     Usage:
         def test_something(live_mode_env):
-            # MENTOR_MODE is now "live"
+            # MENTOR_DATA_SOURCE is now "api"
             ...
     """
-    monkeypatch.setenv("MENTOR_MODE", "live")
+    monkeypatch.setenv("MENTOR_DATA_SOURCE", "api")
     yield
     # monkeypatch automatically restores the original env var
 
@@ -257,13 +257,13 @@ def live_mode_env(monkeypatch):
 @pytest.fixture
 def fixture_mode_env(monkeypatch):
     """
-    Fixture that explicitly sets MENTOR_MODE=fixtures.
+    Fixture that explicitly sets MENTOR_DATA_SOURCE=fixtures.
     
     Usage:
         def test_something(fixture_mode_env):
-            # MENTOR_MODE is now "fixtures"
+            # MENTOR_DATA_SOURCE is now "fixtures"
             ...
     """
-    monkeypatch.setenv("MENTOR_MODE", "fixtures")
+    monkeypatch.setenv("MENTOR_DATA_SOURCE", "fixtures")
     yield
     # monkeypatch automatically restores the original env var

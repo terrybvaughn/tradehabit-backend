@@ -191,7 +191,7 @@ def _call_tool_runner(name: str, args: Dict[str, Any], user_text: Optional[str] 
         raw = safe.get("name", "")
         name_canon = canonicalize(raw)
 
-        if data_service.mode == "live":
+        if data_service.mode == "api":
             data, code = data_service.get_endpoint(name_canon)
             if code != 200:
                 raise RuntimeError(data.get("message", f"Failed to compute {name_canon}"))

@@ -19,9 +19,9 @@ def reset_data_service():
 
 
 def create_live_service():
-    """Helper to create a properly configured live mode data service."""
+    """Helper to create a properly configured api mode data service."""
     return MentorDataService(
-        mode="live",
+        mode="api",
         trade_objs_ref=lambda: flask_app.trade_objs,
         order_df_ref=lambda: flask_app.order_df
     )
@@ -29,8 +29,8 @@ def create_live_service():
 
 def test_blueprint_live_get_summary_data(client, populate_global_state, monkeypatch):
     """Test end-to-end summary with live data through blueprint."""
-    # Set live mode
-    monkeypatch.setenv("MENTOR_MODE", "live")
+    # Set live mode (api data source)
+    monkeypatch.setenv("MENTOR_DATA_SOURCE", "api")
     
     # Reload the data service with live mode
     from mentor import mentor_blueprint
@@ -55,7 +55,7 @@ def test_blueprint_live_get_summary_data(client, populate_global_state, monkeypa
 def test_blueprint_live_get_endpoint_data(client, populate_global_state, monkeypatch):
     """Test all endpoint types with live analyzers through blueprint."""
     # Set live mode
-    monkeypatch.setenv("MENTOR_MODE", "live")
+    monkeypatch.setenv("MENTOR_DATA_SOURCE", "api")
     
     from mentor import mentor_blueprint
     mentor_blueprint.data_service = create_live_service()
@@ -116,7 +116,7 @@ def test_blueprint_live_get_endpoint_data(client, populate_global_state, monkeyp
 def test_blueprint_live_filter_trades(client, populate_global_state, monkeypatch):
     """Test filtering/sorting live trade_objs through blueprint."""
     # Set live mode
-    monkeypatch.setenv("MENTOR_MODE", "live")
+    monkeypatch.setenv("MENTOR_DATA_SOURCE", "api")
     
     from mentor import mentor_blueprint
     mentor_blueprint.data_service = create_live_service()
@@ -168,7 +168,7 @@ def test_blueprint_live_filter_trades(client, populate_global_state, monkeypatch
 def test_blueprint_live_filter_losses(client, populate_global_state, monkeypatch):
     """Test loss statistics from live data through blueprint."""
     # Set live mode
-    monkeypatch.setenv("MENTOR_MODE", "live")
+    monkeypatch.setenv("MENTOR_DATA_SOURCE", "api")
     
     from mentor import mentor_blueprint
     mentor_blueprint.data_service = create_live_service()
@@ -206,9 +206,9 @@ def test_blueprint_live_filter_losses(client, populate_global_state, monkeypatch
 
 
 def test_blueprint_mode_switching(client, populate_global_state, monkeypatch):
-    """Verify env var controls mode correctly."""
+    """Verify env var controls data source correctly."""
     # Start in fixture mode
-    monkeypatch.setenv("MENTOR_MODE", "fixtures")
+    monkeypatch.setenv("MENTOR_DATA_SOURCE", "fixtures")
     from mentor import mentor_blueprint
     mentor_blueprint.data_service = MentorDataService(mode="fixtures")
     
@@ -219,8 +219,8 @@ def test_blueprint_mode_switching(client, populate_global_state, monkeypatch):
     # Fixture has 314 trades
     assert fixture_data["total_trades"] == 314
     
-    # Switch to live mode
-    monkeypatch.setenv("MENTOR_MODE", "live")
+    # Switch to api (live) mode
+    monkeypatch.setenv("MENTOR_DATA_SOURCE", "api")
     mentor_blueprint.data_service = create_live_service()
     
     resp = client.post('/api/mentor/get_summary_data')
@@ -244,7 +244,7 @@ def test_blueprint_live_error_when_no_data(client, monkeypatch):
     
     try:
         # Set live mode
-        monkeypatch.setenv("MENTOR_MODE", "live")
+        monkeypatch.setenv("MENTOR_DATA_SOURCE", "api")
         from mentor import mentor_blueprint
         mentor_blueprint.data_service = create_live_service()
         

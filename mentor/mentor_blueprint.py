@@ -1,10 +1,11 @@
 """
 Mentor Blueprint - Endpoints for OpenAI Assistant integration.
 
-Supports three modes (controlled by MENTOR_MODE environment variable):
+Data source is controlled by MENTOR_DATA_SOURCE environment variable:
 - fixtures: Reads from data/static/*.json (default)
-- live: Computes from app.trade_objs and app.order_df
-- disabled: Returns mock response without calling OpenAI (for testing)
+- api: Computes from app.trade_objs and app.order_df
+
+Activation is controlled by frontend via ?mentor=1 query parameter.
 """
 from flask import Blueprint, request, jsonify, current_app
 from mentor.data_service import MentorDataService
@@ -16,8 +17,9 @@ import statistics
 # Create blueprint with /api/mentor prefix
 mentor_bp = Blueprint("mentor", __name__, url_prefix="/api/mentor")
 
-# Read mode from environment variable (default: fixtures)
-MENTOR_MODE = os.environ.get("MENTOR_MODE", "fixtures")
+# Read data source from environment variable (default: fixtures)
+# Values: 'api' or 'fixtures'
+MENTOR_DATA_SOURCE = os.environ.get("MENTOR_DATA_SOURCE", "fixtures")
 
 # Data service will be initialized after app registration (see init_mentor_service)
 data_service = None
@@ -34,7 +36,7 @@ def init_mentor_service(trade_objs_getter, order_df_getter):
     """
     global data_service
     data_service = MentorDataService(
-        mode=MENTOR_MODE,
+        mode=MENTOR_DATA_SOURCE,
         trade_objs_ref=trade_objs_getter,
         order_df_ref=order_df_getter
     )
@@ -225,9 +227,9 @@ def get_endpoint_data():
     if name == "outsized-loss":
         name = "losses"
     
-    # In live mode, use the data service's get_endpoint method
+    # In api mode, use the data service's get_endpoint method
     # In fixture mode, validate against whitelist first
-    if data_service.mode == "live":
+    if data_service.mode == "api":
         # For flat endpoints like revenge, excessive-risk, etc.
         data, code = data_service.get_endpoint(name)
         if code != 200:
@@ -679,16 +681,6 @@ def filter_losses():
 def chat():
     if request.method == "OPTIONS":
         return ("", 204)
-
-    # Check if Mentor is disabled
-    if MENTOR_MODE == "disabled":
-        payload = request.get_json(silent=True) or {}
-        thread_id = payload.get("threadId")
-        return jsonify({
-            "threadId": thread_id or "",
-            "text": "Mentor is disabled for testing. Set MENTOR_MODE=live or MENTOR_MODE=fixtures to enable.",
-            "error": None
-        }), 200
 
     # Lazy import to avoid circular imports during module initialization
     try:
