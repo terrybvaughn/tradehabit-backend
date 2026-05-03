@@ -387,14 +387,14 @@ def get_revenge_stats():
     return jsonify({
         "revenge_multiplier":         k,
         "total_revenge_trades":       stats["revenge_count"],
-        "revenge_win_rate":           stats["revenge_win_rate"],
-        "average_win_revenge":        stats["revenge_avg_win"],
-        "average_loss_revenge":       stats["revenge_avg_loss"],
-        "payoff_ratio_revenge":       stats["revenge_payoff_ratio"],
-        "net_pnl_revenge":            stats["revenge_net_pnl"],
-        "net_pnl_per_trade_revenge":  stats["revenge_net_pnl_per_trade"],
-        "overall_win_rate":           stats["overall_win_rate"],
-        "overall_payoff_ratio":       stats["overall_payoff_ratio"],
+        "revenge_win_rate":           stats["win_rate_revenge"],
+        "average_win_revenge":        stats["avg_win_revenge"],
+        "average_loss_revenge":       stats["avg_loss_revenge"],
+        "payoff_ratio_revenge":       stats["payoff_ratio_revenge"],
+        "net_pnl_revenge":            stats["net_pnl_revenge"],
+        "net_pnl_per_trade_revenge":  stats["net_pnl_per_revenge"],
+        "overall_win_rate":           stats["win_rate_overall"],
+        "overall_payoff_ratio":       stats["payoff_ratio_overall"],
         "diagnostic":                 insight["diagnostic"]
     })
 

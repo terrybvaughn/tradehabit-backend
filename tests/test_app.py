@@ -36,3 +36,24 @@ def test_analyze_happy_path_then_summary(client, tiny_valid_csv_bytes):
         'payoff_ratio','expectancy','required_wr_adj'
     ]:
         assert key in summary
+
+
+def test_revenge_endpoint_uses_current_stats_shape(client, populate_global_state):
+    resp = client.get('/api/revenge?k=1.0')
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    for key in [
+        'revenge_multiplier',
+        'total_revenge_trades',
+        'revenge_win_rate',
+        'average_win_revenge',
+        'average_loss_revenge',
+        'payoff_ratio_revenge',
+        'net_pnl_revenge',
+        'net_pnl_per_trade_revenge',
+        'overall_win_rate',
+        'overall_payoff_ratio',
+        'diagnostic',
+    ]:
+        assert key in payload
